@@ -22,6 +22,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from engine.evaluator import best_move_material
 from search.minimax import best_move_minimax
+from cli.board_display import display_board_fancy, track_captured_pieces
 
 
 def random_move(board):
@@ -43,13 +44,17 @@ def minimax_move(board, depth=3):
 
 
 def display_board(board, move_num, last_move=None):
-    """Display the current board state."""
+    """Display the current board state with enhanced visualization."""
     print(f"\n{'='*50}")
     print(f"Move {move_num}")
     if last_move:
         print(f"Last move: {last_move}")
     print(f"{'='*50}")
-    print(board)
+
+    # Use fancy display with Unicode pieces and colors
+    captured = track_captured_pieces(board)
+    print(display_board_fancy(board, last_move=last_move, captured_pieces=captured))
+
     print(f"\nFEN: {board.fen()}")
     print(f"Turn: {'White' if board.turn == chess.WHITE else 'Black'}")
     print()
