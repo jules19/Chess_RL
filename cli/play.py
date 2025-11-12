@@ -144,6 +144,66 @@ def play_human_vs_random(human_color=chess.WHITE):
     return result, move_count
 
 
+def play_human_vs_material(human_color=chess.WHITE):
+    """Play a game: Human vs Material Engine."""
+    board = chess.Board()
+    move_count = 0
+
+    print(f"\n🎮 Human ({'White' if human_color == chess.WHITE else 'Black'}) vs Material Engine 💎")
+    display_board(board, move_count)
+
+    while not board.is_game_over():
+        if board.turn == human_color:
+            # Human's turn
+            while True:
+                print(f"Legal moves: {', '.join([str(m) for m in board.legal_moves])}")
+                move_input = input("Your move (e.g. 'e2e4' or 'q' to quit): ").strip()
+
+                if move_input.lower() == 'q':
+                    print("Game abandoned.")
+                    return None, move_count
+
+                try:
+                    move = chess.Move.from_uci(move_input)
+                    if move in board.legal_moves:
+                        board.push(move)
+                        move_count += 1
+                        break
+                    else:
+                        print(f"Illegal move! Try again.")
+                except ValueError:
+                    print(f"Invalid format! Use format like 'e2e4'")
+        else:
+            # Material engine's turn
+            print("\n💎 Material engine thinking...")
+            move = material_move(board)
+            board.push(move)
+            move_count += 1
+            print(f"Material engine plays: {move}")
+
+        display_board(board, move_count, move)
+
+    # Game over
+    result = board.result()
+    outcome = board.outcome()
+
+    print(f"\n{'='*50}")
+    print(f"🏁 GAME OVER after {move_count} moves")
+    print(f"{'='*50}")
+    print(f"Result: {result}")
+    if outcome:
+        print(f"Termination: {outcome.termination.name}")
+        if outcome.winner is None:
+            print(f"Draw!")
+        elif outcome.winner == human_color:
+            print(f"You win! 🎉")
+        else:
+            print(f"Material engine wins! 💎")
+    print()
+
+    return result, move_count
+
+
 def run_test_suite():
     """Run multiple random games to test termination conditions."""
     print("\n🧪 Running test suite: 10 random vs random games")
@@ -266,21 +326,24 @@ def main():
         print("="*50)
         print("1. Random vs Random (watch)")
         print("2. Human vs Random (play)")
-        print("3. Test suite (10 random games)")
-        print("4. Material vs Random (watch) 💎")
-        print("5. Test Material player (20 games) - VALIDATION")
+        print("3. Human vs Material Engine (play) 💎")
+        print("4. Test suite (10 random games)")
+        print("5. Material vs Random (watch) 💎")
+        print("6. Test Material player (20 games) - VALIDATION")
         print("="*50)
-        choice = input("Choose mode (1-5): ").strip()
+        choice = input("Choose mode (1-6): ").strip()
 
         if choice == "1":
             mode = "random"
         elif choice == "2":
             mode = "human"
         elif choice == "3":
-            mode = "test"
+            mode = "human-material"
         elif choice == "4":
-            mode = "material"
+            mode = "test"
         elif choice == "5":
+            mode = "material"
+        elif choice == "6":
             mode = "test-material"
         else:
             print("Invalid choice!")
@@ -292,6 +355,10 @@ def main():
         color_choice = input("Play as White or Black? (w/b): ").strip().lower()
         human_color = chess.WHITE if color_choice == 'w' else chess.BLACK
         play_human_vs_random(human_color)
+    elif mode == "human-material":
+        color_choice = input("Play as White or Black? (w/b): ").strip().lower()
+        human_color = chess.WHITE if color_choice == 'w' else chess.BLACK
+        play_human_vs_material(human_color)
     elif mode == "test":
         run_test_suite()
     elif mode == "material":
@@ -300,7 +367,7 @@ def main():
         test_material_vs_random()
     else:
         print(f"Unknown mode: {mode}")
-        print("Usage: python play.py [random|human|test|material|test-material]")
+        print("Usage: python play.py [random|human|human-material|test|material|test-material]")
 
 
 if __name__ == "__main__":
