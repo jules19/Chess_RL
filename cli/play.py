@@ -1,24 +1,27 @@
 #!/usr/bin/env python3
 """
-Chess game loop - Baby Steps #1 & #2
+Chess game loop - Baby Steps #1, #2, and Days 3-4
 
 This script demonstrates:
 1. Random vs Random play
 2. Human vs Random play
 3. Material-based player (Day 2)
-4. Board visualization
-5. Game termination detection
+4. Minimax search with alpha-beta pruning (Days 3-4)
+5. Board visualization
+6. Game termination detection
 """
 
 import chess
 import random
 import sys
 import os
+import time
 
 # Add project root to path to import engine module
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from engine.evaluator import best_move_material
+from search.minimax import best_move_minimax
 
 
 def random_move(board):
@@ -32,6 +35,11 @@ def random_move(board):
 def material_move(board):
     """Select best move based on material evaluation."""
     return best_move_material(board)
+
+
+def minimax_move(board, depth=3):
+    """Select best move using minimax search."""
+    return best_move_minimax(board, depth=depth, verbose=False)
 
 
 def display_board(board, move_num, last_move=None):
@@ -317,21 +325,256 @@ def test_material_vs_random(num_games=20):
     print()
 
 
+def play_human_vs_minimax(human_color=chess.WHITE, depth=3):
+    """Play a game: Human vs Minimax Engine."""
+    board = chess.Board()
+    move_count = 0
+
+    print(f"\n🎮 Human ({'White' if human_color == chess.WHITE else 'Black'}) vs Minimax Engine (depth={depth}) 🧠")
+    display_board(board, move_count)
+
+    while not board.is_game_over():
+        if board.turn == human_color:
+            # Human's turn
+            while True:
+                print(f"Legal moves: {', '.join([str(m) for m in board.legal_moves])}")
+                move_input = input("Your move (e.g. 'e2e4' or 'q' to quit): ").strip()
+
+                if move_input.lower() == 'q':
+                    print("Game abandoned.")
+                    return None, move_count
+
+                try:
+                    move = chess.Move.from_uci(move_input)
+                    if move in board.legal_moves:
+                        board.push(move)
+                        move_count += 1
+                        break
+                    else:
+                        print(f"Illegal move! Try again.")
+                except ValueError:
+                    print(f"Invalid format! Use format like 'e2e4'")
+        else:
+            # Minimax engine's turn
+            print(f"\n🧠 Minimax engine (depth {depth}) thinking...")
+            start_time = time.time()
+            move = minimax_move(board, depth=depth)
+            elapsed = time.time() - start_time
+            board.push(move)
+            move_count += 1
+            print(f"Minimax plays: {move} (took {elapsed:.2f}s)")
+
+        display_board(board, move_count, move)
+
+    # Game over
+    result = board.result()
+    outcome = board.outcome()
+
+    print(f"\n{'='*50}")
+    print(f"🏁 GAME OVER after {move_count} moves")
+    print(f"{'='*50}")
+    print(f"Result: {result}")
+    if outcome:
+        print(f"Termination: {outcome.termination.name}")
+        if outcome.winner is None:
+            print(f"Draw!")
+        elif outcome.winner == human_color:
+            print(f"You win! 🎉")
+        else:
+            print(f"Minimax engine wins! 🧠")
+    print()
+
+    return result, move_count
+
+
+def play_minimax_vs_random(depth=3, verbose=True):
+    """Play a complete game: Minimax vs Random."""
+    board = chess.Board()
+    move_count = 0
+
+    if verbose:
+        print(f"\n🧠 Minimax (depth {depth}, White) vs Random (Black)")
+        display_board(board, move_count)
+
+    while not board.is_game_over():
+        if board.turn == chess.WHITE:
+            move = minimax_move(board, depth=depth)
+        else:
+            move = random_move(board)
+
+        board.push(move)
+        move_count += 1
+
+        if verbose:
+            display_board(board, move_count, move)
+
+    # Game over
+    result = board.result()
+    outcome = board.outcome()
+
+    if verbose:
+        print(f"\n{'='*50}")
+        print(f"🏁 GAME OVER after {move_count} moves")
+        print(f"{'='*50}")
+        print(f"Result: {result}")
+        if outcome:
+            print(f"Termination: {outcome.termination.name}")
+            if outcome.winner is None:
+                print(f"Draw!")
+            elif outcome.winner == chess.WHITE:
+                print(f"Minimax wins! 🧠")
+            else:
+                print(f"Random wins!")
+        print()
+
+    return result, move_count
+
+
+def test_minimax_vs_random(depth=3, num_games=20):
+    """Test minimax against random player."""
+    print(f"\n🧪 Testing Minimax (depth {depth}) vs Random: {num_games} games")
+    print("="*50)
+
+    results = {
+        "1-0": 0,  # Minimax (White) wins
+        "0-1": 0,  # Random (Black) wins
+        "1/2-1/2": 0,  # Draw
+    }
+
+    move_counts = []
+    total_time = 0
+
+    for i in range(num_games):
+        print(f"\rGame {i+1}/{num_games}...", end="", flush=True)
+        start = time.time()
+        result, move_count = play_minimax_vs_random(depth=depth, verbose=False)
+        total_time += time.time() - start
+        results[result] += 1
+        move_counts.append(move_count)
+
+    print()  # New line after progress
+    print("\n" + "="*50)
+    print(f"📊 Minimax (depth {depth}) vs Random Results")
+    print("="*50)
+    print(f"Minimax wins: {results['1-0']} ({results['1-0']/num_games*100:.1f}%)")
+    print(f"Random wins: {results['0-1']} ({results['0-1']/num_games*100:.1f}%)")
+    print(f"Draws: {results['1/2-1/2']} ({results['1/2-1/2']/num_games*100:.1f}%)")
+    print(f"Average game length: {sum(move_counts)/len(move_counts):.1f} moves")
+    print(f"Min: {min(move_counts)}, Max: {max(move_counts)}")
+    print(f"Total time: {total_time:.1f}s ({total_time/num_games:.1f}s per game)")
+
+    # Validation
+    win_rate = results['1-0'] / num_games
+    if win_rate >= 0.9:
+        print(f"\n✅ VALIDATION PASSED: Minimax wins {win_rate*100:.1f}% (target: >90%)")
+    else:
+        print(f"\n⚠️ VALIDATION FAILED: Minimax wins {win_rate*100:.1f}% (target: >90%)")
+
+    print()
+
+
+def play_minimax_vs_material(minimax_depth=3, verbose=True):
+    """Play a complete game: Minimax vs Material."""
+    board = chess.Board()
+    move_count = 0
+
+    if verbose:
+        print(f"\n🧠 Minimax (depth {minimax_depth}, White) vs 💎 Material (Black)")
+        display_board(board, move_count)
+
+    while not board.is_game_over():
+        if board.turn == chess.WHITE:
+            move = minimax_move(board, depth=minimax_depth)
+        else:
+            move = material_move(board)
+
+        board.push(move)
+        move_count += 1
+
+        if verbose:
+            display_board(board, move_count, move)
+
+    # Game over
+    result = board.result()
+    outcome = board.outcome()
+
+    if verbose:
+        print(f"\n{'='*50}")
+        print(f"🏁 GAME OVER after {move_count} moves")
+        print(f"{'='*50}")
+        print(f"Result: {result}")
+        if outcome:
+            print(f"Termination: {outcome.termination.name}")
+            if outcome.winner is None:
+                print(f"Draw!")
+            elif outcome.winner == chess.WHITE:
+                print(f"Minimax wins! 🧠")
+            else:
+                print(f"Material wins! 💎")
+        print()
+
+    return result, move_count
+
+
+def test_minimax_vs_material(minimax_depth=3, num_games=20):
+    """Test minimax against material player."""
+    print(f"\n🧪 Testing Minimax (depth {minimax_depth}) vs Material: {num_games} games")
+    print("="*50)
+
+    results = {
+        "1-0": 0,  # Minimax (White) wins
+        "0-1": 0,  # Material (Black) wins
+        "1/2-1/2": 0,  # Draw
+    }
+
+    move_counts = []
+
+    for i in range(num_games):
+        print(f"\rGame {i+1}/{num_games}...", end="", flush=True)
+        result, move_count = play_minimax_vs_material(minimax_depth=minimax_depth, verbose=False)
+        results[result] += 1
+        move_counts.append(move_count)
+
+    print()  # New line after progress
+    print("\n" + "="*50)
+    print(f"📊 Minimax (depth {minimax_depth}) vs Material Results")
+    print("="*50)
+    print(f"Minimax wins: {results['1-0']} ({results['1-0']/num_games*100:.1f}%)")
+    print(f"Material wins: {results['0-1']} ({results['0-1']/num_games*100:.1f}%)")
+    print(f"Draws: {results['1/2-1/2']} ({results['1/2-1/2']/num_games*100:.1f}%)")
+    print(f"Average game length: {sum(move_counts)/len(move_counts):.1f} moves")
+    print(f"Min: {min(move_counts)}, Max: {max(move_counts)}")
+
+    # Validation
+    win_rate = results['1-0'] / num_games
+    if win_rate >= 0.7:
+        print(f"\n✅ VALIDATION PASSED: Minimax wins {win_rate*100:.1f}% (target: >70%)")
+    else:
+        print(f"\n⚠️ VALIDATION FAILED: Minimax wins {win_rate*100:.1f}% (target: >70%)")
+
+    print()
+
+
 def main():
     """Main entry point."""
     if len(sys.argv) > 1:
         mode = sys.argv[1]
     else:
-        print("\nChess RL - Baby Steps Edition (Day 2)")
+        print("\nChess RL - Baby Steps Edition (Days 1-4)")
         print("="*50)
         print("1. Random vs Random (watch)")
         print("2. Human vs Random (play)")
         print("3. Human vs Material Engine (play) 💎")
-        print("4. Test suite (10 random games)")
-        print("5. Material vs Random (watch) 💎")
-        print("6. Test Material player (20 games) - VALIDATION")
+        print("4. Human vs Minimax Engine (play) 🧠 NEW!")
+        print("5. Test suite (10 random games)")
+        print("6. Material vs Random (watch) 💎")
+        print("7. Minimax vs Random (watch) 🧠")
+        print("8. Minimax vs Material (watch) 🧠💎")
+        print("9. Test Material player (20 games)")
+        print("10. Test Minimax vs Random (20 games) - VALIDATION")
+        print("11. Test Minimax vs Material (20 games)")
         print("="*50)
-        choice = input("Choose mode (1-6): ").strip()
+        choice = input("Choose mode (1-11): ").strip()
 
         if choice == "1":
             mode = "random"
@@ -340,11 +583,21 @@ def main():
         elif choice == "3":
             mode = "human-material"
         elif choice == "4":
-            mode = "test"
+            mode = "human-minimax"
         elif choice == "5":
-            mode = "material"
+            mode = "test"
         elif choice == "6":
+            mode = "material"
+        elif choice == "7":
+            mode = "minimax"
+        elif choice == "8":
+            mode = "minimax-material"
+        elif choice == "9":
             mode = "test-material"
+        elif choice == "10":
+            mode = "test-minimax"
+        elif choice == "11":
+            mode = "test-minimax-material"
         else:
             print("Invalid choice!")
             return
@@ -359,15 +612,29 @@ def main():
         color_choice = input("Play as White or Black? (w/b): ").strip().lower()
         human_color = chess.WHITE if color_choice == 'w' else chess.BLACK
         play_human_vs_material(human_color)
+    elif mode == "human-minimax":
+        color_choice = input("Play as White or Black? (w/b): ").strip().lower()
+        human_color = chess.WHITE if color_choice == 'w' else chess.BLACK
+        depth_choice = input("Minimax depth (2-4, default 3): ").strip()
+        depth = int(depth_choice) if depth_choice.isdigit() else 3
+        play_human_vs_minimax(human_color, depth=depth)
     elif mode == "test":
         run_test_suite()
     elif mode == "material":
         play_material_vs_random()
+    elif mode == "minimax":
+        play_minimax_vs_random()
+    elif mode == "minimax-material":
+        play_minimax_vs_material()
     elif mode == "test-material":
         test_material_vs_random()
+    elif mode == "test-minimax":
+        test_minimax_vs_random()
+    elif mode == "test-minimax-material":
+        test_minimax_vs_material()
     else:
         print(f"Unknown mode: {mode}")
-        print("Usage: python play.py [random|human|human-material|test|material|test-material]")
+        print("Usage: python play.py [random|human|human-material|human-minimax|test|material|minimax|minimax-material|test-material|test-minimax|test-minimax-material]")
 
 
 if __name__ == "__main__":
