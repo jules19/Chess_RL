@@ -36,6 +36,7 @@ class Colors:
 
     # Text colors
     WHITE_PIECE = '\033[97m'          # Bright white
+    WHITE_PIECE_HIGHLIGHT = '\033[1m\033[38;5;235m'  # Bold dark gray for white pieces on highlights
     BLACK_PIECE = '\033[30m'          # Black
     COORD = '\033[90m'                # Gray for coordinates
 
@@ -112,17 +113,19 @@ def display_board_large(board, last_move=None, captured_pieces=None, use_unicode
 
             # Choose background color
             if use_colors:
-                if square in highlight_squares:
+                is_highlighted = square in highlight_squares
+
+                if is_highlighted:
                     bg_color = Colors.HIGHLIGHT
                 elif is_light_square(square):
                     bg_color = Colors.LIGHT_SQUARE
                 else:
                     bg_color = Colors.DARK_SQUARE
 
-                # Choose piece color
+                # Choose piece color (use darker color for white pieces on highlights)
                 if piece:
                     if piece.color == chess.WHITE:
-                        piece_color = Colors.WHITE_PIECE
+                        piece_color = Colors.WHITE_PIECE_HIGHLIGHT if is_highlighted else Colors.WHITE_PIECE
                     else:
                         piece_color = Colors.BLACK_PIECE
 
@@ -216,17 +219,19 @@ def display_board_fancy(board, last_move=None, captured_pieces=None, use_unicode
 
             # Choose background color
             if use_colors:
-                if square in highlight_squares:
+                is_highlighted = square in highlight_squares
+
+                if is_highlighted:
                     bg_color = Colors.HIGHLIGHT
                 elif is_light_square(square):
                     bg_color = Colors.LIGHT_SQUARE
                 else:
                     bg_color = Colors.DARK_SQUARE
 
-                # Choose piece color
+                # Choose piece color (use darker color for white pieces on highlights)
                 if piece:
                     if piece.color == chess.WHITE:
-                        piece_color = Colors.WHITE_PIECE
+                        piece_color = Colors.WHITE_PIECE_HIGHLIGHT if is_highlighted else Colors.WHITE_PIECE
                     else:
                         piece_color = Colors.BLACK_PIECE
                 else:
