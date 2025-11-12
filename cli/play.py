@@ -24,10 +24,25 @@ from engine.evaluator import best_move_material
 from search.minimax import best_move_minimax
 from cli.board_display import display_board_fancy, track_captured_pieces
 
-# Board display configuration
+# Board display configuration (mutable global)
 # Set CHESS_BOARD_SIZE environment variable to 'large' for bigger display with borders
 # or 'compact' (default) for the smaller 8-line display
-BOARD_SIZE = os.environ.get('CHESS_BOARD_SIZE', 'compact').lower()
+# Can also be toggled dynamically during gameplay
+_board_size = os.environ.get('CHESS_BOARD_SIZE', 'compact').lower()
+
+def get_board_size():
+    """Get current board display size."""
+    return _board_size
+
+def toggle_board_size():
+    """Toggle between compact and large display modes."""
+    global _board_size
+    _board_size = 'large' if _board_size == 'compact' else 'compact'
+    print(f"\n🎨 Display mode switched to: {_board_size.upper()}")
+    return _board_size
+
+# For backwards compatibility
+BOARD_SIZE = get_board_size()
 
 
 def random_move(board):
@@ -57,9 +72,9 @@ def display_board(board, move_num, last_move=None):
     print(f"{'='*50}")
 
     # Use fancy display with Unicode pieces and colors
-    # Size controlled by CHESS_BOARD_SIZE environment variable
+    # Size can be toggled dynamically with toggle_board_size()
     captured = track_captured_pieces(board)
-    print(display_board_fancy(board, last_move=last_move, captured_pieces=captured, size=BOARD_SIZE))
+    print(display_board_fancy(board, last_move=last_move, captured_pieces=captured, size=get_board_size()))
 
     print(f"\nFEN: {board.fen()}")
     print(f"Turn: {'White' if board.turn == chess.WHITE else 'Black'}")
@@ -83,7 +98,7 @@ def pause_for_move(mode='step'):
         return 'auto'
     else:  # step mode
         print("─" * 50)
-        user_input = input("⏸️  [Enter]=next, [a]=auto, [s]=skip, [q]=quit: ").strip().lower()
+        user_input = input("⏸️  [Enter]=next, [a]=auto, [s]=skip, [d]=toggle display, [q]=quit: ").strip().lower()
         if user_input == 'q':
             return 'quit'
         elif user_input == 'a':
@@ -92,6 +107,9 @@ def pause_for_move(mode='step'):
         elif user_input == 's':
             print("⏩ Skipping to end...")
             return 'skip'
+        elif user_input == 'd':
+            toggle_board_size()
+            return 'step'  # Stay in step mode, just toggled display
         else:
             return 'step'
 
@@ -105,7 +123,7 @@ def play_random_vs_random(verbose=True, interactive=False):
     if verbose:
         print("\n🎲 Random vs Random Chess Game")
         if interactive:
-            print("Watch mode: Press Enter to advance, 'a' for auto-play, 's' to skip, 'q' to quit")
+            print("Watch mode: Press Enter to advance, 'a' for auto-play, 's' to skip, 'd' to toggle display, 'q' to quit")
         display_board(board, move_count)
 
     while not board.is_game_over():
@@ -301,7 +319,7 @@ def play_material_vs_random(verbose=True, interactive=False):
     if verbose:
         print("\n💎 Material Player (White) vs Random (Black)")
         if interactive:
-            print("Watch mode: Press Enter to advance, 'a' for auto-play, 's' to skip, 'q' to quit")
+            print("Watch mode: Press Enter to advance, 'a' for auto-play, 's' to skip, 'd' to toggle display, 'q' to quit")
         display_board(board, move_count)
 
     while not board.is_game_over():
@@ -453,7 +471,7 @@ def play_minimax_vs_random(depth=3, verbose=True, interactive=False):
     if verbose:
         print(f"\n🧠 Minimax (depth {depth}, White) vs Random (Black)")
         if interactive:
-            print("Watch mode: Press Enter to advance, 'a' for auto-play, 's' to skip, 'q' to quit")
+            print("Watch mode: Press Enter to advance, 'a' for auto-play, 's' to skip, 'd' to toggle display, 'q' to quit")
         display_board(board, move_count)
 
     while not board.is_game_over():
@@ -549,7 +567,7 @@ def play_minimax_vs_material(minimax_depth=3, verbose=True, interactive=False):
     if verbose:
         print(f"\n🧠 Minimax (depth {minimax_depth}, White) vs 💎 Material (Black)")
         if interactive:
-            print("Watch mode: Press Enter to advance, 'a' for auto-play, 's' to skip, 'q' to quit")
+            print("Watch mode: Press Enter to advance, 'a' for auto-play, 's' to skip, 'd' to toggle display, 'q' to quit")
         display_board(board, move_count)
 
     while not board.is_game_over():
@@ -639,8 +657,8 @@ def main():
     else:
         print("\nChess RL - Baby Steps Edition (Days 1-4)")
         print("="*50)
-        print(f"Board Display: {BOARD_SIZE.upper()} mode")
-        print("(Set CHESS_BOARD_SIZE=large for bigger display with borders)")
+        print(f"Board Display: {get_board_size().upper()} mode")
+        print("(Press 'd' during watch mode to toggle, or choose option 12)")
         print("="*50)
         print("1. Random vs Random (watch)")
         print("2. Human vs Random (play)")
@@ -653,8 +671,9 @@ def main():
         print("9. Test Material player (20 games)")
         print("10. Test Minimax vs Random (20 games) - VALIDATION")
         print("11. Test Minimax vs Material (20 games)")
+        print("12. Toggle display size (compact ⇄ large) 🎨")
         print("="*50)
-        choice = input("Choose mode (1-11): ").strip()
+        choice = input("Choose mode (1-12): ").strip()
 
         if choice == "1":
             mode = "random"
@@ -678,6 +697,11 @@ def main():
             mode = "test-minimax"
         elif choice == "11":
             mode = "test-minimax-material"
+        elif choice == "12":
+            toggle_board_size()
+            print("Press Enter to continue...")
+            input()
+            return main()  # Show menu again
         else:
             print("Invalid choice!")
             return
