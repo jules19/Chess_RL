@@ -55,13 +55,46 @@ def display_board(board, move_num, last_move=None):
     print()
 
 
-def play_random_vs_random(verbose=True):
+def pause_for_move(mode='step'):
+    """
+    Pause between moves in watch mode.
+
+    Args:
+        mode: 'step' (press Enter), 'auto' (auto-advance with delay), 'skip' (no pause)
+
+    Returns:
+        New mode if user changes it, or 'quit' to stop watching
+    """
+    if mode == 'skip':
+        return 'skip'
+    elif mode == 'auto':
+        time.sleep(1.5)  # 1.5 second delay in auto mode
+        return 'auto'
+    else:  # step mode
+        print("─" * 50)
+        user_input = input("⏸️  [Enter]=next, [a]=auto, [s]=skip, [q]=quit: ").strip().lower()
+        if user_input == 'q':
+            return 'quit'
+        elif user_input == 'a':
+            print("▶️  Auto-play mode activated (1.5s between moves)")
+            return 'auto'
+        elif user_input == 's':
+            print("⏩ Skipping to end...")
+            return 'skip'
+        else:
+            return 'step'
+
+
+def play_random_vs_random(verbose=True, interactive=False):
     """Play a complete game: Random vs Random."""
     board = chess.Board()
     move_count = 0
+    watch_mode = 'step' if interactive else 'skip'
 
     if verbose:
         print("\n🎲 Random vs Random Chess Game")
+        if interactive:
+            print("Watch mode: Press Enter to advance, 'a' for auto-play, 's' to skip, 'q' to quit")
         display_board(board, move_count)
 
     while not board.is_game_over():
@@ -71,6 +104,11 @@ def play_random_vs_random(verbose=True):
 
         if verbose:
             display_board(board, move_count, move)
+            if interactive:
+                watch_mode = pause_for_move(watch_mode)
+                if watch_mode == 'quit':
+                    print("\n⏹️  Stopped watching.")
+                    return None, move_count
 
     # Game over
     result = board.result()
@@ -243,13 +281,16 @@ def run_test_suite():
     print()
 
 
-def play_material_vs_random(verbose=True):
+def play_material_vs_random(verbose=True, interactive=False):
     """Play a complete game: Material evaluation vs Random."""
     board = chess.Board()
     move_count = 0
+    watch_mode = 'step' if interactive else 'skip'
 
     if verbose:
         print("\n💎 Material Player (White) vs Random (Black)")
+        if interactive:
+            print("Watch mode: Press Enter to advance, 'a' for auto-play, 's' to skip, 'q' to quit")
         display_board(board, move_count)
 
     while not board.is_game_over():
@@ -263,6 +304,11 @@ def play_material_vs_random(verbose=True):
 
         if verbose:
             display_board(board, move_count, move)
+            if interactive:
+                watch_mode = pause_for_move(watch_mode)
+                if watch_mode == 'quit':
+                    print("\n⏹️  Stopped watching.")
+                    return None, move_count
 
     # Game over
     result = board.result()
@@ -387,17 +433,22 @@ def play_human_vs_minimax(human_color=chess.WHITE, depth=3):
     return result, move_count
 
 
-def play_minimax_vs_random(depth=3, verbose=True):
+def play_minimax_vs_random(depth=3, verbose=True, interactive=False):
     """Play a complete game: Minimax vs Random."""
     board = chess.Board()
     move_count = 0
+    watch_mode = 'step' if interactive else 'skip'
 
     if verbose:
         print(f"\n🧠 Minimax (depth {depth}, White) vs Random (Black)")
+        if interactive:
+            print("Watch mode: Press Enter to advance, 'a' for auto-play, 's' to skip, 'q' to quit")
         display_board(board, move_count)
 
     while not board.is_game_over():
         if board.turn == chess.WHITE:
+            if verbose and interactive:
+                print(f"🧠 Minimax thinking...")
             move = minimax_move(board, depth=depth)
         else:
             move = random_move(board)
@@ -407,6 +458,11 @@ def play_minimax_vs_random(depth=3, verbose=True):
 
         if verbose:
             display_board(board, move_count, move)
+            if interactive:
+                watch_mode = pause_for_move(watch_mode)
+                if watch_mode == 'quit':
+                    print("\n⏹️  Stopped watching.")
+                    return None, move_count
 
     # Game over
     result = board.result()
@@ -473,17 +529,22 @@ def test_minimax_vs_random(depth=3, num_games=20):
     print()
 
 
-def play_minimax_vs_material(minimax_depth=3, verbose=True):
+def play_minimax_vs_material(minimax_depth=3, verbose=True, interactive=False):
     """Play a complete game: Minimax vs Material."""
     board = chess.Board()
     move_count = 0
+    watch_mode = 'step' if interactive else 'skip'
 
     if verbose:
         print(f"\n🧠 Minimax (depth {minimax_depth}, White) vs 💎 Material (Black)")
+        if interactive:
+            print("Watch mode: Press Enter to advance, 'a' for auto-play, 's' to skip, 'q' to quit")
         display_board(board, move_count)
 
     while not board.is_game_over():
         if board.turn == chess.WHITE:
+            if verbose and interactive:
+                print(f"🧠 Minimax thinking...")
             move = minimax_move(board, depth=minimax_depth)
         else:
             move = material_move(board)
@@ -493,6 +554,11 @@ def play_minimax_vs_material(minimax_depth=3, verbose=True):
 
         if verbose:
             display_board(board, move_count, move)
+            if interactive:
+                watch_mode = pause_for_move(watch_mode)
+                if watch_mode == 'quit':
+                    print("\n⏹️  Stopped watching.")
+                    return None, move_count
 
     # Game over
     result = board.result()
@@ -603,7 +669,7 @@ def main():
             return
 
     if mode == "random":
-        play_random_vs_random()
+        play_random_vs_random(interactive=True)
     elif mode == "human":
         color_choice = input("Play as White or Black? (w/b): ").strip().lower()
         human_color = chess.WHITE if color_choice == 'w' else chess.BLACK
@@ -621,11 +687,11 @@ def main():
     elif mode == "test":
         run_test_suite()
     elif mode == "material":
-        play_material_vs_random()
+        play_material_vs_random(interactive=True)
     elif mode == "minimax":
-        play_minimax_vs_random()
+        play_minimax_vs_random(interactive=True)
     elif mode == "minimax-material":
-        play_minimax_vs_material()
+        play_minimax_vs_material(interactive=True)
     elif mode == "test-material":
         test_material_vs_random()
     elif mode == "test-minimax":
