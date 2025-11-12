@@ -24,6 +24,11 @@ from engine.evaluator import best_move_material
 from search.minimax import best_move_minimax
 from cli.board_display import display_board_fancy, track_captured_pieces
 
+# Board display configuration
+# Set CHESS_BOARD_SIZE environment variable to 'large' for bigger display with borders
+# or 'compact' (default) for the smaller 8-line display
+BOARD_SIZE = os.environ.get('CHESS_BOARD_SIZE', 'compact').lower()
+
 
 def random_move(board):
     """Select a random legal move."""
@@ -52,8 +57,9 @@ def display_board(board, move_num, last_move=None):
     print(f"{'='*50}")
 
     # Use fancy display with Unicode pieces and colors
+    # Size controlled by CHESS_BOARD_SIZE environment variable
     captured = track_captured_pieces(board)
-    print(display_board_fancy(board, last_move=last_move, captured_pieces=captured))
+    print(display_board_fancy(board, last_move=last_move, captured_pieces=captured, size=BOARD_SIZE))
 
     print(f"\nFEN: {board.fen()}")
     print(f"Turn: {'White' if board.turn == chess.WHITE else 'Black'}")
@@ -632,6 +638,9 @@ def main():
         mode = sys.argv[1]
     else:
         print("\nChess RL - Baby Steps Edition (Days 1-4)")
+        print("="*50)
+        print(f"Board Display: {BOARD_SIZE.upper()} mode")
+        print("(Set CHESS_BOARD_SIZE=large for bigger display with borders)")
         print("="*50)
         print("1. Random vs Random (watch)")
         print("2. Human vs Random (play)")
