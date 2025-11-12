@@ -1,6 +1,63 @@
 # Goal
 
-Design a Python chess program that **improves via reinforcement learning** (self-play) and stays maintainable, reproducible, and fast. No code—just the architecture.
+Build a Python chess program that **improves via reinforcement learning** (self-play) using an incremental, risk-mitigated approach. Each phase delivers a playable chess engine while building toward the full AlphaZero-style system.
+
+## Development Philosophy
+
+**⚠️ New Approach: Incremental Baby Steps**
+
+This project uses a **risk-reduction strategy** that builds a progression of increasingly sophisticated chess engines. See `RISK_REDUCTION.md` for detailed rationale.
+
+**Key Principles:**
+1. **Every phase produces a playable chess program**
+2. **Each component is independently testable**
+3. **Zero cloud costs until Phase 3 (Week 6+)**
+4. **Clear decision points prevent sunk cost fallacy**
+5. **Can stop at any phase and have something useful**
+
+## Development Phases
+
+### Phase 0: Random Player (✅ COMPLETE - Day 1)
+- **Status**: Working random vs random chess game
+- **Strength**: Random play
+- **Files**: `cli/play.py`
+- **Validation**: Test suite passes; games terminate correctly
+- **See**: `QUICKSTART.md`
+
+### Phase 1: Manual Chess Engine (Week 1 - Target: ~1200-1400 Elo)
+- **Day 2**: Material evaluation (count piece values)
+- **Days 3-4**: Minimax search with alpha-beta pruning (depth 2-3)
+- **Days 5-6**: Position evaluation (center control, development, king safety)
+- **Day 7**: UCI interface (play in chess GUIs)
+- **Validation**: Beats random >80%, finds mate-in-2, makes sensible opening moves
+
+### Phase 2: MCTS Engine (Week 2 - Target: ~1400-1600 Elo)
+- Add MCTS with random rollouts
+- UCT selection with visit count statistics
+- Domain knowledge (use evaluator instead of random rollouts)
+- **Validation**: With 200 sims/move, beats minimax depth-3
+
+### Phase 3: Neural Network (Weeks 3-4 - Target: ~1400-1600 Elo)
+- Policy-value network architecture
+- Train on supervised data (Lichess database)
+- Use for MCTS leaf evaluation
+- **Validation**: NN-MCTS matches hand-crafted MCTS strength
+
+### Phase 4: Self-Play RL (Weeks 5-8 - Target: 1600-1800+ Elo)
+- Self-play infrastructure
+- Replay buffer and training loop
+- Evaluation and promotion system
+- **Validation**: Elo improves over generations
+
+### Phase 5: Scale Up (Weeks 9+ - Target: 1800+ Elo)
+- Larger networks (20-40 blocks)
+- More MCTS simulations
+- Cloud compute for training bursts
+- **Validation**: Steady Elo improvement; master-level play
+
+---
+
+# Full System Architecture (End State Vision)
 
 # High-Level System
 
@@ -137,16 +194,33 @@ Design a Python chess program that **improves via reinforcement learning** (self
 * **Search Ablations:** Plug-in interfaces for different exploration constants, rollout policies, or NN heads.
 * **Human Play / UI:** UCI/USI adaptor and a minimalist GUI; can play against current best checkpoint.
 
-# Minimum Viable Starting Plan
+# Recommended Starting Plan (New Incremental Approach)
 
-1. Implement **rules + perft-validated movegen**.
-2. Stand up **policy-value net** + **inference**.
-3. Wire **MCTS** and **self-play** with a tiny model to prove the loop.
-4. Add **replay buffer + trainer**; run short cycles (e.g., 50k positions) and confirm loss/elo trends.
-5. Introduce **evaluation gates** and promotion flow.
-6. Scale actors and model size; add experiment tracking; iterate.
+**⚠️ Start here:** Follow the baby-steps approach in `RISK_REDUCTION.md` and `QUICKSTART.md`
 
-Awesome—here’s a super-granular, **smallest-possible-delta** roadmap. Every step ends with **What you can see/test** so you’ve always got something to poke.
+**Week 1 Quick Start:**
+1. ✅ **Random player** (DONE - see `cli/play.py`)
+2. **Material evaluator** - make the engine prefer captures
+3. **Minimax search** - add look-ahead (depth 2-3)
+4. **Position evaluation** - center, development, king safety
+5. **UCI interface** - play in chess GUIs
+
+**Why this approach?**
+- Uses `python-chess` (saves 2-4 weeks vs building from scratch)
+- Playable chess program in Week 1
+- Each step independently testable
+- Clear validation criteria
+- Can stop at any point and have something useful
+
+**After Week 1**, proceed to MCTS (Week 2), then Neural Network (Weeks 3-4), then Self-Play RL (Weeks 5+).
+
+---
+
+# Alternative: Build Move Generation from Scratch
+
+If you prefer to build everything from first principles (educational but time-intensive), here's a super-granular roadmap. Every step ends with **What you can see/test**.
+
+**⚠️ Warning:** This approach takes 2-4 weeks longer before you have a playable chess program. Only choose this if learning low-level chess programming is a primary goal.
 
 ---
 

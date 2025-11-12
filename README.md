@@ -1,7 +1,32 @@
 # Chess_RL
 Incremental development of a Chess program using Reinforcement Learning
 
-Here’s the **plain-English vision** for the chess program, how it works, and the kind of computer you’d need to run it.
+---
+
+## **🚀 Getting Started (Start Here!)**
+
+**New to the project? Start with baby steps:**
+
+1. **Quick Start** (5 minutes): See [`QUICKSTART.md`](QUICKSTART.md) to play your first chess game
+2. **Risk Reduction Strategy**: Read [`RISK_REDUCTION.md`](RISK_REDUCTION.md) to understand the incremental approach
+3. **Development Plan**: Check [`PLAN.md`](PLAN.md) for the full roadmap
+
+**Current Status:** ✅ Phase 0 Complete - Random player working
+
+**Next Steps:**
+- Day 2: Add material evaluation (prefer captures)
+- Week 1: Minimax search + position evaluation (~1200-1400 Elo)
+- Week 2: MCTS engine (~1400-1600 Elo)
+- Weeks 3-4: Neural network
+- Weeks 5+: Self-play RL
+
+**Why this approach?** Build a progression of playable chess engines, each independently useful, while learning and validating as you go. No cloud costs for the first month.
+
+---
+
+## **Long-Term Vision**
+
+Here's the **plain-English vision** for the final chess program, how it works, and the kind of computer you'd need to run it.
 
 ---
 
