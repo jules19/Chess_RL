@@ -176,11 +176,19 @@ def play_human_vs_random(human_color=chess.WHITE):
             # Human's turn
             while True:
                 print(f"Legal moves: {', '.join([str(m) for m in board.legal_moves])}")
-                move_input = input("Your move (e.g. 'e2e4' or 'q' to quit): ").strip()
+                move_input = input("Your move (e.g. 'e2e4', 'd'=display, 'c'=colors, 'q'=quit): ").strip()
 
                 if move_input.lower() == 'q':
                     print("Game abandoned.")
                     return None, move_count
+                elif move_input.lower() == 'd':
+                    toggle_board_size()
+                    display_board(board, move_count)
+                    continue
+                elif move_input.lower() == 'c':
+                    cycle_color_scheme()
+                    display_board(board, move_count)
+                    continue
 
                 try:
                     move = chess.Move.from_uci(move_input)
@@ -235,11 +243,19 @@ def play_human_vs_material(human_color=chess.WHITE):
             # Human's turn
             while True:
                 print(f"Legal moves: {', '.join([str(m) for m in board.legal_moves])}")
-                move_input = input("Your move (e.g. 'e2e4' or 'q' to quit): ").strip()
+                move_input = input("Your move (e.g. 'e2e4', 'd'=display, 'c'=colors, 'q'=quit): ").strip()
 
                 if move_input.lower() == 'q':
                     print("Game abandoned.")
                     return None, move_count
+                elif move_input.lower() == 'd':
+                    toggle_board_size()
+                    display_board(board, move_count)
+                    continue
+                elif move_input.lower() == 'c':
+                    cycle_color_scheme()
+                    display_board(board, move_count)
+                    continue
 
                 try:
                     move = chess.Move.from_uci(move_input)
@@ -416,11 +432,19 @@ def play_human_vs_minimax(human_color=chess.WHITE, depth=3):
             # Human's turn
             while True:
                 print(f"Legal moves: {', '.join([str(m) for m in board.legal_moves])}")
-                move_input = input("Your move (e.g. 'e2e4' or 'q' to quit): ").strip()
+                move_input = input("Your move (e.g. 'e2e4', 'd'=display, 'c'=colors, 'q'=quit): ").strip()
 
                 if move_input.lower() == 'q':
                     print("Game abandoned.")
                     return None, move_count
+                elif move_input.lower() == 'd':
+                    toggle_board_size()
+                    display_board(board, move_count)
+                    continue
+                elif move_input.lower() == 'c':
+                    cycle_color_scheme()
+                    display_board(board, move_count)
+                    continue
 
                 try:
                     move = chess.Move.from_uci(move_input)
