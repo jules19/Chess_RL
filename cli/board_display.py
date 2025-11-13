@@ -198,9 +198,9 @@ def display_board_fancy(board, last_move=None, captured_pieces=None, use_unicode
 
     # Header with file labels
     if use_colors:
-        lines.append(f"{Colors.COORD}    a  b  c  d  e  f  g  h{Colors.RESET}")
+        lines.append(f"{Colors.COORD}   a b c d e f g h{Colors.RESET}")
     else:
-        lines.append("    a  b  c  d  e  f  g  h")
+        lines.append("   a b c d e f g h")
 
     # Board ranks (8 to 1)
     for rank in range(7, -1, -1):
@@ -253,9 +253,9 @@ def display_board_fancy(board, last_move=None, captured_pieces=None, use_unicode
 
     # Footer with file labels
     if use_colors:
-        lines.append(f"{Colors.COORD}    a  b  c  d  e  f  g  h{Colors.RESET}")
+        lines.append(f"{Colors.COORD}   a b c d e f g h{Colors.RESET}")
     else:
-        lines.append("    a  b  c  d  e  f  g  h")
+        lines.append("   a b c d e f g h")
 
     # Add captured pieces if provided
     if captured_pieces:
