@@ -1,7 +1,44 @@
 # Chess_RL
 Incremental development of a Chess program using Reinforcement Learning
 
-Here’s the **plain-English vision** for the chess program, how it works, and the kind of computer you’d need to run it.
+---
+
+## **🚀 Getting Started (Start Here!)**
+
+**New to the project? Start with baby steps:**
+
+1. **Quick Start** (5 minutes): See [`QUICKSTART.md`](QUICKSTART.md) to play your first chess game
+2. **Risk Reduction Strategy**: Read [`RISK_REDUCTION.md`](RISK_REDUCTION.md) to understand the incremental approach
+3. **Development Plan**: Check [`PLAN.md`](PLAN.md) for the full roadmap
+
+**Current Status:** ✅ Phase 0 Complete (Days 1-7) - Full UCI Chess Engine Ready!
+
+**What's Working:**
+- ✅ Day 1: Random move engine
+- ✅ Day 2: Material evaluation
+- ✅ Days 3-4: Minimax with alpha-beta pruning (depth 3)
+- ✅ Days 5-6: Positional evaluation (center control, development, king safety, pawn structure)
+- ✅ Day 7: UCI interface (play in chess GUIs like Cute Chess!)
+- ✅ Enhanced terminal display with color schemes
+- ✅ Current Strength: ~1200-1400 Elo
+
+**Quick Start:**
+- **Play in terminal**: `python3 cli/play.py`
+- **Play in GUI**: See [`UCI_SETUP_MAC.md`](UCI_SETUP_MAC.md) for Mac setup
+- **Test UCI**: `python3 chess_rl_uci.py`
+
+**Next Steps:**
+- Week 2: MCTS engine (~1400-1600 Elo)
+- Weeks 3-4: Neural network
+- Weeks 5+: Self-play RL
+
+**Why this approach?** Build a progression of playable chess engines, each independently useful, while learning and validating as you go. No cloud costs for the first month.
+
+---
+
+## **Long-Term Vision**
+
+Here's the **plain-English vision** for the final chess program, how it works, and the kind of computer you'd need to run it.
 
 ---
 
