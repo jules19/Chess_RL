@@ -22,6 +22,114 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from engine.evaluator import evaluate
 
 
+def quiescence_search(board: chess.Board, alpha: float, beta: float,
+                      maximizing: bool, nodes_searched: list = None,
+                      max_depth: int = 10) -> float:
+    """
+    Quiescence search - searches only "noisy" moves (captures, checks, promotions)
+    until position is quiet. This prevents the horizon effect where the engine
+    stops searching in the middle of a tactical sequence.
+
+    Example of horizon effect WITHOUT quiescence:
+        Depth 3: Bxe5 (capture pawn, looks good!)
+        Depth 4: Nxe5 (recapture bishop - oops, we lose material!)
+
+    Quiescence fixes this by continuing to search tactical moves beyond the
+    normal search depth until the position stabilizes.
+
+    Args:
+        board: Current position
+        alpha: Best score White can guarantee
+        beta: Best score Black can guarantee
+        maximizing: True if maximizing (White), False if minimizing (Black)
+        nodes_searched: Optional counter for nodes
+        max_depth: Maximum depth to search (prevents infinite loops)
+
+    Returns:
+        Evaluation score of the quiet position
+    """
+    if nodes_searched is not None:
+        nodes_searched[0] += 1
+
+    # Check for game over
+    if board.is_game_over():
+        return evaluate(board)
+
+    # Stand-pat score: evaluation if we make no more captures
+    # This represents "doing nothing" - if it's already good enough, we can stop
+    stand_pat = evaluate(board)
+
+    # Prevent searching too deep (safety limit)
+    if max_depth <= 0:
+        return stand_pat
+
+    # Beta cutoff: opponent won't allow this position
+    if maximizing:
+        if stand_pat >= beta:
+            return beta
+        if stand_pat > alpha:
+            alpha = stand_pat
+    else:
+        if stand_pat <= alpha:
+            return alpha
+        if stand_pat < beta:
+            beta = stand_pat
+
+    # Generate only "noisy" moves: captures, checks, and promotions
+    all_moves = list(board.legal_moves)
+    noisy_moves = []
+
+    for move in all_moves:
+        # Include captures
+        if board.is_capture(move):
+            noisy_moves.append(move)
+            continue
+
+        # Include promotions
+        if move.promotion:
+            noisy_moves.append(move)
+            continue
+
+        # Include checks (but be careful - this can make search very slow)
+        # We only check for checks if there aren't many captures
+        if len(noisy_moves) < 5:
+            board.push(move)
+            if board.is_check():
+                noisy_moves.append(move)
+            board.pop()
+
+    # If no noisy moves, position is quiet - return stand-pat evaluation
+    if not noisy_moves:
+        return stand_pat
+
+    # Order noisy moves (captures first, best captures prioritized)
+    ordered_moves = order_moves(board, noisy_moves)
+
+    # Search noisy moves
+    if maximizing:
+        for move in ordered_moves:
+            board.push(move)
+            score = quiescence_search(board, alpha, beta, False, nodes_searched, max_depth - 1)
+            board.pop()
+
+            if score >= beta:
+                return beta  # Beta cutoff
+            if score > alpha:
+                alpha = score
+        return alpha
+    else:
+        for move in ordered_moves:
+            board.push(move)
+            score = quiescence_search(board, alpha, beta, True, nodes_searched, max_depth - 1)
+            board.pop()
+
+            if score <= alpha:
+                return alpha  # Alpha cutoff
+            if score < beta:
+                beta = score
+        return beta
+
+
 def order_moves(board: chess.Board, moves: list) -> list:
     """
     Order moves for more efficient alpha-beta pruning.
@@ -94,9 +202,14 @@ def minimax(board: chess.Board, depth: int, alpha: float, beta: float,
     if nodes_searched is not None:
         nodes_searched[0] += 1
 
-    # Base case: reached search depth limit or game over
-    if depth == 0 or board.is_game_over():
+    # Base case: game over
+    if board.is_game_over():
         return evaluate(board)
+
+    # Base case: reached search depth limit
+    # Instead of evaluating immediately, use quiescence search to resolve tactics
+    if depth == 0:
+        return quiescence_search(board, alpha, beta, maximizing, nodes_searched)
 
     legal_moves = list(board.legal_moves)
 
