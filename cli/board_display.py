@@ -27,13 +27,67 @@ PIECES_UNICODE = {
     chess.KING: {'white': '♔', 'black': '♚'},
 }
 
+# Color scheme definitions
+COLOR_SCHEMES = {
+    'lichess': {
+        'name': 'Lichess Classic',
+        'light': '\033[48;5;223m',   # Warm beige
+        'dark': '\033[48;5;137m',    # Rich medium brown
+        'highlight': '\033[48;5;186m'  # Yellow
+    },
+    'blue': {
+        'name': 'High Contrast Blue',
+        'light': '\033[48;5;153m',   # Soft blue
+        'dark': '\033[48;5;67m',     # Deep blue
+        'highlight': '\033[48;5;186m'  # Yellow
+    },
+    'grey': {
+        'name': 'Grey Minimalist',
+        'light': '\033[48;5;250m',   # Light grey
+        'dark': '\033[48;5;240m',    # Dark grey
+        'highlight': '\033[48;5;186m'  # Yellow
+    },
+    'original': {
+        'name': 'Original',
+        'light': '\033[48;5;222m',   # Pale tan (original)
+        'dark': '\033[48;5;94m',     # Very dark brown (original)
+        'highlight': '\033[48;5;186m'  # Yellow
+    }
+}
+
+# Current color scheme (mutable global)
+_current_scheme = os.environ.get('CHESS_COLOR_SCHEME', 'lichess').lower()
+
+def get_color_scheme():
+    """Get current color scheme name."""
+    return _current_scheme
+
+def set_color_scheme(scheme_name):
+    """Set the color scheme."""
+    global _current_scheme
+    if scheme_name in COLOR_SCHEMES:
+        _current_scheme = scheme_name
+        return True
+    return False
+
+def cycle_color_scheme():
+    """Cycle to the next color scheme."""
+    global _current_scheme
+    schemes = list(COLOR_SCHEMES.keys())
+    current_index = schemes.index(_current_scheme) if _current_scheme in schemes else 0
+    next_index = (current_index + 1) % len(schemes)
+    _current_scheme = schemes[next_index]
+    scheme_name = COLOR_SCHEMES[_current_scheme]['name']
+    print(f"\n🎨 Color scheme changed to: {scheme_name}")
+    return _current_scheme
+
+def get_current_colors():
+    """Get the current color scheme's colors."""
+    scheme = COLOR_SCHEMES.get(_current_scheme, COLOR_SCHEMES['lichess'])
+    return scheme
+
 # ANSI color codes
 class Colors:
-    # Square colors - Lichess Classic inspired
-    LIGHT_SQUARE = '\033[48;5;223m'  # Warm beige (was 222 - too pale)
-    DARK_SQUARE = '\033[48;5;137m'   # Rich medium brown (was 94 - too dark)
-    HIGHLIGHT = '\033[48;5;186m'     # Yellow highlight for last move
-
     # Text colors
     WHITE_PIECE = '\033[97m'          # Bright white
     WHITE_PIECE_HIGHLIGHT = '\033[1m\033[38;5;235m'  # Bold dark gray for white pieces on highlights
@@ -43,6 +97,21 @@ class Colors:
     # Reset
     RESET = '\033[0m'
     BOLD = '\033[1m'
+
+    @staticmethod
+    def get_light_square():
+        """Get current light square color."""
+        return get_current_colors()['light']
+
+    @staticmethod
+    def get_dark_square():
+        """Get current dark square color."""
+        return get_current_colors()['dark']
+
+    @staticmethod
+    def get_highlight():
+        """Get current highlight color."""
+        return get_current_colors()['highlight']
 
 
 def get_piece_symbol(piece, use_unicode=True):
@@ -116,11 +185,11 @@ def display_board_large(board, last_move=None, captured_pieces=None, use_unicode
                 is_highlighted = square in highlight_squares
 
                 if is_highlighted:
-                    bg_color = Colors.HIGHLIGHT
+                    bg_color = Colors.get_highlight()
                 elif is_light_square(square):
-                    bg_color = Colors.LIGHT_SQUARE
+                    bg_color = Colors.get_light_square()
                 else:
-                    bg_color = Colors.DARK_SQUARE
+                    bg_color = Colors.get_dark_square()
 
                 # Choose piece color (use darker color for white pieces on highlights)
                 if piece:
@@ -222,11 +291,11 @@ def display_board_fancy(board, last_move=None, captured_pieces=None, use_unicode
                 is_highlighted = square in highlight_squares
 
                 if is_highlighted:
-                    bg_color = Colors.HIGHLIGHT
+                    bg_color = Colors.get_highlight()
                 elif is_light_square(square):
-                    bg_color = Colors.LIGHT_SQUARE
+                    bg_color = Colors.get_light_square()
                 else:
-                    bg_color = Colors.DARK_SQUARE
+                    bg_color = Colors.get_dark_square()
 
                 # Choose piece color (use darker color for white pieces on highlights)
                 if piece:

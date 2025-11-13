@@ -22,7 +22,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from engine.evaluator import best_move_material
 from search.minimax import best_move_minimax
-from cli.board_display import display_board_fancy, track_captured_pieces
+from cli.board_display import display_board_fancy, track_captured_pieces, cycle_color_scheme, get_color_scheme, COLOR_SCHEMES
 
 # Board display configuration (mutable global)
 # Set CHESS_BOARD_SIZE environment variable to 'large' for bigger display with borders
@@ -98,7 +98,7 @@ def pause_for_move(mode='step'):
         return 'auto'
     else:  # step mode
         print("─" * 50)
-        user_input = input("⏸️  [Enter]=next, [a]=auto, [s]=skip, [d]=toggle display, [q]=quit: ").strip().lower()
+        user_input = input("⏸️  [Enter]=next, [a]=auto, [s]=skip, [d]=display, [c]=colors, [q]=quit: ").strip().lower()
         if user_input == 'q':
             return 'quit'
         elif user_input == 'a':
@@ -110,6 +110,9 @@ def pause_for_move(mode='step'):
         elif user_input == 'd':
             toggle_board_size()
             return 'step'  # Stay in step mode, just toggled display
+        elif user_input == 'c':
+            cycle_color_scheme()
+            return 'step'  # Stay in step mode, just cycled colors
         else:
             return 'step'
 
@@ -123,7 +126,7 @@ def play_random_vs_random(verbose=True, interactive=False):
     if verbose:
         print("\n🎲 Random vs Random Chess Game")
         if interactive:
-            print("Watch mode: Press Enter to advance, 'a' for auto-play, 's' to skip, 'd' to toggle display, 'q' to quit")
+            print("Watch mode: [Enter]=next, [a]=auto, [s]=skip, [d]=display, [c]=colors, [q]=quit")
         display_board(board, move_count)
 
     while not board.is_game_over():
@@ -319,7 +322,7 @@ def play_material_vs_random(verbose=True, interactive=False):
     if verbose:
         print("\n💎 Material Player (White) vs Random (Black)")
         if interactive:
-            print("Watch mode: Press Enter to advance, 'a' for auto-play, 's' to skip, 'd' to toggle display, 'q' to quit")
+            print("Watch mode: [Enter]=next, [a]=auto, [s]=skip, [d]=display, [c]=colors, [q]=quit")
         display_board(board, move_count)
 
     while not board.is_game_over():
@@ -471,7 +474,7 @@ def play_minimax_vs_random(depth=3, verbose=True, interactive=False):
     if verbose:
         print(f"\n🧠 Minimax (depth {depth}, White) vs Random (Black)")
         if interactive:
-            print("Watch mode: Press Enter to advance, 'a' for auto-play, 's' to skip, 'd' to toggle display, 'q' to quit")
+            print("Watch mode: [Enter]=next, [a]=auto, [s]=skip, [d]=display, [c]=colors, [q]=quit")
         display_board(board, move_count)
 
     while not board.is_game_over():
@@ -567,7 +570,7 @@ def play_minimax_vs_material(minimax_depth=3, verbose=True, interactive=False):
     if verbose:
         print(f"\n🧠 Minimax (depth {minimax_depth}, White) vs 💎 Material (Black)")
         if interactive:
-            print("Watch mode: Press Enter to advance, 'a' for auto-play, 's' to skip, 'd' to toggle display, 'q' to quit")
+            print("Watch mode: [Enter]=next, [a]=auto, [s]=skip, [d]=display, [c]=colors, [q]=quit")
         display_board(board, move_count)
 
     while not board.is_game_over():
@@ -655,10 +658,11 @@ def main():
     if len(sys.argv) > 1:
         mode = sys.argv[1]
     else:
+        current_scheme_name = COLOR_SCHEMES[get_color_scheme()]['name']
         print("\nChess RL - Baby Steps Edition (Days 1-4)")
         print("="*50)
-        print(f"Board Display: {get_board_size().upper()} mode")
-        print("(Press 'd' during watch mode to toggle, or choose option 12)")
+        print(f"Display: {get_board_size().upper()} | Colors: {current_scheme_name}")
+        print("(Press 'd' or 'c' during watch mode, or use options 12/13)")
         print("="*50)
         print("1. Random vs Random (watch)")
         print("2. Human vs Random (play)")
@@ -672,8 +676,9 @@ def main():
         print("10. Test Minimax vs Random (20 games) - VALIDATION")
         print("11. Test Minimax vs Material (20 games)")
         print("12. Toggle display size (compact ⇄ large) 🎨")
+        print("13. Change color scheme (cycle) 🎨")
         print("="*50)
-        choice = input("Choose mode (1-12): ").strip()
+        choice = input("Choose mode (1-13): ").strip()
 
         if choice == "1":
             mode = "random"
@@ -699,6 +704,11 @@ def main():
             mode = "test-minimax-material"
         elif choice == "12":
             toggle_board_size()
+            print("Press Enter to continue...")
+            input()
+            return main()  # Show menu again
+        elif choice == "13":
+            cycle_color_scheme()
             print("Press Enter to continue...")
             input()
             return main()  # Show menu again
