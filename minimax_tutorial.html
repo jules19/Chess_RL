@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding Minimax: A Practical Guide for Chess AI</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+            border-left: 4px solid #3498db;
+            padding-left: 15px;
+        }
+
+        h3 {
+            color: #555;
+            margin-top: 20px;
+        }
+
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', Courier, monospace;
+            color: #e74c3c;
+        }
+
+        pre {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 5px;
+            overflow-x: auto;
+            line-height: 1.4;
+        }
+
+        pre code {
+            background-color: transparent;
+            color: #ecf0f1;
+            padding: 0;
+        }
+
+        .key-insight {
+            background-color: #e8f4f8;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .warning {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .tree-diagram {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: monospace;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .step {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .step-number {
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Understanding Minimax: A Practical Guide for Chess AI</h1>
+
+        <p><em>A hands-on tutorial for software engineers learning game tree search algorithms</em></p>
+
+        <h2>What is Minimax?</h2>
+
+        <p>Minimax is a decision-making algorithm used in two-player, zero-sum games like chess, tic-tac-toe, and checkers. The core idea is beautifully simple: <strong>you want to maximize your advantage while assuming your opponent will minimize it</strong>.</p>
+
+        <div class="key-insight">
+            <strong>Key Insight:</strong> In chess, when you're choosing a move, you need to think ahead: "If I make this move, what's the best response my opponent can make? And then what's my best counter-response?" Minimax formalizes this recursive thinking process.
+        </div>
+
+        <h2>The Core Concept</h2>
+
+        <p>Imagine you're playing chess as White. The game alternates between:</p>
+        <ul>
+            <li><strong>Maximizing player (you)</strong> - trying to get the highest score</li>
+            <li><strong>Minimizing player (opponent)</strong> - trying to get the lowest score</li>
+        </ul>
+
+        <p>The algorithm explores possible future game states by building a <strong>game tree</strong>, where each node represents a board position and each edge represents a possible move.</p>
+
+        <div class="tree-diagram">
+<pre>
+                    [Root Position]
+                         +10
+                    (Max's turn)
+                          |
+        +-----------------+-----------------+
+        |                 |                 |
+    Move A            Move B            Move C
+      +10               -5                +3
+  (Min's turn)      (Min's turn)      (Min's turn)
+        |                 |                 |
+   +----+----+       +----+----+       +----+----+
+   |    |    |       |    |    |       |    |    |
+  +10  +12  -5      -5   +2   +1      +3   +7   -2
+
+Max chooses Move A (value +10)
+because it's the best among {+10, -5, +3}
+</pre>
+        </div>
+
+        <h2>How Minimax Works: Step by Step</h2>
+
+        <div class="step">
+            <span class="step-number">1</span>
+            <strong>Generate the game tree</strong> - Starting from the current position, recursively explore all possible moves up to a certain depth.
+        </div>
+
+        <div class="step">
+            <span class="step-number">2</span>
+            <strong>Evaluate leaf nodes</strong> - At the deepest level (leaf nodes), use an evaluation function to score the position. In chess, this might be based on material count, piece positioning, king safety, etc.
+        </div>
+
+        <div class="step">
+            <span class="step-number">3</span>
+            <strong>Propagate values upward</strong> - Work backwards through the tree:
+            <ul style="margin-top: 10px;">
+                <li>At <strong>MAX nodes</strong> (your turn): choose the <strong>maximum</strong> value among children</li>
+                <li>At <strong>MIN nodes</strong> (opponent's turn): choose the <strong>minimum</strong> value among children</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <span class="step-number">4</span>
+            <strong>Select the best move</strong> - At the root, pick the move that leads to the highest evaluated position.
+        </div>
+
+        <h2>Python Implementation</h2>
+
+        <p>Here's a clean implementation of minimax for a chess-like game:</p>
+
+        <pre><code>def minimax(position, depth, is_maximizing_player):
+    """
+    Minimax algorithm for two-player zero-sum games.
+
+    Args:
+        position: Current game state (e.g., chess board)
+        depth: How many moves ahead to look
+        is_maximizing_player: True if current player is maximizing, False otherwise
+
+    Returns:
+        The best evaluation score for this position
+    """
+
+    # Base case: reached maximum depth or game over
+    if depth == 0 or is_terminal(position):
+        return evaluate_position(position)
+
+    if is_maximizing_player:
+        # Maximizing player wants the highest score
+        max_eval = float('-inf')
+
+        for move in get_legal_moves(position):
+            # Make the move
+            new_position = make_move(position, move)
+
+            # Recursively evaluate the resulting position
+            eval_score = minimax(new_position, depth - 1, False)
+
+            # Take the maximum
+            max_eval = max(max_eval, eval_score)
+
+        return max_eval
+
+    else:
+        # Minimizing player wants the lowest score
+        min_eval = float('inf')
+
+        for move in get_legal_moves(position):
+            new_position = make_move(position, move)
+            eval_score = minimax(new_position, depth - 1, True)
+
+            # Take the minimum
+            min_eval = min(min_eval, eval_score)
+
+        return min_eval
+
+
+def find_best_move(position, depth):
+    """
+    Find the best move for the current player.
+
+    Returns:
+        The best move to make
+    """
+    best_move = None
+    best_value = float('-inf')
+
+    for move in get_legal_moves(position):
+        new_position = make_move(position, move)
+
+        # Evaluate this move (opponent will minimize)
+        move_value = minimax(new_position, depth - 1, False)
+
+        if move_value > best_value:
+            best_value = move_value
+            best_move = move
+
+    return best_move</code></pre>
+
+        <h2>Chess Evaluation Function Example</h2>
+
+        <p>The evaluation function is critical - it assigns a numerical score to any board position. Here's a simple example:</p>
+
+        <pre><code>def evaluate_position(board):
+    """
+    Simple material-based evaluation for chess.
+    Positive scores favor White, negative favor Black.
+    """
+
+    # Piece values in centipawns (1 pawn = 100)
+    piece_values = {
+        'P': 100,   # Pawn
+        'N': 320,   # Knight
+        'B': 330,   # Bishop
+        'R': 500,   # Rook
+        'Q': 900,   # Queen
+        'K': 20000  # King (effectively infinite)
+    }
+
+    score = 0
+
+    for square in board.squares():
+        piece = board.get_piece(square)
+
+        if piece:
+            value = piece_values[piece.type.upper()]
+
+            # Add value for white pieces, subtract for black
+            if piece.color == WHITE:
+                score += value
+            else:
+                score -= value
+
+    # You can add more sophisticated evaluation:
+    # - Piece positioning (center control, development)
+    # - King safety (pawn shield, castling)
+    # - Pawn structure (passed pawns, doubled pawns)
+    # - Mobility (number of legal moves)
+
+    return score</code></pre>
+
+        <h2>A Concrete Example</h2>
+
+        <p>Let's walk through a simple 3-ply (3 half-moves) example:</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Position</th>
+                    <th>Player</th>
+                    <th>Possible Moves</th>
+                    <th>Evaluation</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Root</td>
+                    <td>White (MAX)</td>
+                    <td>Nf3, e4, d4</td>
+                    <td>Choose best</td>
+                </tr>
+                <tr>
+                    <td>After Nf3</td>
+                    <td>Black (MIN)</td>
+                    <td>Nf6, e5, d5</td>
+                    <td>-10 (opponent's best response)</td>
+                </tr>
+                <tr>
+                    <td>After e4</td>
+                    <td>Black (MIN)</td>
+                    <td>e5, c5, Nf6</td>
+                    <td>+20 (opponent's best response)</td>
+                </tr>
+                <tr>
+                    <td>After d4</td>
+                    <td>Black (MIN)</td>
+                    <td>d5, Nf6, e6</td>
+                    <td>+5 (opponent's best response)</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p><strong>Result:</strong> White chooses <code>e4</code> because it has the highest value (+20) after considering Black's best responses.</p>
+
+        <h2>Optimization: Alpha-Beta Pruning</h2>
+
+        <p>Pure minimax is slow because it explores <em>every</em> possible path. <strong>Alpha-beta pruning</strong> is an optimization that skips branches that can't possibly affect the final decision.</p>
+
+        <div class="key-insight">
+            <strong>The Idea:</strong> If you've already found a good move, and you're exploring an alternative, you can stop as soon as you know the alternative is worse - no need to explore all its possibilities.
+        </div>
+
+        <pre><code>def minimax_alpha_beta(position, depth, alpha, beta, is_maximizing):
+    """
+    Minimax with alpha-beta pruning for efficiency.
+
+    Args:
+        alpha: Best value for maximizer found so far
+        beta: Best value for minimizer found so far
+    """
+
+    if depth == 0 or is_terminal(position):
+        return evaluate_position(position)
+
+    if is_maximizing:
+        max_eval = float('-inf')
+
+        for move in get_legal_moves(position):
+            new_position = make_move(position, move)
+            eval_score = minimax_alpha_beta(new_position, depth - 1,
+                                           alpha, beta, False)
+            max_eval = max(max_eval, eval_score)
+            alpha = max(alpha, eval_score)
+
+            # Beta cutoff: minimizer won't allow this path
+            if beta <= alpha:
+                break  # Prune remaining branches
+
+        return max_eval
+
+    else:
+        min_eval = float('inf')
+
+        for move in get_legal_moves(position):
+            new_position = make_move(position, move)
+            eval_score = minimax_alpha_beta(new_position, depth - 1,
+                                           alpha, beta, True)
+            min_eval = min(min_eval, eval_score)
+            beta = min(beta, eval_score)
+
+            # Alpha cutoff: maximizer won't allow this path
+            if beta <= alpha:
+                break  # Prune remaining branches
+
+        return min_eval</code></pre>
+
+        <div class="key-insight">
+            <strong>Performance Gain:</strong> Alpha-beta pruning can reduce the number of nodes evaluated from O(b^d) to O(b^(d/2)) in the best case, where b is the branching factor and d is depth. For chess, this means searching twice as deep in the same time!
+        </div>
+
+        <h2>Practical Considerations for Chess</h2>
+
+        <h3>1. Search Depth</h3>
+        <p>In chess, the branching factor is ~35 (average legal moves per position). This means:</p>
+        <ul>
+            <li><strong>Depth 4:</strong> ~1.5 million positions</li>
+            <li><strong>Depth 6:</strong> ~1.8 billion positions</li>
+            <li><strong>Depth 8:</strong> ~2.2 trillion positions</li>
+        </ul>
+        <p>Most chess engines search 8-20 ply deep, using heavy optimizations.</p>
+
+        <h3>2. Quiescence Search</h3>
+        <p>Don't stop searching in the middle of captures! Use <strong>quiescence search</strong> at leaf nodes to explore forcing moves (checks, captures) until the position is "quiet".</p>
+
+        <pre><code>def quiescence_search(position, alpha, beta):
+    """
+    Continue searching captures and checks until position is stable.
+    """
+    stand_pat = evaluate_position(position)
+
+    if stand_pat >= beta:
+        return beta
+    if alpha < stand_pat:
+        alpha = stand_pat
+
+    for move in get_tactical_moves(position):  # Only captures/checks
+        new_position = make_move(position, move)
+        score = -quiescence_search(new_position, -beta, -alpha)
+
+        if score >= beta:
+            return beta
+        if score > alpha:
+            alpha = score
+
+    return alpha</code></pre>
+
+        <h3>3. Move Ordering</h3>
+        <p>Searching good moves first makes alpha-beta pruning more effective. Try this order:</p>
+        <ol>
+            <li>Hash table move (from transposition table)</li>
+            <li>Winning captures (e.g., queen takes pawn)</li>
+            <li>Killer moves (moves that caused cutoffs at same depth)</li>
+            <li>Non-captures</li>
+            <li>Losing captures (e.g., pawn takes queen)</li>
+        </ol>
+
+        <h2>Limitations of Minimax</h2>
+
+        <div class="warning">
+            <strong>Important:</strong> While minimax is elegant and works well for games like chess, it has limitations:
+            <ul>
+                <li><strong>Computational cost:</strong> Exponential growth with depth</li>
+                <li><strong>Evaluation function dependency:</strong> Quality is limited by how well you can score positions</li>
+                <li><strong>Tactical vs Strategic:</strong> Better at tactics (short-term) than long-term strategy</li>
+                <li><strong>Horizon effect:</strong> Can push problems just beyond search depth</li>
+            </ul>
+        </div>
+
+        <h2>Modern Alternatives: MCTS and Neural Networks</h2>
+
+        <p>Modern chess AI (like this project aims to build) uses different approaches:</p>
+
+        <ul>
+            <li><strong>Monte Carlo Tree Search (MCTS):</strong> Explores the game tree probabilistically, focusing computation on promising variations</li>
+            <li><strong>Neural Networks:</strong> Learn evaluation functions and move policies from millions of games, avoiding hand-crafted heuristics</li>
+            <li><strong>Hybrid approaches (AlphaZero):</strong> Combine MCTS with neural networks for both policy (which moves to explore) and value (position evaluation)</li>
+        </ul>
+
+        <p>These techniques scale better and can discover strategic patterns that humans might miss.</p>
+
+        <h2>Summary</h2>
+
+        <p>Minimax is the foundation of game tree search:</p>
+
+        <ol>
+            <li>Build a tree of possible future positions</li>
+            <li>Evaluate leaf positions with a heuristic function</li>
+            <li>Propagate values up, alternating between max (you) and min (opponent)</li>
+            <li>Choose the move leading to the best guaranteed outcome</li>
+            <li>Use alpha-beta pruning to skip irrelevant branches</li>
+        </ol>
+
+        <p>While modern engines have moved beyond pure minimax, understanding it gives you the foundation for appreciating more advanced techniques like MCTS and neural network-guided search.</p>
+
+        <div class="key-insight">
+            <strong>Next Steps:</strong> Try implementing minimax for tic-tac-toe first (much simpler), then extend it to chess with a basic evaluation function. Experiment with different search depths and see how alpha-beta pruning improves performance. Once you're comfortable, explore Monte Carlo Tree Search and reinforcement learning approaches!
+        </div>
+
+        <hr style="margin: 40px 0;">
+
+        <p style="text-align: center; color: #7f8c8d; font-size: 0.9em;">
+            <em>This tutorial is part of the Chess_RL project - building a self-learning chess engine using reinforcement learning.</em>
+        </p>
+    </div>
+</body>
+</html>
