@@ -683,7 +683,7 @@ def main():
         mode = sys.argv[1]
     else:
         current_scheme_name = COLOR_SCHEMES[get_color_scheme()]['name']
-        print("\nChess RL - Baby Steps Edition (Days 1-4)")
+        print("\nChess RL - Baby Steps Edition (Days 1-6)")
         print("="*50)
         print(f"Display: {get_board_size().upper()} | Colors: {current_scheme_name}")
         print("(Press 'd' or 'c' during watch mode, or use options 12/13)")
