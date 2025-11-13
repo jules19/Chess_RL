@@ -29,10 +29,10 @@ PIECES_UNICODE = {
 
 # ANSI color codes
 class Colors:
-    # Square colors
-    LIGHT_SQUARE = '\033[48;5;222m'  # Light tan
-    DARK_SQUARE = '\033[48;5;94m'     # Dark brown
-    HIGHLIGHT = '\033[48;5;186m'      # Yellow highlight for last move
+    # Square colors - Lichess Classic inspired
+    LIGHT_SQUARE = '\033[48;5;223m'  # Warm beige (was 222 - too pale)
+    DARK_SQUARE = '\033[48;5;137m'   # Rich medium brown (was 94 - too dark)
+    HIGHLIGHT = '\033[48;5;186m'     # Yellow highlight for last move
 
     # Text colors
     WHITE_PIECE = '\033[97m'          # Bright white
