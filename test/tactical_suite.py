@@ -72,12 +72,12 @@ MATE_IN_1 = [
         description="Classic back rank mate with rook"
     ),
     TacticalPuzzle(
-        "Queen Mate on f7",
-        "r1bqkb1r/pppp1Qpp/2n2n2/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 1",
-        ["e8f7"],
+        "Queen Mate on f7 (Scholar's Mate)",
+        "r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 0 1",
+        ["h5f7"],
         "Mate in 1",
         depth_required=2,
-        description="Black king must take queen on f7, then Bxf7# is checkmate (This is BLACK to move - king takes queen)"
+        description="Qxf7# - Scholar's Mate, queen takes f7 with checkmate"
     ),
     TacticalPuzzle(
         "Anastasia's Mate",
@@ -111,14 +111,6 @@ MATE_IN_1 = [
         depth_required=2,
         description="Rf8# - rook to f8 checkmate, bishop controls escape square"
     ),
-    TacticalPuzzle(
-        "Fool's Mate Pattern",
-        "rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 0 1",
-        ["d1h5"],  # This is wrong - let me verify
-        "Mate in 1",
-        depth_required=2,
-        description="Back rank weakness - queen delivers mate"
-    ),
 ]
 
 # ============================================================================
@@ -151,12 +143,12 @@ MATE_IN_2 = [
         description="Knight to h6+ forces king to h8, then Nf7# (smothered mate)"
     ),
     TacticalPuzzle(
-        "Queen Sacrifice Mate",
-        "r1bqk2r/pppp1Qpp/2n2n2/2b1p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 1",
-        ["e8f7"],
+        "Legal's Mate Pattern",
+        "r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/3P1N2/PPP2PPP/RNBQ1RK1 b kq - 0 1",
+        ["c6d4"],
         "Mate in 2",
         depth_required=4,
-        description="After Kxf7, checkmate follows with Bxf7#"
+        description="After knight forks, White has Nxe5 and then Qf7# is mate"
     ),
 ]
 
@@ -238,27 +230,27 @@ TACTICS = [
 HANGING_PIECES = [
     TacticalPuzzle(
         "Hanging Queen",
-        "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPPQPPP/RNB1KBNR b KQkq - 0 1",
-        ["d8e7", "d8h4", "d8f6", "f8c5", "g8f6", "b8c6"],
+        "rnbqkb1r/pppp1ppp/5n2/4p3/4P3/8/PPPPQPPP/RNB1KBNR b KQkq - 0 1",
+        ["f6e4"],
         "Hanging Piece",
         depth_required=2,
-        description="White queen on e2 is undefended (but may not be capturable immediately)"
+        description="White's pawn on e4 is hanging - Black knight can capture it"
     ),
     TacticalPuzzle(
         "Hanging Rook",
-        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-        ["e2e4", "d2d4", "g1f3"],
+        "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 1",
+        ["f3e5"],
         "Hanging Piece",
-        depth_required=1,
-        description="Starting position - no hanging pieces, develop normally"
+        depth_required=2,
+        description="Black's pawn on e5 is hanging - White knight can capture for free"
     ),
     TacticalPuzzle(
         "Free Knight",
-        "rnbqkb1r/pppppppp/5n2/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-        ["e2e4", "d2d4"],
+        "rnbqkb1r/pppp1ppp/8/4p3/4Pn2/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 1",
+        ["f3e5", "d1f3"],
         "Hanging Piece",
         depth_required=2,
-        description="Black knight on f6 - develop and control center"
+        description="Black knight on f4 is hanging - capture it or attack with queen"
     ),
 ]
 
