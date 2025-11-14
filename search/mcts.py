@@ -35,7 +35,54 @@ import os
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from engine.evaluator import evaluate
+from engine.evaluator import evaluate, PIECE_VALUES
+
+
+def hangs_material(board: chess.Board, move: chess.Move, threshold: int = 300) -> bool:
+    """
+    Quick 1-ply tactical safety check: does this move hang material?
+
+    Checks if making this move leaves any of our pieces undefended and under
+    attack by the opponent. This is a FAST check (just counts attackers/defenders)
+    that catches the most common tactical blunders.
+
+    Args:
+        board: Current board position (before the move)
+        move: Move to check for hanging material
+        threshold: Minimum centipawn value to consider hanging (default: 300 = minor piece)
+                  300 = catches hanging knights/bishops/rooks/queens
+                  100 = also catches hanging pawns (more restrictive)
+
+    Returns:
+        True if the move hangs >= threshold centipawns of material
+
+    Example:
+        >>> board = chess.Board()
+        >>> move = chess.Move.from_uci("e2e4")
+        >>> hangs_material(board, move, threshold=300)
+        False  # e4 doesn't hang any pieces
+    """
+    # Make the move temporarily
+    board.push(move)
+
+    hanging_value = 0
+    our_color = not board.turn  # We just moved, so it's opponent's turn
+
+    # Check all our pieces to see if any are hanging
+    for square in chess.SQUARES:
+        piece = board.piece_at(square)
+        if piece and piece.color == our_color:
+            # Count attackers and defenders
+            attackers = board.attackers(board.turn, square)  # Opponent's attackers
+            defenders = board.attackers(our_color, square)   # Our defenders
+
+            # Piece is hanging if attacked and not defended
+            if len(attackers) > 0 and len(defenders) == 0:
+                hanging_value += PIECE_VALUES[piece.piece_type]
+
+    board.pop()  # Undo the move
+
+    return hanging_value >= threshold
 
 
 class MCTSNode:
@@ -51,7 +98,7 @@ class MCTSNode:
     """
 
     def __init__(self, board: chess.Board, parent: Optional['MCTSNode'] = None,
-                 move: Optional[chess.Move] = None):
+                 move: Optional[chess.Move] = None, filter_blunders: bool = True):
         """
         Initialize a new MCTS node.
 
@@ -59,10 +106,12 @@ class MCTSNode:
             board: The chess position this node represents
             parent: Parent node (None for root)
             move: The move that led to this position (None for root)
+            filter_blunders: If True, filter out moves that hang pieces (default: True)
         """
         self.board = board.copy()
         self.parent = parent
         self.move = move  # Move that led to this position
+        self.filter_blunders = filter_blunders
 
         # MCTS statistics
         self.visit_count = 0
@@ -70,7 +119,17 @@ class MCTSNode:
 
         # Children and unexplored moves
         self.children = {}  # Dict[chess.Move, MCTSNode]
-        self.untried_moves = list(board.legal_moves)
+        all_moves = list(board.legal_moves)
+
+        # OPTIMIZATION 3: Filter out obvious blunders (hanging pieces)
+        # This catches tactical mistakes WITHOUT slowing down search
+        if filter_blunders and len(all_moves) > 1:  # Keep at least 1 move (zugzwang)
+            safe_moves = [m for m in all_moves if not hangs_material(board, m, threshold=300)]
+            # Use safe moves if we have any, otherwise use all (forced blunders/sacrifices)
+            self.untried_moves = safe_moves if safe_moves else all_moves
+        else:
+            self.untried_moves = all_moves
+
         random.shuffle(self.untried_moves)  # Randomize order to avoid bias
 
     def is_fully_expanded(self) -> bool:
@@ -159,7 +218,7 @@ class MCTSNode:
         new_board.push(move)
 
         # Create child node
-        child = MCTSNode(new_board, parent=self, move=move)
+        child = MCTSNode(new_board, parent=self, move=move, filter_blunders=self.filter_blunders)
         self.children[move] = child
 
         return child
@@ -348,6 +407,7 @@ def mcts_search(board: chess.Board, simulations: int = 200,
                 use_evaluator: bool = True,
                 exploration_constant: float = 1.41,
                 sample_size: int = 10,
+                filter_blunders: bool = True,
                 verbose: bool = False) -> Optional[chess.Move]:
     """
     Perform MCTS search to find the best move.
@@ -368,6 +428,7 @@ def mcts_search(board: chess.Board, simulations: int = 200,
         use_evaluator: If True, use smart rollouts; if False, use random
         exploration_constant: UCT exploration parameter (higher = more exploration)
         sample_size: Number of moves to evaluate in rollouts (default: 10)
+        filter_blunders: If True, filter moves that hang pieces (default: True)
         verbose: Print search statistics
 
     Returns:
@@ -377,7 +438,7 @@ def mcts_search(board: chess.Board, simulations: int = 200,
         return None
 
     # Create root node
-    root = MCTSNode(board)
+    root = MCTSNode(board, filter_blunders=filter_blunders)
 
     start_time = time.time()
 
@@ -440,6 +501,7 @@ def mcts_search(board: chess.Board, simulations: int = 200,
 
 def best_move_mcts(board: chess.Board, simulations: int = 200,
                    use_evaluator: bool = True, sample_size: int = 10,
+                   filter_blunders: bool = True,
                    verbose: bool = False) -> Optional[chess.Move]:
     """
     Wrapper function for MCTS search (matches interface of other engines).
@@ -449,6 +511,7 @@ def best_move_mcts(board: chess.Board, simulations: int = 200,
         simulations: Number of MCTS iterations
         use_evaluator: Use smart rollouts (True) or random (False)
         sample_size: Number of moves to evaluate in rollouts (default: 10)
+        filter_blunders: If True, filter moves that hang pieces (default: True)
         verbose: Print search statistics
 
     Returns:
@@ -456,7 +519,7 @@ def best_move_mcts(board: chess.Board, simulations: int = 200,
     """
     return mcts_search(board, simulations=simulations,
                       use_evaluator=use_evaluator, sample_size=sample_size,
-                      verbose=verbose)
+                      filter_blunders=filter_blunders, verbose=verbose)
 
 
 if __name__ == "__main__":
