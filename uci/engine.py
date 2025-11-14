@@ -20,6 +20,7 @@ from typing import Optional
 sys.path.insert(0, '/home/user/Chess_RL')
 from engine.evaluator import evaluate, best_move_material
 from search.minimax import best_move_minimax
+from search.mcts import best_move_mcts
 
 
 class UCIEngine:
@@ -29,6 +30,8 @@ class UCIEngine:
         self.board = chess.Board()
         self.engine_type = "minimax"  # default
         self.search_depth = 3  # default
+        self.mcts_simulations = 200  # default for MCTS
+        self.mcts_use_evaluator = True  # default: use evaluator rollouts
         self.debug = False
 
     def log_debug(self, message: str):
@@ -43,8 +46,10 @@ class UCIEngine:
         print()
 
         # Declare available options
-        print("option name Engine Type type combo default minimax var random var material var minimax")
+        print("option name Engine Type type combo default minimax var random var material var minimax var mcts")
         print("option name Search Depth type spin default 3 min 1 max 6")
+        print("option name MCTS Simulations type spin default 200 min 50 max 1000")
+        print("option name MCTS Use Evaluator type check default true")
         print("option name Debug type check default false")
         print()
 
@@ -62,7 +67,7 @@ class UCIEngine:
     def handle_setoption(self, name: str, value: str):
         """Handle 'setoption' command - configure engine options."""
         if name == "Engine Type":
-            if value in ["random", "material", "minimax"]:
+            if value in ["random", "material", "minimax", "mcts"]:
                 self.engine_type = value
                 self.log_debug(f"Engine type set to {value}")
             else:
@@ -78,6 +83,21 @@ class UCIEngine:
                     self.log_debug(f"Search depth out of range: {depth}")
             except ValueError:
                 self.log_debug(f"Invalid depth value: {value}")
+
+        elif name == "MCTS Simulations":
+            try:
+                sims = int(value)
+                if 50 <= sims <= 1000:
+                    self.mcts_simulations = sims
+                    self.log_debug(f"MCTS simulations set to {sims}")
+                else:
+                    self.log_debug(f"MCTS simulations out of range: {sims}")
+            except ValueError:
+                self.log_debug(f"Invalid MCTS simulations value: {value}")
+
+        elif name == "MCTS Use Evaluator":
+            self.mcts_use_evaluator = (value.lower() == "true")
+            self.log_debug(f"MCTS Use Evaluator set to {self.mcts_use_evaluator}")
 
         elif name == "Debug":
             self.debug = (value.lower() == "true")
@@ -153,6 +173,11 @@ class UCIEngine:
 
         elif self.engine_type == "minimax":
             return best_move_minimax(self.board, self.search_depth)
+
+        elif self.engine_type == "mcts":
+            return best_move_mcts(self.board,
+                                 simulations=self.mcts_simulations,
+                                 use_evaluator=self.mcts_use_evaluator)
 
         # Fallback
         return random.choice(legal_moves)
