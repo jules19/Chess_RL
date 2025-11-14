@@ -335,9 +335,11 @@ def mcts_search(board: chess.Board, simulations: int = 200,
         else:
             value = simulate_random(search_board)
 
-        # Adjust value to be from the perspective of the side to move at root
-        # (MCTS nodes store values from their perspective)
-        if board.turn == chess.BLACK:
+        # Adjust value to be from the perspective of the leaf node's parent
+        # The simulation returns White's perspective. We need the parent's perspective.
+        # If leaf has WHITE to move, parent had BLACK to move -> need Black's perspective
+        # If leaf has BLACK to move, parent had WHITE to move -> need White's perspective
+        if search_board.turn == chess.WHITE:
             value = -value
 
         # 4. BACKPROPAGATION - Update tree
