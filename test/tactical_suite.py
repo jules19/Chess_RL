@@ -111,14 +111,6 @@ MATE_IN_1 = [
         depth_required=2,
         description="Rf8# - rook to f8 checkmate, bishop controls escape square"
     ),
-    TacticalPuzzle(
-        "Queen and Bishop Mate",
-        "r1b1kb1r/pppp1ppp/2n2q2/4n3/2B1P3/2N2N2/PPPP1PPP/R1BQ1RK1 w kq - 0 1",
-        ["d1d8"],
-        "Mate in 1",
-        depth_required=2,
-        description="Queen to d8 is checkmate - king has no escape"
-    ),
 ]
 
 # ============================================================================

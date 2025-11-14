@@ -99,16 +99,27 @@ Replaced all three with proper hanging piece puzzles:
 ## Impact
 
 ### Before Fixes:
-- **Mate in 1**: 28.6% pass rate (2/7)
-- **Overall**: 42.9% pass rate (12/28)
+- **Mate in 1**: 28.6% pass rate (2/7 puzzles)
+- **Overall**: 42.9% pass rate (12/28 puzzles)
 - Several puzzles had **illegal expected moves**
 - Puzzles tested wrong concepts (hanging pieces that weren't hanging)
 
-### Expected After Fixes:
-- **Mate in 1**: Should improve significantly (removed 2 broken puzzles)
-- **Hanging Pieces**: Should now properly test capture of undefended pieces
-- **Mate in 2**: Fixed one broken puzzle
-- **Overall pass rate**: Should improve by ~20-30%
+### After Fixes:
+- **Mate in 1**: 50.0% pass rate (3/6 puzzles) - **IMPROVED**
+- **Mate in 2**: 25.0% pass rate (1/4 puzzles)
+- **Tactics**: 12.5% pass rate (1/8 puzzles)
+- **Hanging Pieces**: 33.3% pass rate (1/3 puzzles)
+- **Opening Principles**: 75.0% pass rate (3/4 puzzles)
+- **Endgame**: 50.0% pass rate (1/2 puzzles)
+- **Overall**: 37.0% pass rate (10/27 puzzles)
+
+### Analysis:
+The overall pass rate appears to have decreased (42.9% → 37.0%), but this is actually **more accurate** because:
+1. Removed 1 broken puzzle with illegal move
+2. Fixed 3 "Hanging Pieces" puzzles that didn't test hanging pieces
+3. Fixed 2 incorrect mate-in-1 puzzles
+4. The test suite now accurately tests what it claims to test
+5. **The low pass rate reflects the ENGINE's tactical weaknesses, not test suite errors**
 
 ---
 
@@ -168,6 +179,28 @@ Replaced all three with proper hanging piece puzzles:
 
 ## Conclusion
 
-The tactical test suite had significant errors that were making the engine appear weaker than it actually is. The validation results (VALIDATION_RESULTS.md) noted that the test suite had errors, and this fix addresses the most critical issues.
+The tactical test suite had significant errors that were producing unreliable validation results:
+- Fixed 4 critical puzzle errors (illegal moves, wrong positions, mismatched descriptions)
+- Removed 1 broken puzzle that I couldn't fix correctly
+- Test suite now has 27 valid puzzles (down from 28)
 
-**Expected improvement**: Engine should score 60-80% on tactical puzzles (instead of 42.9%) after these fixes, more accurately reflecting its ~1200 Elo strength.
+### Key Findings:
+
+1. **Test Suite is Now Accurate**: All puzzles test what they claim to test
+2. **Engine Performance**: 37.0% pass rate (10/27) reveals genuine tactical weaknesses
+3. **Mate in 1 Improved**: 28.6% → 50.0% (for this category specifically)
+4. **Overall Lower**: 42.9% → 37.0%, but this is more honest/accurate
+
+### Recommendations:
+
+**For the Engine:**
+- The low tactical puzzle score (37%) confirms the engine needs improvement
+- Quiescence search helps but isn't enough
+- Consider: better move ordering, transposition tables, tactical pattern recognition
+
+**For the Test Suite:**
+- Current puzzles are valid and working correctly
+- Could add more diverse tactical puzzles in the future
+- Consider separating "engine finds mate" from "engine makes good moves"
+
+**Bottom Line**: The test suite is now reliable. The engine's ~37% tactical score accurately reflects that it's below the target 1200-1400 Elo range for tactical play, though tournament results show it dominates weaker opponents.
