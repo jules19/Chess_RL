@@ -203,6 +203,59 @@ def simulate_random(board: chess.Board, max_moves: int = 200) -> float:
         return 0.0
 
 
+def get_prioritized_moves(board: chess.Board, legal_moves: List[chess.Move],
+                          sample_size: int) -> List[chess.Move]:
+    """
+    Intelligently sample moves, prioritizing forcing moves over quiet moves.
+
+    In chess, captures and promotions are disproportionately important - they're
+    the main source of tactics and material swings. Random sampling might miss
+    critical captures, leading to unrealistic rollouts.
+
+    Strategy:
+    1. Always include ALL forcing moves (captures + promotions) up to sample_size
+    2. Fill remaining slots with random quiet moves
+    3. This ensures we never miss critical tactics while still exploring variety
+
+    Args:
+        board: Current board position
+        legal_moves: List of all legal moves
+        sample_size: Target number of moves to sample
+
+    Returns:
+        List of prioritized moves (forcing moves + sample of quiet moves)
+    """
+    if len(legal_moves) <= sample_size:
+        return legal_moves
+
+    forcing = []  # Captures + promotions (+ checks for extra tactics)
+    quiet = []
+
+    for move in legal_moves:
+        # Prioritize captures and promotions (most critical)
+        # Also include checks as they're forcing moves
+        if board.is_capture(move) or move.promotion or board.gives_check(move):
+            forcing.append(move)
+        else:
+            quiet.append(move)
+
+    # Strategy: Include ALL forcing moves (up to sample_size)
+    # Then fill remaining slots with quiet moves
+    if len(forcing) >= sample_size:
+        # Too many forcing moves - sample from them
+        return random.sample(forcing, sample_size)
+    else:
+        # Take all forcing moves + sample quiet moves to reach sample_size
+        sampled = forcing.copy()
+        remaining_slots = sample_size - len(forcing)
+
+        if remaining_slots > 0 and quiet:
+            num_quiet = min(remaining_slots, len(quiet))
+            sampled.extend(random.sample(quiet, num_quiet))
+
+        return sampled if sampled else legal_moves
+
+
 def simulate_with_evaluator(board: chess.Board, max_moves: int = 50,
                             sample_size: int = 10) -> float:
     """
@@ -211,8 +264,10 @@ def simulate_with_evaluator(board: chess.Board, max_moves: int = 50,
     Instead of pure random moves, use the evaluation function to guide play.
     This gives much better estimates than random rollouts.
 
-    OPTIMIZATION: Uses move sampling to evaluate only a subset of legal moves
-    instead of all moves, providing 3-5x speedup with minimal accuracy loss.
+    OPTIMIZATIONS:
+    1. Move sampling: Evaluate only a subset of moves (3-5x speedup)
+    2. Smart prioritization: Always consider forcing moves (captures/checks/promotions)
+       to ensure realistic tactical play
 
     Args:
         board: Starting position
@@ -231,12 +286,9 @@ def simulate_with_evaluator(board: chess.Board, max_moves: int = 50,
         if not legal_moves:
             break
 
-        # OPTIMIZATION: Sample random subset of moves if there are too many
-        # This is the key speedup - evaluate 10 moves instead of 35!
-        if len(legal_moves) > sample_size:
-            moves_to_evaluate = random.sample(legal_moves, sample_size)
-        else:
-            moves_to_evaluate = legal_moves
+        # OPTIMIZATION 1: Sample subset of moves (3-5x speedup)
+        # OPTIMIZATION 2: Prioritize forcing moves (better accuracy, enables smaller sample_size)
+        moves_to_evaluate = get_prioritized_moves(sim_board, legal_moves, sample_size)
 
         # Pick move with simple 1-ply evaluation from sampled moves
         best_move = None
