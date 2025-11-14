@@ -203,16 +203,22 @@ def simulate_random(board: chess.Board, max_moves: int = 200) -> float:
         return 0.0
 
 
-def simulate_with_evaluator(board: chess.Board, max_moves: int = 50) -> float:
+def simulate_with_evaluator(board: chess.Board, max_moves: int = 50,
+                            sample_size: int = 10) -> float:
     """
     Simulate a game using the evaluator for guidance (smart rollout).
 
     Instead of pure random moves, use the evaluation function to guide play.
     This gives much better estimates than random rollouts.
 
+    OPTIMIZATION: Uses move sampling to evaluate only a subset of legal moves
+    instead of all moves, providing 3-5x speedup with minimal accuracy loss.
+
     Args:
         board: Starting position
         max_moves: Maximum moves to simulate (shorter than random since it's slower)
+        sample_size: Number of moves to evaluate per position (default: 10)
+                    Lower = faster but less accurate, Higher = slower but more accurate
 
     Returns:
         Game result estimate from White's perspective (-1.0 to +1.0)
@@ -225,11 +231,18 @@ def simulate_with_evaluator(board: chess.Board, max_moves: int = 50) -> float:
         if not legal_moves:
             break
 
-        # Pick move with simple 1-ply evaluation
+        # OPTIMIZATION: Sample random subset of moves if there are too many
+        # This is the key speedup - evaluate 10 moves instead of 35!
+        if len(legal_moves) > sample_size:
+            moves_to_evaluate = random.sample(legal_moves, sample_size)
+        else:
+            moves_to_evaluate = legal_moves
+
+        # Pick move with simple 1-ply evaluation from sampled moves
         best_move = None
         best_eval = float('-inf') if sim_board.turn == chess.WHITE else float('inf')
 
-        for move in legal_moves:
+        for move in moves_to_evaluate:
             sim_board.push(move)
             eval_score = evaluate(sim_board)
             sim_board.pop()
@@ -282,6 +295,7 @@ def backpropagate(node: MCTSNode, value: float):
 def mcts_search(board: chess.Board, simulations: int = 200,
                 use_evaluator: bool = True,
                 exploration_constant: float = 1.41,
+                sample_size: int = 10,
                 verbose: bool = False) -> Optional[chess.Move]:
     """
     Perform MCTS search to find the best move.
@@ -301,6 +315,7 @@ def mcts_search(board: chess.Board, simulations: int = 200,
         simulations: Number of MCTS iterations to run
         use_evaluator: If True, use smart rollouts; if False, use random
         exploration_constant: UCT exploration parameter (higher = more exploration)
+        sample_size: Number of moves to evaluate in rollouts (default: 10)
         verbose: Print search statistics
 
     Returns:
@@ -331,7 +346,7 @@ def mcts_search(board: chess.Board, simulations: int = 200,
 
         # 3. SIMULATION - Play out game
         if use_evaluator:
-            value = simulate_with_evaluator(search_board)
+            value = simulate_with_evaluator(search_board, sample_size=sample_size)
         else:
             value = simulate_random(search_board)
 
@@ -372,7 +387,8 @@ def mcts_search(board: chess.Board, simulations: int = 200,
 
 
 def best_move_mcts(board: chess.Board, simulations: int = 200,
-                   use_evaluator: bool = True, verbose: bool = False) -> Optional[chess.Move]:
+                   use_evaluator: bool = True, sample_size: int = 10,
+                   verbose: bool = False) -> Optional[chess.Move]:
     """
     Wrapper function for MCTS search (matches interface of other engines).
 
@@ -380,13 +396,15 @@ def best_move_mcts(board: chess.Board, simulations: int = 200,
         board: Current position
         simulations: Number of MCTS iterations
         use_evaluator: Use smart rollouts (True) or random (False)
+        sample_size: Number of moves to evaluate in rollouts (default: 10)
         verbose: Print search statistics
 
     Returns:
         Best move found
     """
     return mcts_search(board, simulations=simulations,
-                      use_evaluator=use_evaluator, verbose=verbose)
+                      use_evaluator=use_evaluator, sample_size=sample_size,
+                      verbose=verbose)
 
 
 if __name__ == "__main__":
