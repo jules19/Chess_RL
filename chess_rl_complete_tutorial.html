@@ -625,13 +625,111 @@
                 <p style="font-size: 0.9em; opacity: 0.8;">Risk-Reduction Philosophy • Baby Steps • Continuous Validation</p>
             </div>
 
-            <!-- INTRODUCTION -->
+            <!-- PROJECT VISION -->
+            <section id="vision">
+                <h2>🎯 Project Vision: Building AlphaZero from First Principles</h2>
+
+                <p>This project teaches you how to build a <strong>chess AI that improves through self-play reinforcement learning</strong>, using the same fundamental techniques that powered DeepMind's AlphaZero—the program that defeated Stockfish (the world's strongest chess engine) in 2017.</p>
+
+                <p>But rather than jumping straight into the deep end with neural networks and self-play, we take an <strong>incremental, educational approach</strong> that builds your understanding step by step.</p>
+
+                <h3>What Makes This Approach Different?</h3>
+
+                <div class="comparison">
+                    <div class="comparison-item">
+                        <h4>❌ Traditional Approach</h4>
+                        <ul>
+                            <li>Start with deep learning immediately</li>
+                            <li>Requires cloud GPUs from day 1</li>
+                            <li>Nothing works until everything works</li>
+                            <li>High risk of getting stuck</li>
+                            <li>Hard to debug when things fail</li>
+                        </ul>
+                    </div>
+                    <div class="comparison-item">
+                        <h4>✅ Our Risk-Reduction Approach</h4>
+                        <ul>
+                            <li>Build progressively sophisticated engines</li>
+                            <li>Each phase delivers a playable program</li>
+                            <li>Works on local hardware (Mac/PC)</li>
+                            <li>Clear validation criteria at each step</li>
+                            <li>Can stop at any phase and have something useful</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="key-insight">
+                    <strong>💡 The Core Philosophy:</strong> Every phase in this tutorial produces a <strong>working, playable chess engine</strong>. You're never more than one phase away from something you can test, play against, and validate. This de-risks the learning process and ensures continuous progress.
+                </div>
+
+                <h3>The Ultimate Goal: AlphaZero-Style Self-Learning AI</h3>
+
+                <p>By the end of this tutorial, you'll have built an AI that:</p>
+
+                <ul class="checklist">
+                    <li><strong>Learns from self-play:</strong> Improves by playing against itself (no human games needed)</li>
+                    <li><strong>Combines search and learning:</strong> MCTS guided by neural network predictions</li>
+                    <li><strong>Discovers novel strategies:</strong> Finds moves and patterns humans never taught it</li>
+                    <li><strong>Scales with compute:</strong> Larger networks + more games = stronger play</li>
+                    <li><strong>Generalizes:</strong> The techniques work for Go, shogi, and other board games</li>
+                </ul>
+
+                <div class="warning">
+                    <strong>⏱️ Time and Hardware Expectations:</strong>
+                    <ul>
+                        <li><strong>Phases 0-2 (Classical AI):</strong> 2-3 weeks, runs on any laptop (no GPU needed)</li>
+                        <li><strong>Phase 3 (Neural Networks):</strong> 2-4 weeks, benefits from GPU (Mac M-series or NVIDIA)</li>
+                        <li><strong>Phase 4 (Self-Play RL):</strong> 2-4 weeks, GPU highly recommended (can use cloud bursts)</li>
+                        <li><strong>Phase 5 (Scaling):</strong> Ongoing, cloud GPU for training (2-6 hour bursts, ~$10-50/month)</li>
+                    </ul>
+
+                    <p><strong>Total time to AlphaZero-style AI:</strong> 8-14 weeks of part-time work (evenings/weekends)</p>
+                </div>
+
+                <h3>What You'll Learn Along the Way</h3>
+
+                <p>This isn't just about chess—you'll master fundamental AI concepts that apply across domains:</p>
+
+                <table>
+                    <tr>
+                        <th>Phase</th>
+                        <th>AI Concepts</th>
+                        <th>Practical Skills</th>
+                    </tr>
+                    <tr>
+                        <td>Phases 0-1</td>
+                        <td>Game trees, minimax, alpha-beta pruning, evaluation functions</td>
+                        <td>Classical search algorithms, heuristic design</td>
+                    </tr>
+                    <tr>
+                        <td>Phase 2</td>
+                        <td>Monte Carlo methods, UCT, exploration vs exploitation</td>
+                        <td>Statistical sampling, anytime algorithms</td>
+                    </tr>
+                    <tr>
+                        <td>Phase 3</td>
+                        <td>Deep learning, ResNets, supervised learning, policy-value networks</td>
+                        <td>PyTorch, neural network training, debugging ML models</td>
+                    </tr>
+                    <tr>
+                        <td>Phases 4-5</td>
+                        <td>Reinforcement learning, self-play, curriculum learning</td>
+                        <td>Training loops, Elo systems, distributed computing</td>
+                    </tr>
+                </table>
+
+                <div class="success">
+                    <strong>🎓 Prerequisites:</strong> You should be comfortable with Python programming and basic algorithms. We'll teach you chess AI, machine learning, and reinforcement learning from scratch—no prior experience required!
+                </div>
+            </section>
+
+            <!-- ROADMAP & TIMELINE -->
             <section id="journey">
-                <h2>🌟 The Learning Journey</h2>
+                <h2>🗺️ The Complete Roadmap</h2>
 
                 <div class="learning-objective">
-                    <h3>What You'll Build</h3>
-                    <p>This tutorial guides you through building <strong>six progressively sophisticated chess engines</strong>, each playable and independently useful, culminating in an AlphaZero-style self-learning system.</p>
+                    <h3>Six Progressively Sophisticated Engines</h3>
+                    <p>This tutorial guides you through building <strong>six chess engines</strong>, each playable and independently useful, culminating in an AlphaZero-style self-learning system.</p>
 
                     <p><strong>The Complete Journey:</strong></p>
                     <ul class="checklist">
@@ -919,11 +1017,1125 @@ Draw Rate:        Low (~10-20%, random rarely achieves draws)
                 </div>
             </details>
 
-            <!-- Placeholder for remaining phases - I'll continue building this in the next message -->
-            <div style="text-align: center; padding: 40px; color: #666;">
-                <p><strong>Tutorial continues with Phases 1-5...</strong></p>
-                <p><em>(Building complete file - this is part 1 of the comprehensive tutorial)</em></p>
-            </div>
+            <!-- PHASE 1: MINIMAX & EVALUATION -->
+            <details class="phase" id="phase1">
+                <summary>📍 Phase 1: Minimax & Evaluation Functions</summary>
+                <div class="phase-content">
+                    <div class="breadcrumb">
+                        <a href="#intro">Home</a> → Phase 1: Minimax & Evaluation
+                    </div>
+
+                    <div class="day-marker complete">✅ Week 1 - Target: 1200-1400 Elo</div>
+
+                    <div class="learning-objective">
+                        <h3>Learning Objectives - Phase 1</h3>
+                        <p>By the end of this phase, you will:</p>
+                        <ul class="checklist">
+                            <li>Implement material evaluation (piece counting)</li>
+                            <li>Build minimax search with alpha-beta pruning</li>
+                            <li>Add positional evaluation (center control, development)</li>
+                            <li>Implement strategic evaluation (king safety, pawn structure)</li>
+                            <li>Add quiescence search to eliminate horizon effect</li>
+                            <li>Create UCI interface for playing in chess GUIs</li>
+                        </ul>
+                    </div>
+
+                    <h3>🎯 Goal: From Random to Strategic Play</h3>
+
+                    <p>Phase 1 transforms our random player into a chess engine that understands <strong>evaluation</strong> (what makes a position good) and <strong>search</strong> (looking ahead to find forcing moves).</p>
+
+                    <div class="key-insight">
+                        <strong>💡 The Two Pillars of Chess AI:</strong>
+                        <ul>
+                            <li><strong>Evaluation:</strong> Given a position, how good is it? (+200 = White is winning by 2 pawns)</li>
+                            <li><strong>Search:</strong> Look ahead N moves to see which position we'll reach</li>
+                        </ul>
+                        Combined, these create an engine that can find tactics and avoid blunders.
+                    </div>
+
+                    <h3>Day 2: Material Evaluation</h3>
+
+                    <p>The first rule of chess: <strong>don't lose your pieces</strong>. We'll teach our engine the point value of pieces:</p>
+
+                    <pre><code>def evaluate_material(board: chess.Board) -> int:
+    """Evaluate material balance. Returns score in centipawns."""
+    PIECE_VALUES = {
+        chess.PAWN: 100,
+        chess.KNIGHT: 300,
+        chess.BISHOP: 300,
+        chess.ROOK: 500,
+        chess.QUEEN: 900,
+        chess.KING: 0,  # Priceless
+    }
+
+    score = 0
+    for square in chess.SQUARES:
+        piece = board.piece_at(square)
+        if piece:
+            value = PIECE_VALUES[piece.piece_type]
+            score += value if piece.color == chess.WHITE else -value
+
+    return score  # Positive = White winning, Negative = Black winning</code></pre>
+
+                    <div class="success">
+                        <strong>✅ Test:</strong> Starting position returns 0 (equal material). Position missing White queen returns -900.
+                    </div>
+
+                    <h3>Days 3-4: Minimax Search with Alpha-Beta Pruning</h3>
+
+                    <p>Now we add <strong>look-ahead</strong>. Minimax explores the game tree, assuming both players play optimally:</p>
+
+                    <div class="diagram">
+<pre>
+                [Current Position]
+                    Your turn
+                        |
+    +-------------------+-------------------+
+    |                   |                   |
+Move A              Move B              Move C
+    |                   |                   |
+[After A]          [After B]          [After C]
+ Opp turn           Opp turn           Opp turn
+    |                   |                   |
+Pick best       Pick best           Pick best
+response        response            response
+
+White searches each move, assumes Black responds
+optimally, then picks the move with best result.</pre>
+                    </div>
+
+                    <pre><code>def minimax(board, depth, alpha, beta, maximizing):
+    """Minimax with alpha-beta pruning."""
+    if depth == 0 or board.is_game_over():
+        return evaluate(board)
+
+    legal_moves = list(board.legal_moves)
+    ordered_moves = order_moves(board, legal_moves)  # Search good moves first
+
+    if maximizing:
+        max_eval = float('-inf')
+        for move in ordered_moves:
+            board.push(move)
+            eval_score = minimax(board, depth - 1, alpha, beta, False)
+            board.pop()
+
+            max_eval = max(max_eval, eval_score)
+            alpha = max(alpha, eval_score)
+
+            if beta <= alpha:
+                break  # Beta cutoff - prune!
+
+        return max_eval
+    else:
+        min_eval = float('inf')
+        for move in ordered_moves:
+            board.push(move)
+            eval_score = minimax(board, depth - 1, alpha, beta, True)
+            board.pop()
+
+            min_eval = min(min_eval, eval_score)
+            beta = min(beta, eval_score)
+
+            if beta <= alpha:
+                break  # Alpha cutoff - prune!
+
+        return min_eval</code></pre>
+
+                    <div class="key-insight">
+                        <strong>Alpha-Beta Magic:</strong> With good move ordering, alpha-beta pruning reduces nodes searched from ~1.5M to ~40K at depth 4 (40× speedup!)
+                    </div>
+
+                    <h3>Day 5: Positional Understanding</h3>
+
+                    <p>Material alone isn't enough. We add <strong>center control</strong> and <strong>piece development</strong>:</p>
+
+                    <pre><code>def evaluate_center_control(board):
+    """Reward pieces in the center (d4, e4, d5, e5)."""
+    CENTER = [chess.D4, chess.E4, chess.D5, chess.E5]
+    score = 0
+
+    for square in CENTER:
+        piece = board.piece_at(square)
+        if piece:
+            bonus = 30 if piece.piece_type == chess.PAWN else 20
+            score += bonus if piece.color == chess.WHITE else -bonus
+
+    return score
+
+def evaluate_development(board):
+    """Penalize knights/bishops on starting squares (opening only)."""
+    if board.fullmove_number > 10:
+        return 0  # Only care about development in opening
+
+    WHITE_KNIGHT_START = [chess.B1, chess.G1]
+    score = 0
+
+    for square in WHITE_KNIGHT_START:
+        piece = board.piece_at(square)
+        if piece and piece.piece_type == chess.KNIGHT:
+            score -= 15  # Penalty for undeveloped piece
+
+    # (Similar logic for Black knights and bishops)
+    return score</code></pre>
+
+                    <h3>Day 6: Strategic Evaluation</h3>
+
+                    <p>Add <strong>king safety</strong> and <strong>pawn structure</strong>:</p>
+
+                    <pre><code>def evaluate_king_safety(board):
+    """Reward castling and pawn shields."""
+    score = 0
+
+    white_king_sq = board.king(chess.WHITE)
+
+    # Castled kingside
+    if white_king_sq == chess.G1:
+        score += 30  # Castling bonus
+
+        # Pawn shield bonus
+        if board.piece_at(chess.F2) == chess.Piece(chess.PAWN, chess.WHITE):
+            score += 10
+        if board.piece_at(chess.G2) == chess.Piece(chess.PAWN, chess.WHITE):
+            score += 10
+
+    # Penalty for king in center (dangerous!)
+    if white_king_sq in [chess.D4, chess.E4, chess.D5, chess.E5]:
+        score -= 40
+
+    # (Similar logic for Black king)
+    return score
+
+def evaluate_pawn_structure(board):
+    """Penalize doubled/isolated pawns, reward passed pawns."""
+    score = 0
+
+    for file in range(8):
+        white_pawns = [r for r in range(8)
+                       if board.piece_at(chess.square(file, r)) ==
+                          chess.Piece(chess.PAWN, chess.WHITE)]
+
+        # Doubled pawns penalty
+        if len(white_pawns) > 1:
+            score -= 20 * (len(white_pawns) - 1)
+
+        # Passed pawns bonus (no enemy pawns blocking)
+        for rank in white_pawns:
+            if is_passed_pawn(board, file, rank, chess.WHITE):
+                score += 20 + (rank * 10)  # More valuable as it advances
+
+    # (Similar logic for Black pawns)
+    return score</code></pre>
+
+                    <h3>Complete Evaluation Function</h3>
+
+                    <pre><code>def evaluate(board):
+    """Master evaluation combining all components."""
+    if board.is_checkmate():
+        return -100000 if board.turn == chess.WHITE else 100000
+
+    if board.is_stalemate() or board.is_insufficient_material():
+        return 0  # Draw
+
+    # Material dominates (~80% of evaluation)
+    score = evaluate_material(board)
+
+    # Positional factors (~10-50 centipawns each)
+    score += evaluate_center_control(board)
+    score += evaluate_development(board)
+    score += evaluate_king_safety(board)
+    score += evaluate_pawn_structure(board)
+
+    # Small bonuses
+    if board.is_check():
+        score += 50 if board.turn == chess.BLACK else -50
+
+    mobility = board.legal_moves.count()
+    score += mobility if board.turn == chess.WHITE else -mobility
+
+    return score</code></pre>
+
+                    <div class="key-insight">
+                        <strong>Evaluation Hierarchy:</strong> Material = 100-900 points per piece. Positional = 10-50 points. This balance ensures material is most important, but positional factors decide equal positions.
+                    </div>
+
+                    <h3>Day 7: Quiescence Search - Fixing the Horizon Effect</h3>
+
+                    <p>Critical fix: <strong>don't stop searching in the middle of tactics</strong>!</p>
+
+                    <div class="warning">
+                        <strong>⚠️ The Horizon Effect:</strong> Fixed-depth search stops at depth N, even if a tactical blow comes at depth N+1. The engine thinks it won a pawn, but doesn't see the piece gets recaptured next move!
+                    </div>
+
+                    <p><strong>Solution:</strong> Continue searching captures/checks until position is "quiet" (no immediate tactics).</p>
+
+                    <pre><code>def quiescence_search(board, alpha, beta, maximizing, max_depth=10):
+    """Search tactical moves until position is quiet."""
+    if board.is_game_over() or max_depth <= 0:
+        return evaluate(board)
+
+    # Stand-pat: evaluation if we make no more captures
+    stand_pat = evaluate(board)
+
+    if maximizing:
+        if stand_pat >= beta:
+            return beta
+        alpha = max(alpha, stand_pat)
+    else:
+        if stand_pat <= alpha:
+            return alpha
+        beta = min(beta, stand_pat)
+
+    # Only search captures, checks, promotions (tactical moves)
+    noisy_moves = [m for m in board.legal_moves
+                   if board.is_capture(m) or m.promotion]
+
+    if not noisy_moves:
+        return stand_pat  # Position is quiet!
+
+    # Search noisy moves recursively
+    if maximizing:
+        for move in order_moves(board, noisy_moves):
+            board.push(move)
+            score = quiescence_search(board, alpha, beta, False, max_depth - 1)
+            board.pop()
+
+            if score >= beta:
+                return beta
+            alpha = max(alpha, score)
+        return alpha
+    else:
+        # (Similar logic for minimizing)
+        ...
+
+# Integrate into minimax:
+def minimax(board, depth, alpha, beta, maximizing):
+    if depth == 0:
+        return quiescence_search(board, alpha, beta, maximizing)  # ✅ Fixed!
+    # (rest of minimax unchanged)</code></pre>
+
+                    <div class="success">
+                        <strong>✅ Impact:</strong> Quiescence search eliminates tactical blunders. Expected Elo gain: +100 to +200!
+                    </div>
+
+                    <h3>Day 8: UCI Protocol Integration</h3>
+
+                    <p>Make your engine playable in chess GUIs (Arena, Cute Chess, etc.) via the Universal Chess Interface:</p>
+
+                    <pre><code>class UCIEngine:
+    """UCI-compliant chess engine wrapper."""
+
+    def __init__(self):
+        self.board = chess.Board()
+        self.search_depth = 3
+
+    def handle_uci(self):
+        print("id name Chess_RL v0.1.0")
+        print("id author Your Name")
+        print("option name Search Depth type spin default 3 min 1 max 6")
+        print("uciok", flush=True)
+
+    def handle_position(self, args):
+        if args[0] == "startpos":
+            self.board = chess.Board()
+            idx = 1
+        # Apply moves if present
+        if "moves" in args:
+            move_idx = args.index("moves") + 1
+            for move_str in args[move_idx:]:
+                self.board.push(chess.Move.from_uci(move_str))
+
+    def handle_go(self, args):
+        depth = self.search_depth
+        if "depth" in args:
+            depth = int(args[args.index("depth") + 1])
+
+        best_move = best_move_minimax(self.board, depth)
+        print(f"bestmove {best_move.uci()}", flush=True)
+
+    def run(self):
+        while True:
+            line = input().strip()
+            if not line:
+                continue
+
+            parts = line.split()
+            command = parts[0]
+
+            if command == "uci":
+                self.handle_uci()
+            elif command == "isready":
+                print("readyok", flush=True)
+            elif command == "position":
+                self.handle_position(parts[1:])
+            elif command == "go":
+                self.handle_go(parts[1:])
+            elif command == "quit":
+                break</code></pre>
+
+                    <div class="checkpoint">
+                        <h4>✅ Phase 1 Validation Checklist</h4>
+                        <p>Before moving to Phase 2, verify:</p>
+                        <ul class="checklist">
+                            <li>Engine finds mate-in-2 puzzles</li>
+                            <li>Avoids hanging pieces (no horizon effect blunders)</li>
+                            <li>Develops pieces in opening (plays e4/d4/Nf3, not h4)</li>
+                            <li>Beats random player 100% of the time</li>
+                            <li>UCI interface works in a chess GUI</li>
+                            <li>Estimated strength: 1200-1400 Elo</li>
+                        </ul>
+                    </div>
+
+                    <div class="success">
+                        <h4>🎉 Phase 1 Complete!</h4>
+                        <p>You've built a chess engine with human-like understanding! It evaluates positions, searches ahead, finds tactics, and plays strategically.</p>
+                        <p><strong>What's next:</strong> Phase 2 introduces Monte Carlo Tree Search (MCTS), a different search algorithm that uses statistical sampling instead of exhaustive search.</p>
+                    </div>
+
+                    <div class="section-nav">
+                        <a href="#phase0" class="prev">← Phase 0: Random Player</a>
+                        <a href="#phase2" class="next">Next: Monte Carlo Tree Search →</a>
+                    </div>
+                </div>
+            </details>
+
+            <!-- PHASE 2: MONTE CARLO TREE SEARCH -->
+            <details class="phase" id="phase2">
+                <summary>📍 Phase 2: Monte Carlo Tree Search (MCTS)</summary>
+                <div class="phase-content">
+                    <div class="breadcrumb">
+                        <a href="#intro">Home</a> → Phase 2: Monte Carlo Tree Search
+                    </div>
+
+                    <div class="day-marker complete">✅ Week 2 - Target: 1400-1600 Elo</div>
+
+                    <div class="learning-objective">
+                        <h3>Learning Objectives - Phase 2</h3>
+                        <p>By the end of this phase, you will:</p>
+                        <ul class="checklist">
+                            <li>Understand Monte Carlo Tree Search fundamentals</li>
+                            <li>Implement UCT (Upper Confidence Bound for Trees) selection</li>
+                            <li>Build MCTS with random rollouts</li>
+                            <li>Enhance MCTS with domain knowledge (evaluation function)</li>
+                            <li>Compare MCTS vs Minimax performance</li>
+                            <li>Understand when MCTS excels vs traditional search</li>
+                        </ul>
+                    </div>
+
+                    <h3>🎯 Goal: A Different Way to Search</h3>
+
+                    <p>Minimax exhaustively searches all moves to a fixed depth. MCTS takes a different approach: <strong>statistically sample the most promising paths</strong> by playing out random games.</p>
+
+                    <div class="key-insight">
+                        <strong>💡 The MCTS Philosophy:</strong>
+                        <ul>
+                            <li><strong>Minimax:</strong> "Explore everything to depth N"</li>
+                            <li><strong>MCTS:</strong> "Focus computational budget on promising moves through statistical sampling"</li>
+                        </ul>
+                        MCTS can search deeper on critical variations while spending less time on obviously bad moves.
+                    </div>
+
+                    <h3>How MCTS Works: The Four Phases</h3>
+
+                    <div class="diagram">
+<pre>
+MCTS operates in a loop, repeating these 4 steps N times:
+
+1. SELECTION: Start at root, follow promising path down tree
+   ↓
+2. EXPANSION: Add a new node (unexplored move)
+   ↓
+3. SIMULATION: Play out a random game to the end
+   ↓
+4. BACKPROPAGATION: Update statistics along path
+
+Repeat N times (e.g., 200-800 simulations)
+Then pick the move with most visits</pre>
+                    </div>
+
+                    <h3>Phase 1: Selection with UCT</h3>
+
+                    <p>At each node, we select the child with the highest <strong>UCT score</strong>:</p>
+
+                    <div class="key-insight">
+                        <strong>UCT Formula:</strong> UCT = (wins/visits) + C × √(ln(parent_visits) / visits)
+                        <ul>
+                            <li><strong>Exploitation term:</strong> wins/visits (favor moves that win often)</li>
+                            <li><strong>Exploration term:</strong> C × √(...) (try less-visited moves)</li>
+                            <li><strong>C constant:</strong> Balance exploration vs exploitation (typically √2)</li>
+                        </ul>
+                    </div>
+
+                    <pre><code>class MCTSNode:
+    def __init__(self, board, parent=None, move=None):
+        self.board = board.copy()
+        self.parent = parent
+        self.move = move  # Move that led to this node
+
+        self.children = []
+        self.visits = 0
+        self.wins = 0.0  # From perspective of player who moved here
+
+        self.untried_moves = list(board.legal_moves)
+
+    def uct_value(self, exploration_constant=1.41):  # √2
+        """Calculate UCT score for this node."""
+        if self.visits == 0:
+            return float('inf')  # Unvisited nodes have highest priority
+
+        # Exploitation: win rate
+        exploitation = self.wins / self.visits
+
+        # Exploration: √(ln(parent_visits) / visits)
+        exploration = exploration_constant * math.sqrt(
+            math.log(self.parent.visits) / self.visits
+        )
+
+        return exploitation + exploration
+
+    def select_child(self):
+        """Select child with highest UCT value."""
+        return max(self.children, key=lambda c: c.uct_value())</code></pre>
+
+                    <h3>Phase 2: Expansion</h3>
+
+                    <p>When we reach a node with untried moves, we expand it:</p>
+
+                    <pre><code>    def expand(self):
+        """Add a new child node for an untried move."""
+        if not self.untried_moves:
+            return None  # Fully expanded
+
+        # Pick a random untried move
+        move = self.untried_moves.pop()
+
+        # Create new board state
+        new_board = self.board.copy()
+        new_board.push(move)
+
+        # Create child node
+        child = MCTSNode(new_board, parent=self, move=move)
+        self.children.append(child)
+
+        return child</code></pre>
+
+                    <h3>Phase 3: Simulation (Random Rollout)</h3>
+
+                    <p>Play out a random game from this position to estimate value:</p>
+
+                    <pre><code>def simulate_random_game(board):
+    """Play random moves until game ends. Return result."""
+    sim_board = board.copy()
+
+    while not sim_board.is_game_over():
+        legal_moves = list(sim_board.legal_moves)
+        random_move = random.choice(legal_moves)
+        sim_board.push(random_move)
+
+    # Return game result from White's perspective
+    result = sim_board.result()
+    if result == "1-0":
+        return 1.0  # White wins
+    elif result == "0-1":
+        return 0.0  # Black wins
+    else:
+        return 0.5  # Draw</code></pre>
+
+                    <div class="warning">
+                        <strong>⚠️ Random Rollouts are Weak:</strong> Pure random games give noisy estimates. We'll improve this with domain knowledge later!
+                    </div>
+
+                    <h3>Phase 4: Backpropagation</h3>
+
+                    <p>Update statistics along the path from leaf to root:</p>
+
+                    <pre><code>    def backpropagate(self, result):
+        """Update node statistics with simulation result."""
+        self.visits += 1
+
+        # Result is from White's perspective
+        # If this node is Black's turn, we want opposite result
+        if self.board.turn == chess.BLACK:
+            self.wins += result
+        else:
+            self.wins += (1.0 - result)
+
+        # Recurse to parent
+        if self.parent:
+            self.parent.backpropagate(result)</code></pre>
+
+                    <h3>Putting It All Together: MCTS Main Loop</h3>
+
+                    <pre><code>def mcts_search(board, num_simulations=200):
+    """Run MCTS for given number of simulations."""
+    root = MCTSNode(board)
+
+    for _ in range(num_simulations):
+        node = root
+
+        # 1. SELECTION: Traverse tree using UCT
+        while node.untried_moves == [] and node.children:
+            node = node.select_child()
+
+        # 2. EXPANSION: Add new node if possible
+        if node.untried_moves:
+            node = node.expand()
+
+        # 3. SIMULATION: Play random game from this node
+        result = simulate_random_game(node.board)
+
+        # 4. BACKPROPAGATION: Update statistics
+        node.backpropagate(result)
+
+    # Choose move with most visits (most robust)
+    best_child = max(root.children, key=lambda c: c.visits)
+    return best_child.move</code></pre>
+
+                    <h3>Improving MCTS: Domain Knowledge</h3>
+
+                    <p>Pure random rollouts are weak. We can improve by using our evaluation function:</p>
+
+                    <pre><code>def simulate_with_evaluation(board, max_depth=10):
+    """Simulate game using evaluation function instead of random play."""
+    sim_board = board.copy()
+    depth = 0
+
+    while not sim_board.is_game_over() and depth < max_depth:
+        legal_moves = list(sim_board.legal_moves)
+
+        # Instead of random, pick move with best evaluation
+        best_move = None
+        best_eval = float('-inf') if sim_board.turn == chess.WHITE else float('inf')
+
+        for move in legal_moves:
+            sim_board.push(move)
+            eval_score = evaluate(sim_board)  # Use our evaluation!
+            sim_board.pop()
+
+            if sim_board.turn == chess.WHITE:
+                if eval_score > best_eval:
+                    best_eval = eval_score
+                    best_move = move
+            else:
+                if eval_score < best_eval:
+                    best_eval = eval_score
+                    best_move = move
+
+        if best_move:
+            sim_board.push(best_move)
+            depth += 1
+
+    # Return evaluation of final position (normalized to [0, 1])
+    final_eval = evaluate(sim_board)
+    return 1.0 / (1.0 + math.exp(-final_eval / 100))  # Sigmoid normalization</code></pre>
+
+                    <div class="success">
+                        <strong>✅ Impact:</strong> Using evaluation function in rollouts dramatically improves MCTS strength! Now it understands tactics and strategy, not just random moves.
+                    </div>
+
+                    <h3>MCTS vs Minimax: When to Use Each?</h3>
+
+                    <table>
+                        <tr>
+                            <th>Characteristic</th>
+                            <th>Minimax + Alpha-Beta</th>
+                            <th>MCTS</th>
+                        </tr>
+                        <tr>
+                            <td><strong>Search Style</strong></td>
+                            <td>Exhaustive to fixed depth</td>
+                            <td>Adaptive (deep on promising moves)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Time Management</strong></td>
+                            <td>Depth limited</td>
+                            <td>Simulation limited (anytime algorithm)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Tactical Positions</strong></td>
+                            <td>✅ Excellent with quiescence</td>
+                            <td>⚠️ Can miss deep tactics</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Complex Positions</strong></td>
+                            <td>⚠️ Struggles with high branching</td>
+                            <td>✅ Adapts to complexity</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Neural Network Ready</strong></td>
+                            <td>❌ Hard to integrate learning</td>
+                            <td>✅ Perfect for AlphaZero-style RL</td>
+                        </tr>
+                    </table>
+
+                    <div class="key-insight">
+                        <strong>Why MCTS for Phase 3?</strong> MCTS is the foundation of AlphaZero! In Phase 3, we'll replace random/evaluation rollouts with a neural network that provides policy (which moves to explore) and value (position evaluation). MCTS + Neural Network = AlphaZero magic!
+                    </div>
+
+                    <h3>Performance Tuning: Key Parameters</h3>
+
+                    <ul>
+                        <li><strong>Number of simulations:</strong> 200-800 for reasonable play (more = stronger but slower)</li>
+                        <li><strong>Exploration constant (C):</strong> √2 (1.41) is standard, increase for more exploration</li>
+                        <li><strong>Rollout depth:</strong> 10-20 moves (balance between speed and accuracy)</li>
+                        <li><strong>Evaluation vs random:</strong> Evaluation-based rollouts are much stronger</li>
+                    </ul>
+
+                    <div class="checkpoint">
+                        <h4>✅ Phase 2 Validation Checklist</h4>
+                        <p>Before moving to Phase 3, verify:</p>
+                        <ul class="checklist">
+                            <li>MCTS with 200 sims beats random player 100% of the time</li>
+                            <li>MCTS with evaluation rollouts matches/beats minimax depth-3</li>
+                            <li>UCT properly balances exploration and exploitation</li>
+                            <li>Engine doesn't hang (simulations complete in reasonable time)</li>
+                            <li>Move selection is robust (high visit count moves)</li>
+                            <li>Estimated strength: 1400-1600 Elo</li>
+                        </ul>
+                    </div>
+
+                    <div class="success">
+                        <h4>🎉 Phase 2 Complete!</h4>
+                        <p>You've implemented Monte Carlo Tree Search, a fundamentally different search algorithm from minimax. This prepares you for Phase 3, where MCTS becomes the bridge between search and deep learning!</p>
+                        <p><strong>What's next:</strong> Phase 3 introduces neural networks that learn to evaluate positions and suggest moves, replacing hand-crafted evaluation functions with learned representations.</p>
+                    </div>
+
+                    <div class="section-nav">
+                        <a href="#phase1" class="prev">← Phase 1: Minimax</a>
+                        <a href="#phase3" class="next">Next: Neural Networks →</a>
+                    </div>
+                </div>
+            </details>
+
+            <!-- PHASE 3: NEURAL NETWORKS (OVERVIEW + LINK) -->
+            <details class="phase" id="phase3">
+                <summary>📍 Phase 3: Neural Networks (Current Phase)</summary>
+                <div class="phase-content">
+                    <div class="breadcrumb">
+                        <a href="#intro">Home</a> → Phase 3: Neural Networks
+                    </div>
+
+                    <div class="day-marker current">🔄 Weeks 3-4 - Target: 1400-1600 Elo</div>
+
+                    <div class="learning-objective">
+                        <h3>Learning Objectives - Phase 3</h3>
+                        <p>By the end of this phase, you will:</p>
+                        <ul class="checklist">
+                            <li>Understand AlphaZero-style policy-value networks</li>
+                            <li>Implement ResNet architecture for chess</li>
+                            <li>Build board encoding (position → tensor)</li>
+                            <li>Implement move encoding/decoding (move ↔ integer)</li>
+                            <li>Train neural network on supervised data (Lichess games)</li>
+                            <li>Integrate neural network with MCTS</li>
+                            <li>Compare NN-MCTS vs hand-crafted evaluation</li>
+                        </ul>
+                    </div>
+
+                    <h3>🎯 Goal: From Hand-Crafted to Learned Evaluation</h3>
+
+                    <p>In Phase 1, we hand-crafted evaluation functions (material, center control, king safety). In Phase 3, we replace these with a <strong>neural network that learns patterns from millions of chess games</strong>.</p>
+
+                    <div class="key-insight">
+                        <strong>💡 The Neural Network Advantage:</strong>
+                        <ul>
+                            <li><strong>Hand-crafted eval:</strong> Limited by human chess knowledge (hundreds of heuristics max)</li>
+                            <li><strong>Neural network:</strong> Learns millions of patterns from data (can discover non-obvious strategies)</li>
+                            <li><strong>Scalability:</strong> More data + bigger network = stronger play (no human bottleneck)</li>
+                        </ul>
+                    </div>
+
+                    <h3>The AlphaZero Architecture: Policy + Value</h3>
+
+                    <p>Unlike traditional engines with one evaluation function, AlphaZero uses a <strong>two-headed network</strong>:</p>
+
+                    <div class="diagram">
+<pre>
+Input: Board Position (8×8×20 tensor)
+  ↓
+Shared ResNet Trunk (4-40 residual blocks)
+  ↓
+  ├──→ Policy Head: P(move | position)
+  │    Output: 4672-dim vector (probability for each move)
+  │    Usage: Tells MCTS which moves to explore
+  │
+  └──→ Value Head: V(position)
+       Output: Scalar in [-1, +1]
+       Usage: Tells MCTS how good the position is
+</pre>
+                    </div>
+
+                    <div class="key-insight">
+                        <strong>Why Two Heads?</strong>
+                        <ul>
+                            <li><strong>Policy:</strong> "Which moves look promising?" (guides MCTS exploration)</li>
+                            <li><strong>Value:</strong> "Is this position winning?" (replaces rollouts in MCTS)</li>
+                        </ul>
+                        Together, they make MCTS much more efficient: explore good moves (policy) and evaluate positions accurately (value).
+                    </div>
+
+                    <h3>Current Progress (Days 1-2 Complete)</h3>
+
+                    <div class="success">
+                        <h4>✅ Implemented Components:</h4>
+                        <ul class="checklist">
+                            <li><strong>net/model.py:</strong> PolicyValueNetwork (ResNet with policy/value heads)</li>
+                            <li><strong>net/encoding.py:</strong> board_to_tensor(), move_to_index(), legal_moves_mask()</li>
+                            <li><strong>Network architecture:</strong> 4 ResBlocks, 128 channels, ~1.4M parameters</li>
+                            <li><strong>Input encoding:</strong> 20-plane representation (pieces, castling, turn, etc.)</li>
+                            <li><strong>Move encoding:</strong> 4672-dim action space (from_square × 64 + to_square)</li>
+                        </ul>
+                    </div>
+
+                    <h3>Detailed Tutorial: Phase 3 Deep Dive</h3>
+
+                    <p>Phase 3 is comprehensive and spans multiple weeks. We've created a dedicated <strong>53 KB standalone tutorial</strong> with extensive pedagogical content covering:</p>
+
+                    <ul>
+                        <li>Complete neural network architecture walkthrough</li>
+                        <li>Detailed board encoding explanation with examples</li>
+                        <li>Training pipeline (dataset, loss functions, optimization)</li>
+                        <li>Integration with MCTS (replacing rollouts with NN evaluation)</li>
+                        <li>Debugging neural networks for chess</li>
+                        <li>Performance benchmarks and Elo comparisons</li>
+                    </ul>
+
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 8px; text-align: center; margin: 30px 0;">
+                        <h3 style="color: white; margin-top: 0;">📘 Complete Phase 3 Tutorial</h3>
+                        <p style="color: white; font-size: 1.1em; margin: 20px 0;">
+                            For the full neural network tutorial with code walkthroughs, diagrams, and pedagogical best practices:
+                        </p>
+                        <a href="neural_network_tutorial.html" style="display: inline-block; background: white; color: #667eea; padding: 15px 40px; border-radius: 25px; text-decoration: none; font-weight: bold; font-size: 1.2em; box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: transform 0.2s;">
+                            Open Neural Network Tutorial →
+                        </a>
+                        <p style="color: white; margin-top: 20px; opacity: 0.9; font-size: 0.95em;">
+                            (~1,300 lines • ~12,000 words • Bloom's Taxonomy • Multiple representations)
+                        </p>
+                    </div>
+
+                    <h3>Quick Reference: Key Concepts</h3>
+
+                    <h4>Input Encoding (20 planes × 8×8)</h4>
+                    <pre><code># Board state → 20-plane tensor
+Planes 0-11:  Piece positions (6 piece types × 2 colors)
+Plane 12:     Repetition count = 1
+Plane 13:     Repetition count = 2
+Planes 14-17: Castling rights (WK, WQ, BK, BQ)
+Plane 18:     No-progress count (50-move rule)
+Plane 19:     Side to move (all 1s if White, all 0s if Black)</code></pre>
+
+                    <h4>Network Architecture</h4>
+                    <pre><code>PolicyValueNetwork(
+  input_channels=20,
+  num_res_blocks=4,    # Increase to 10-40 for stronger play
+  num_channels=128     # Increase to 256 for more capacity
+)
+  ├─ Shared trunk: Conv → [ResBlock × 4] → BatchNorm
+  ├─ Policy head: Conv → Flatten → Linear(4672)
+  └─ Value head: Conv → Flatten → Linear → Tanh()</code></pre>
+
+                    <h4>Integration with MCTS</h4>
+                    <pre><code># In MCTS simulation, replace random rollout with NN:
+def simulate_with_neural_network(board):
+    """Use neural network instead of hand-crafted evaluation."""
+    tensor = board_to_tensor(board)
+    policy, value = model.predict(tensor)
+
+    # Value is already in [-1, +1] (White winning to Black winning)
+    # Normalize to [0, 1] for MCTS backpropagation
+    return (value + 1.0) / 2.0
+
+# In MCTS expansion, use policy to guide selection:
+def expand_with_policy(node):
+    """Use policy network to prioritize moves."""
+    tensor = board_to_tensor(node.board)
+    policy, _ = model.predict(tensor)
+
+    # Sort untried moves by policy probability
+    move_probs = [(move, policy[move_to_index(move)])
+                  for move in node.untried_moves]
+    move_probs.sort(key=lambda x: x[1], reverse=True)
+
+    # Expand highest-probability move first
+    best_move = move_probs[0][0]
+    # (create child node...)</code></pre>
+
+                    <div class="checkpoint">
+                        <h4>✅ Phase 3 Validation Checklist</h4>
+                        <p>Complete when:</p>
+                        <ul class="checklist">
+                            <li>Network trains without errors (loss decreases)</li>
+                            <li>Policy network predicts legal moves >50% of time on held-out set</li>
+                            <li>Value network correlates with game outcomes (Spearman ρ > 0.5)</li>
+                            <li>NN-MCTS matches hand-crafted MCTS strength (~1400-1600 Elo)</li>
+                            <li>Inference is fast enough (~1-10ms per position)</li>
+                            <li>No bugs in board encoding (visual inspection + tests)</li>
+                        </ul>
+                    </div>
+
+                    <h3>What Comes Next: Phase 4 (Self-Play RL)</h3>
+
+                    <p>In Phase 3, we train the network on <strong>human games</strong> (supervised learning). In Phase 4, we'll train on <strong>self-play games</strong> (reinforcement learning), allowing the engine to discover new strategies beyond human play!</p>
+
+                    <div class="section-nav">
+                        <a href="#phase2" class="prev">← Phase 2: MCTS</a>
+                        <a href="#phase4" class="next">Next: Self-Play RL (Coming Soon) →</a>
+                    </div>
+                </div>
+            </details>
+
+            <!-- PHASE 4: SELF-PLAY RL (COMING SOON) -->
+            <details class="phase phase-coming-soon" id="phase4">
+                <summary>📍 Phase 4: Self-Play Reinforcement Learning (Coming Soon)</summary>
+                <div class="phase-content">
+                    <div class="breadcrumb">
+                        <a href="#intro">Home</a> → Phase 4: Self-Play RL
+                    </div>
+
+                    <div class="day-marker">📅 Weeks 5-8 - Target: 1600-1800+ Elo</div>
+
+                    <div class="learning-objective">
+                        <h3>Planned Objectives - Phase 4</h3>
+                        <p>Phase 4 will cover:</p>
+                        <ul class="checklist-pending">
+                            <li>Building self-play infrastructure</li>
+                            <li>Replay buffer and experience storage</li>
+                            <li>Training loop (self-play → train → evaluate → promote)</li>
+                            <li>Elo-based model promotion system</li>
+                            <li>Continuous improvement through self-play</li>
+                            <li>Discovering superhuman strategies</li>
+                        </ul>
+                    </div>
+
+                    <h3>🎯 Goal: Learning from Self-Play</h3>
+
+                    <p>Phase 4 is where the magic happens: the engine <strong>plays against itself</strong>, learns from its games, and continuously improves without human data!</p>
+
+                    <div class="key-insight">
+                        <strong>The Self-Play Loop:</strong>
+                        <ol>
+                            <li><strong>Generate:</strong> Play games using current network + MCTS</li>
+                            <li><strong>Store:</strong> Save positions, MCTS policies, and game outcomes</li>
+                            <li><strong>Train:</strong> Update network to match MCTS policies and predict outcomes</li>
+                            <li><strong>Evaluate:</strong> Test new network against current best</li>
+                            <li><strong>Promote:</strong> Replace current network if new one is stronger</li>
+                            <li><strong>Repeat:</strong> Continuous improvement!</li>
+                        </ol>
+                    </div>
+
+                    <p><em>Detailed tutorial for Phase 4 coming soon...</em></p>
+
+                    <div class="section-nav">
+                        <a href="#phase3" class="prev">← Phase 3: Neural Networks</a>
+                        <a href="#phase5" class="next">Next: Scaling Up (Coming Soon) →</a>
+                    </div>
+                </div>
+            </details>
+
+            <!-- PHASE 5: SCALING UP (COMING SOON) -->
+            <details class="phase phase-coming-soon" id="phase5">
+                <summary>📍 Phase 5: Scaling Up (Coming Soon)</summary>
+                <div class="phase-content">
+                    <div class="breadcrumb">
+                        <a href="#intro">Home</a> → Phase 5: Scaling Up
+                    </div>
+
+                    <div class="day-marker">📅 Weeks 9+ - Target: 1800+ Elo (Master Level)</div>
+
+                    <div class="learning-objective">
+                        <h3>Planned Objectives - Phase 5</h3>
+                        <p>Phase 5 will cover:</p>
+                        <ul class="checklist-pending">
+                            <li>Larger neural networks (20-40 residual blocks)</li>
+                            <li>More MCTS simulations (800-1600 per move)</li>
+                            <li>Cloud compute for training (GPU clusters)</li>
+                            <li>Distributed self-play workers</li>
+                            <li>Advanced techniques (opening books, endgame tablebases)</li>
+                            <li>Reaching master-level play (2000+ Elo)</li>
+                        </ul>
+                    </div>
+
+                    <h3>🎯 Goal: Master-Level Chess AI</h3>
+
+                    <p>Phase 5 is about <strong>scale</strong>: bigger networks, more compute, more games. This is where you can push toward master-level strength!</p>
+
+                    <div class="key-insight">
+                        <strong>Scaling Strategy:</strong>
+                        <ul>
+                            <li><strong>Start local:</strong> Mac mini M4 for self-play, cloud bursts for training</li>
+                            <li><strong>Incremental scaling:</strong> Gradually increase network size and simulations</li>
+                            <li><strong>Cost control:</strong> Short GPU bursts (2-6 hours) instead of 24/7 rentals</li>
+                            <li><strong>Checkpoints persist:</strong> All progress carries forward (no wasted work)</li>
+                        </ul>
+                    </div>
+
+                    <p><em>Detailed tutorial for Phase 5 coming soon...</em></p>
+
+                    <div class="section-nav">
+                        <a href="#phase4" class="prev">← Phase 4: Self-Play RL</a>
+                        <a href="#glossary" class="next">Reference: Glossary →</a>
+                    </div>
+                </div>
+            </details>
+
+            <!-- GLOSSARY -->
+            <section id="glossary" style="margin-top: 60px;">
+                <h2>📖 Complete Glossary</h2>
+
+                <div class="glossary-term">
+                    <dt>Alpha-Beta Pruning</dt>
+                    <dd>Optimization for minimax that skips searching branches that can't affect the final decision. With good move ordering, reduces nodes searched by ~95%.</dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>AlphaZero</dt>
+                    <dd>DeepMind's 2017 chess/Go/shogi AI that uses self-play reinforcement learning with MCTS and neural networks. Achieved superhuman strength without human data.</dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Centipawn</dt>
+                    <dd>Unit of chess evaluation. 100 centipawns = 1 pawn. Allows fine-grained position assessment (e.g., +20 = slight advantage worth 1/5 pawn).</dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Elo Rating</dt>
+                    <dd>Chess strength measurement system. ~1200 = beginner, ~1600 = intermediate, ~2000 = expert, ~2400 = master, ~2800 = world champion.</dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Evaluation Function</dt>
+                    <dd>Function that assigns a numerical score to a chess position. Positive = White winning, negative = Black winning, zero = equal.</dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Horizon Effect</dt>
+                    <dd>Bug in fixed-depth search where engine stops searching right before a tactical blow. Solved by quiescence search.</dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>MCTS (Monte Carlo Tree Search)</dt>
+                    <dd>Search algorithm that uses statistical sampling instead of exhaustive search. Balances exploration vs exploitation using UCT formula.</dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Minimax</dt>
+                    <dd>Classic game tree search algorithm. Maximizing player tries to maximize score, minimizing player tries to minimize, both assuming optimal play.</dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Policy Network</dt>
+                    <dd>Neural network that outputs probability distribution over moves. Tells MCTS which moves to explore first.</dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Quiescence Search</dt>
+                    <dd>Extension of minimax that continues searching tactical moves (captures, checks) until position is quiet. Eliminates horizon effect.</dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>ResNet (Residual Network)</dt>
+                    <dd>Neural network architecture with skip connections. Enables training very deep networks (40+ layers) without vanishing gradients.</dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Rollout</dt>
+                    <dd>In MCTS, playing out a game from a position to estimate its value. Can use random moves, evaluation function, or neural network.</dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Self-Play</dt>
+                    <dd>Training technique where AI plays against itself to generate training data. Key to AlphaZero's superhuman performance.</dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>UCI (Universal Chess Interface)</dt>
+                    <dd>Standard text-based protocol for chess engines and GUIs. Allows any UCI engine to work with any UCI GUI (Arena, Cute Chess, etc.).</dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>UCT (Upper Confidence Bound for Trees)</dt>
+                    <dd>Formula for node selection in MCTS. Balances exploitation (try winning moves) with exploration (try less-visited moves).</dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Value Network</dt>
+                    <dd>Neural network that outputs position evaluation in [-1, +1]. Tells MCTS how good a position is without rollouts.</dd>
+                </div>
+            </section>
+
+            <!-- RESOURCES -->
+            <section id="resources" style="margin-top: 60px;">
+                <h2>📚 Learning Resources</h2>
+
+                <h3>Chess Programming</h3>
+                <ul>
+                    <li><strong>Chess Programming Wiki:</strong> <code>https://www.chessprogramming.org</code> - Comprehensive wiki on chess engine development</li>
+                    <li><strong>python-chess Documentation:</strong> <code>https://python-chess.readthedocs.io</code> - Library used in this project</li>
+                    <li><strong>Cute Chess:</strong> GUI for testing engines and running tournaments</li>
+                </ul>
+
+                <h3>Algorithms</h3>
+                <ul>
+                    <li><strong>Minimax & Alpha-Beta:</strong> Classic AI textbooks (Russell & Norvig, "Artificial Intelligence: A Modern Approach")</li>
+                    <li><strong>Monte Carlo Tree Search:</strong> "A Survey of Monte Carlo Tree Search Methods" (Browne et al., 2012)</li>
+                    <li><strong>UCT Algorithm:</strong> "Bandit Based Monte-Carlo Planning" (Kocsis & Szepesvári, 2006)</li>
+                </ul>
+
+                <h3>Neural Networks & Deep Learning</h3>
+                <ul>
+                    <li><strong>AlphaZero Paper:</strong> "Mastering Chess and Shogi by Self-Play with a General Reinforcement Learning Algorithm" (Silver et al., 2017)</li>
+                    <li><strong>ResNet Paper:</strong> "Deep Residual Learning for Image Recognition" (He et al., 2015)</li>
+                    <li><strong>PyTorch Tutorials:</strong> <code>https://pytorch.org/tutorials</code> - Official PyTorch learning resources</li>
+                </ul>
+
+                <h3>Reinforcement Learning</h3>
+                <ul>
+                    <li><strong>Sutton & Barto:</strong> "Reinforcement Learning: An Introduction" (classic RL textbook)</li>
+                    <li><strong>Spinning Up in Deep RL:</strong> OpenAI's educational resource on deep RL</li>
+                    <li><strong>AlphaGo Documentary:</strong> Excellent introduction to the concepts behind AlphaZero</li>
+                </ul>
+            </section>
+
+            <!-- ALPHAZERO TIMELINE -->
+            <section id="timeline" style="margin-top: 60px; margin-bottom: 60px;">
+                <h2>🕐 AlphaZero: Historical Timeline</h2>
+
+                <table>
+                    <tr>
+                        <th>Year</th>
+                        <th>Milestone</th>
+                        <th>Impact</th>
+                    </tr>
+                    <tr>
+                        <td>2016</td>
+                        <td>AlphaGo defeats Lee Sedol (Go world champion)</td>
+                        <td>First superhuman Go AI</td>
+                    </tr>
+                    <tr>
+                        <td>2017</td>
+                        <td>AlphaGo Zero learns from pure self-play</td>
+                        <td>Surpasses AlphaGo without human data</td>
+                    </tr>
+                    <tr>
+                        <td>Dec 2017</td>
+                        <td>AlphaZero generalizes to chess, shogi, Go</td>
+                        <td>Defeats Stockfish (strongest chess engine)</td>
+                    </tr>
+                    <tr>
+                        <td>2018-Present</td>
+                        <td>Open-source implementations (Leela Chess Zero, KataGo)</td>
+                        <td>AlphaZero techniques democratized</td>
+                    </tr>
+                </table>
+
+                <div class="key-insight">
+                    <strong>What AlphaZero Taught Us:</strong>
+                    <ul>
+                        <li>Self-play RL can achieve superhuman performance without human data</li>
+                        <li>General algorithms work across different games (chess, Go, shogi)</li>
+                        <li>Neural networks can discover novel strategies humans never found</li>
+                        <li>Combining search (MCTS) with learning (neural networks) is incredibly powerful</li>
+                    </ul>
+                </div>
+            </section>
 
         </div>
     </main>
