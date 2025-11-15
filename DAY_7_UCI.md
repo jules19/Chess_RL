@@ -8,10 +8,12 @@ Implemented the **Universal Chess Interface (UCI)** protocol, allowing Chess_RL 
 
 ### Files Created
 
-1. **`uci/engine.py`** - Main UCI protocol implementation (~280 lines)
+1. **`uci/engine.py`** - Main UCI protocol implementation with logging (~570 lines)
 2. **`chess_rl_uci.py`** - Simple launcher script
 3. **`UCI_SETUP_MAC.md`** - Comprehensive Mac setup guide
-4. **`DAY_7_UCI.md`** - This summary
+4. **`UCI_LOGGING_README.md`** - Comprehensive logging documentation
+5. **`test_uci_logging.py`** - Test script for logging features
+6. **`DAY_7_UCI.md`** - This summary
 
 ### UCI Protocol Implementation
 
@@ -43,6 +45,24 @@ Users can configure via UCI:
 
 3. **Debug** (on/off):
    - Enable debug logging for troubleshooting
+
+4. **UCI Log** (on/off):
+   - Enable UCI transaction logging with timestamps
+   - Captures all UCI commands and responses
+   - Perfect for debugging protocol issues
+
+5. **UCI Log File** (string, default: `uci_transactions.log`):
+   - Path to UCI transaction log file
+
+6. **PGN Export** (on/off):
+   - Enable automatic PGN game export
+   - Games saved in standard PGN format
+   - Compatible with chess analysis tools
+
+7. **PGN Export File** (string, default: `games.pgn`):
+   - Path to PGN export file
+
+See [`UCI_LOGGING_README.md`](UCI_LOGGING_README.md) for detailed documentation on logging features.
 
 ### Integration with Existing Code
 
@@ -102,6 +122,48 @@ Result: ✅ FEN positions parsed correctly
 $ echo "position startpos moves e2e4 e7e5 g1f3" | ...
 Result: ✅ Move sequences applied correctly
 ```
+
+## Logging Features
+
+### UCI Transaction Logging
+
+Captures all UCI protocol communication for debugging and analysis:
+
+```bash
+# Enable UCI transaction logging
+python3 uci/engine.py --uci-log debug.log
+
+# Enable PGN game export
+python3 uci/engine.py --pgn-log games.pgn
+
+# Enable both
+python3 uci/engine.py --uci-log debug.log --pgn-log games.pgn
+```
+
+**Use Cases:**
+- Debug UCI protocol issues
+- Track engine decision-making
+- Analyze game sequences
+- Build training data for ML/RL
+- Post-game analysis in chess tools
+
+**Example Log Output:**
+```
+[2025-11-14 10:23:45.123] IN : position startpos moves e2e4
+[2025-11-14 10:23:45.124] IN : go depth 4
+[2025-11-14 10:23:45.789] OUT: info depth 4 score cp 25
+[2025-11-14 10:23:45.790] OUT: bestmove e7e5
+```
+
+### PGN Game Export
+
+Automatically saves games in standard PGN format:
+- Compatible with Lichess, Chess.com, ChessBase
+- Includes game metadata and move history
+- Detects game outcomes (checkmate, stalemate, draws)
+- Perfect for analyzing engine performance
+
+See [`UCI_LOGGING_README.md`](UCI_LOGGING_README.md) for complete documentation.
 
 ## Usage Examples
 
@@ -263,9 +325,11 @@ Day 7 complete! We now have:
 - ✅ Working UCI interface
 - ✅ All engine types accessible via GUI
 - ✅ Professional testing infrastructure
+- ✅ UCI transaction logging for debugging
+- ✅ PGN game export for analysis
 - ✅ Objective strength measurement capability
 - ✅ Foundation for comparing future improvements
 
 **Phase 0 (Week 1) successfully completed!** 🎉
 
-The engine is ready for serious development and testing as we move into MCTS and beyond.
+The engine is ready for serious development and testing as we move into MCTS and beyond. With comprehensive logging in place, we can now track engine behavior, debug issues efficiently, and build datasets for future machine learning applications.

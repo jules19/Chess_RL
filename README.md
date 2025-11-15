@@ -26,6 +26,7 @@ Incremental development of a Chess program using Reinforcement Learning
 - **Play in terminal**: `python3 cli/play.py`
 - **Play in GUI**: See [`UCI_SETUP_MAC.md`](UCI_SETUP_MAC.md) for Mac setup
 - **Test UCI**: `python3 chess_rl_uci.py`
+- **UCI Logging**: `python3 uci/engine.py --uci-log debug.log --pgn-log games.pgn` (see [`UCI_LOGGING_README.md`](UCI_LOGGING_README.md))
 
 **Next Steps:**
 - Week 2: MCTS engine (~1400-1600 Elo)
