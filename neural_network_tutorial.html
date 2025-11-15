@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phase 3: Neural Networks for Chess - Complete Tutorial</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #2c3e50;
+            border-bottom: 4px solid #667eea;
+            padding-bottom: 15px;
+            font-size: 2.5em;
+        }
+
+        h2 {
+            color: #34495e;
+            margin-top: 50px;
+            border-left: 6px solid #667eea;
+            padding-left: 20px;
+            background: linear-gradient(90deg, #f8f9fa 0%, white 100%);
+            padding: 15px 20px;
+            border-radius: 4px;
+        }
+
+        h3 {
+            color: #555;
+            margin-top: 30px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 8px;
+        }
+
+        h4 {
+            color: #666;
+            margin-top: 20px;
+        }
+
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Courier New', Courier, monospace;
+            color: #e74c3c;
+            font-size: 0.9em;
+        }
+
+        pre {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            line-height: 1.5;
+            border-left: 4px solid #667eea;
+        }
+
+        pre code {
+            background-color: transparent;
+            color: #ecf0f1;
+            padding: 0;
+        }
+
+        .learning-objective {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
+        }
+
+        .learning-objective h3 {
+            color: white;
+            border: none;
+            margin-top: 0;
+            padding-bottom: 0;
+        }
+
+        .key-insight {
+            background-color: #e8f4f8;
+            border-left: 5px solid #3498db;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 4px;
+        }
+
+        .key-insight strong {
+            color: #2980b9;
+        }
+
+        .warning {
+            background-color: #fff3cd;
+            border-left: 5px solid #ffc107;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 4px;
+        }
+
+        .success {
+            background-color: #d4edda;
+            border-left: 5px solid #28a745;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 4px;
+        }
+
+        .checkpoint {
+            background-color: #f0f0ff;
+            border: 2px solid #667eea;
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 8px;
+        }
+
+        .checkpoint h4 {
+            color: #667eea;
+            margin-top: 0;
+            font-size: 1.2em;
+        }
+
+        .day-marker {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 0.95em;
+            margin: 15px 0;
+            box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+        }
+
+        .phase-nav {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 30px 0;
+            border: 2px solid #e0e0e0;
+        }
+
+        .phase-nav a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 5px 10px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .phase-nav a:hover {
+            background-color: #e8f4f8;
+        }
+
+        .diagram {
+            background-color: #f9f9f9;
+            border: 2px solid #ddd;
+            padding: 20px;
+            margin: 25px 0;
+            font-family: 'Courier New', Courier, monospace;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+
+        .code-explanation {
+            background-color: #fffef0;
+            border-left: 4px solid #f39c12;
+            padding: 15px;
+            margin: 15px 0 25px 0;
+            font-size: 0.95em;
+        }
+
+        .interactive-demo {
+            background-color: #f0fff4;
+            border: 2px solid #28a745;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 8px;
+        }
+
+        .progress-tracker {
+            background: linear-gradient(90deg, #28a745 0%, #28a745 20%, #e0e0e0 20%, #e0e0e0 100%);
+            height: 30px;
+            border-radius: 15px;
+            margin: 20px 0;
+            position: relative;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .progress-label {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            line-height: 30px;
+            color: white;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+            margin: 30px 0;
+        }
+
+        .timeline-item {
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #667eea;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            border-bottom: 1px dotted #667eea;
+            cursor: help;
+        }
+
+        .architecture-diagram {
+            background: linear-gradient(135deg, #667eea22 0%, #764ba222 100%);
+            border: 2px solid #667eea;
+            padding: 30px;
+            margin: 30px 0;
+            border-radius: 10px;
+            font-family: 'Courier New', Courier, monospace;
+            text-align: center;
+        }
+
+        .math {
+            font-style: italic;
+            background-color: #f0f0ff;
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+            display: inline-block;
+        }
+
+        ul.checklist {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        ul.checklist li:before {
+            content: "✅ ";
+            margin-right: 10px;
+        }
+
+        .footer-nav {
+            background-color: #2c3e50;
+            color: white;
+            padding: 30px;
+            margin-top: 50px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .footer-nav a {
+            color: #3498db;
+            text-decoration: none;
+            margin: 0 15px;
+            font-weight: bold;
+        }
+
+        .footer-nav a:hover {
+            color: #5dade2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 Phase 3: Neural Networks for Chess</h1>
+        <p style="font-size: 1.2em; color: #666;">A comprehensive guide to building AlphaZero-style neural networks from scratch</p>
+
+        <div class="progress-tracker">
+            <div class="progress-label">Phase 3a Progress: 20% Complete (Days 1-2 ✅)</div>
+        </div>
+
+        <div class="phase-nav">
+            <strong>📚 Tutorial Navigation:</strong><br><br>
+            <a href="minimax_tutorial.html">← Phase 0-1: Minimax & Evaluation</a> |
+            <a href="#overview">Overview</a> |
+            <a href="#day1-2">Days 1-2: Architecture</a> |
+            <a href="#day3-4">Days 3-4: Dataset</a> |
+            <a href="#day8-10">Days 8-10: Training</a> |
+            <a href="#integration">Integration</a>
+        </div>
+
+        <div class="learning-objective" id="overview">
+            <h3>🎯 What You'll Learn in Phase 3</h3>
+            <p><strong>Big Picture:</strong> Build a neural network that can evaluate chess positions and suggest good moves, just like AlphaZero.</p>
+            <ul>
+                <li><strong>Part A (Days 1-7):</strong> Build & train a policy-value network on supervised data</li>
+                <li><strong>Part B (Days 8-14):</strong> Replace hand-crafted evaluation with neural network in MCTS</li>
+                <li><strong>Ultimate Goal:</strong> Create NN-MCTS engine ready for self-play reinforcement learning</li>
+            </ul>
+            <p><strong>Prerequisites:</strong> Completed Phases 0-2 (Random, Minimax, MCTS engines)</p>
+        </div>
+
+        <h2 id="introduction">🌟 Introduction: Why Neural Networks?</h2>
+
+        <h3>The Journey So Far</h3>
+        <p>You've built an impressive progression of chess engines:</p>
+        <ul>
+            <li>✅ <strong>Random Player:</strong> Picks moves randomly (baseline)</li>
+            <li>✅ <strong>Material Player:</strong> Counts piece values (greedy)</li>
+            <li>✅ <strong>Minimax (depth-3):</strong> Looks ahead with hand-crafted evaluation (~1200-1400 Elo)</li>
+            <li>✅ <strong>MCTS (200 sims):</strong> Monte Carlo Tree Search with smart rollouts (~1400-1600 Elo)</li>
+        </ul>
+
+        <p>All of these engines use <strong>hand-crafted evaluation</strong>: you wrote code that says "center control is worth 30 centipawns" or "knights near the center are good." This works well, but has limits:</p>
+
+        <div class="key-insight">
+            <strong>🤔 The Hand-Crafted Evaluation Problem:</strong>
+            <ul>
+                <li>Requires chess expertise to design</li>
+                <li>Hard to balance different factors</li>
+                <li>Misses subtle patterns humans might not notice</li>
+                <li>Doesn't improve on its own (static)</li>
+            </ul>
+        </div>
+
+        <h3>The Neural Network Solution</h3>
+        <p>Instead of writing rules by hand, we'll train a neural network to <strong>learn</strong> what makes a position good or bad by studying millions of positions. This is how AlphaZero achieved superhuman strength.</p>
+
+        <div class="architecture-diagram">
+            <strong>🏗️ The Big Picture: AlphaZero Architecture</strong><br><br>
+            <pre>
+Chess Position → Neural Network → { Policy: "These moves look good"
+                                   { Value:  "White is winning +0.7"
+                    ↓
+              Monte Carlo Tree Search
+                    ↓
+              Best Move Selection
+            </pre>
+        </div>
+
+        <div class="key-insight">
+            <strong>💡 Key Insight:</strong> Neural networks can <em>discover</em> patterns and strategies that humans never explicitly programmed. AlphaZero discovered novel opening ideas and endgame techniques by learning from self-play, not from human games.
+        </div>
+
+        <h2 id="conceptual-foundation">🧩 Conceptual Foundation</h2>
+
+        <h3>What is a Neural Network? (Simple Explanation)</h3>
+        <p>Think of a neural network as a <strong>function approximator</strong>. Just like <code>y = 2x + 3</code> is a function that maps <code>x</code> to <code>y</code>, a neural network is a (very complex) function that maps inputs to outputs.</p>
+
+        <div class="diagram">
+            <strong>Simple Function vs Neural Network:</strong>
+            <pre>
+Simple Function:
+  x (input) → [2x + 3] → y (output)
+
+Neural Network:
+  Chess Board → [Million Parameters] → {Move Probabilities, Position Value}
+            </pre>
+        </div>
+
+        <p>The magic is that the neural network <strong>learns</strong> the right parameters (weights) from data, rather than being hand-designed.</p>
+
+        <h3>Two Outputs: Policy and Value</h3>
+        <p>Our neural network has <strong>two heads</strong> (outputs), following the AlphaZero design:</p>
+
+        <div class="timeline">
+            <div class="timeline-item">
+                <strong>1️⃣ Policy Head:</strong> Predicts which moves are good<br>
+                <em>Output:</em> Probability distribution over all possible moves<br>
+                <em>Example:</em> [e4: 25%, d4: 20%, Nf3: 15%, ... other moves: 40%]
+            </div>
+            <div class="timeline-item">
+                <strong>2️⃣ Value Head:</strong> Evaluates the current position<br>
+                <em>Output:</em> Single number from -1 to +1<br>
+                <em>Example:</em> +0.3 means "White is slightly better"
+            </div>
+        </div>
+
+        <div class="key-insight">
+            <strong>🎯 Why Two Heads?</strong> The policy helps MCTS explore good moves faster (focus search), while the value provides an immediate position evaluation (no need for rollouts). Together, they make MCTS much stronger.
+        </div>
+
+        <h3>The Learning Process (Supervised Learning)</h3>
+        <p>In Phase 3a, we'll use <strong>supervised learning</strong> - the network learns from examples:</p>
+
+        <ol>
+            <li><strong>Generate Data:</strong> Play games with your MCTS engine → record positions + outcomes</li>
+            <li><strong>Train Network:</strong> Show the network positions and teach it:
+                <ul>
+                    <li>"This position led to a win for White" → value should be positive</li>
+                    <li>"MCTS chose this move after 200 simulations" → policy should favor it</li>
+                </ul>
+            </li>
+            <li><strong>Test Network:</strong> See if it can predict good moves and outcomes on new positions</li>
+            <li><strong>Iterate:</strong> Repeat until the network is accurate</li>
+        </ol>
+
+        <div class="warning">
+            <strong>⚠️ Important Distinction:</strong>
+            <ul>
+                <li><strong>Phase 3a (Supervised Learning):</strong> Learn from existing games (MCTS or human games)</li>
+                <li><strong>Phase 4 (Self-Play RL):</strong> Play against yourself, learn from your own games, improve over time</li>
+            </ul>
+            We start with supervised learning because it's simpler and gives us a working baseline before attempting self-play.
+        </div>
+
+        <h2 id="day1-2">📅 Days 1-2: Neural Network Architecture</h2>
+
+        <div class="day-marker">✅ COMPLETE - Days 1-2</div>
+
+        <div class="learning-objective">
+            <h3>Learning Objectives - Days 1-2</h3>
+            <p>By the end of these two days, you will:</p>
+            <ul class="checklist">
+                <li>Understand ResNet architecture (residual blocks with skip connections)</li>
+                <li>Build a policy-value network with dual heads</li>
+                <li>Encode chess boards as 20-plane tensors</li>
+                <li>Convert moves to/from integer indices</li>
+                <li>Mask illegal moves in network outputs</li>
+                <li>Validate network shapes and data flow</li>
+            </ul>
+        </div>
+
+        <h3>🏗️ Architecture Overview: The ResNet Backbone</h3>
+
+        <p>Our network uses a <strong>ResNet</strong> (Residual Network) architecture, which is the foundation of AlphaZero. The key innovation is the <strong>skip connection</strong> (also called residual connection).</p>
+
+        <div class="diagram">
+            <strong>Traditional Layer vs Residual Block:</strong>
+            <pre>
+Traditional Layer:
+  x → [Conv → ReLU] → output
+
+Residual Block (with skip connection):
+  x → [Conv → ReLU → Conv → ReLU] → output
+  └──────────────(+)────────────────┘
+           (skip connection)
+            </pre>
+        </div>
+
+        <div class="key-insight">
+            <strong>💡 Why Skip Connections Matter:</strong> In deep networks (20+ layers), gradients can "vanish" during backpropagation, making training impossible. Skip connections allow gradients to flow directly through the network, enabling training of very deep models. This is why AlphaZero can use 20-40 residual blocks.
+        </div>
+
+        <h3>📐 Complete Network Architecture</h3>
+
+        <div class="architecture-diagram">
+            <strong>Full Policy-Value Network (Layer by Layer):</strong>
+            <pre style="text-align: left; background-color: transparent; color: #2c3e50;">
+INPUT: (batch, 20, 8, 8)
+  ↓
+[Initial Conv 3×3, 128 channels]
+  ↓
+[Residual Block 1] ──┐
+  ↓                   │ (Skip connections
+[Residual Block 2] ──┤  allow deep training)
+  ↓                   │
+[Residual Block 3] ──┤
+  ↓                   │
+[Residual Block 4] ──┘
+  ↓
+  ├────────────────┬────────────────┐
+  ↓                ↓                ↓
+POLICY HEAD      VALUE HEAD
+(Move Probs)     (Position Eval)
+  ↓                ↓
+Conv 1×1 (2ch)   Conv 1×1 (1ch)
+  ↓                ↓
+Flatten          Flatten
+  ↓                ↓
+Linear           FC(256)
+  ↓                ↓
+(4672,)          FC(1)
+logits           ↓
+               Tanh
+                 ↓
+               [-1, +1]
+            </pre>
+        </div>
+
+        <h3>🔢 Network Statistics</h3>
+
+        <table>
+            <tr>
+                <th>Component</th>
+                <th>Details</th>
+            </tr>
+            <tr>
+                <td>Input Size</td>
+                <td>(batch, 20, 8, 8) = 1,280 values per position</td>
+            </tr>
+            <tr>
+                <td>Residual Blocks</td>
+                <td>4 blocks (small for fast iteration, can scale to 20-40)</td>
+            </tr>
+            <tr>
+                <td>Channels</td>
+                <td>128 (can scale to 256-512 later)</td>
+            </tr>
+            <tr>
+                <td>Policy Output</td>
+                <td>4,672 move logits (all possible from-to combinations)</td>
+            </tr>
+            <tr>
+                <td>Value Output</td>
+                <td>1 scalar in range [-1, +1]</td>
+            </tr>
+            <tr>
+                <td>Total Parameters</td>
+                <td>~1,410,000 (1.4 million)</td>
+            </tr>
+            <tr>
+                <td>Model Size</td>
+                <td>~5.5 MB (FP32)</td>
+            </tr>
+        </table>
+
+        <div class="key-insight">
+            <strong>🎓 Design Philosophy:</strong> We start small (4 blocks, 128 channels) for fast experimentation on your Mac mini M4. Once the pipeline works, you can scale up to 20-40 blocks for stronger play. AlphaZero uses 40 blocks with 256 channels, but requires GPUs for training.
+        </div>
+
+        <h3>💻 Code Walkthrough: Residual Block</h3>
+
+        <p>Let's understand the code piece by piece, starting with the fundamental building block:</p>
+
+        <pre><code class="language-python">class ResidualBlock(nn.Module):
+    """
+    Residual block with skip connection.
+
+    Architecture: x → Conv → BN → ReLU → Conv → BN → (+x) → ReLU
+    """
+    def __init__(self, channels=128):
+        super(ResidualBlock, self).__init__()
+
+        # First conv layer
+        self.conv1 = nn.Conv2d(channels, channels,
+                               kernel_size=3, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(channels)
+
+        # Second conv layer
+        self.conv2 = nn.Conv2d(channels, channels,
+                               kernel_size=3, padding=1, bias=False)
+        self.bn2 = nn.BatchNorm2d(channels)
+
+    def forward(self, x):
+        identity = x  # Save for skip connection
+
+        # First conv block
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = F.relu(out)
+
+        # Second conv block
+        out = self.conv2(out)
+        out = self.bn2(out)
+
+        # Skip connection (the magic!)
+        out = out + identity
+
+        # Final activation
+        out = F.relu(out)
+        return out
+</code></pre>
+
+        <div class="code-explanation">
+            <strong>🔍 Code Breakdown:</strong>
+            <ul>
+                <li><code>kernel_size=3</code>: 3×3 convolution (learns local patterns like "knight + pawn formation")</li>
+                <li><code>padding=1</code>: Keeps output same size as input (8×8 stays 8×8)</li>
+                <li><code>bias=False</code>: BatchNorm has bias, so conv doesn't need it (saves parameters)</li>
+                <li><code>identity = x</code>: Save input for skip connection</li>
+                <li><code>out + identity</code>: The residual/skip connection (key innovation!)</li>
+            </ul>
+        </div>
+
+        <h3>💻 Code Walkthrough: Policy Head</h3>
+
+        <pre><code class="language-python">class PolicyHead(nn.Module):
+    """
+    Policy head: Outputs probability distribution over moves.
+
+    Architecture: (128, 8, 8) → Conv 1×1 → Flatten → Linear → (4672,)
+    """
+    def __init__(self, in_channels=128):
+        super(PolicyHead, self).__init__()
+
+        # Reduce channels with 1×1 convolution
+        self.conv = nn.Conv2d(in_channels, 2, kernel_size=1)
+        self.bn = nn.BatchNorm2d(2)
+
+        # Fully connected to move space (2×8×8 = 128 → 4672)
+        self.fc = nn.Linear(128, 4672)
+
+    def forward(self, x):
+        # Reduce channels
+        out = self.conv(x)      # (batch, 128, 8, 8) → (batch, 2, 8, 8)
+        out = self.bn(out)
+        out = F.relu(out)
+
+        # Flatten
+        out = out.view(out.size(0), -1)  # → (batch, 128)
+
+        # Fully connected to move space
+        policy_logits = self.fc(out)  # → (batch, 4672)
+
+        return policy_logits
+</code></pre>
+
+        <div class="code-explanation">
+            <strong>🔍 Code Breakdown:</strong>
+            <ul>
+                <li><code>kernel_size=1</code>: 1×1 conv acts as a learned channel reduction (128 → 2)</li>
+                <li><code>view(batch, -1)</code>: Flatten (2, 8, 8) → 128 values</li>
+                <li><code>fc(out)</code>: Linear layer maps 128 → 4672 (all possible moves)</li>
+                <li><strong>Output:</strong> Unnormalized logits (not probabilities yet - softmax comes later)</li>
+            </ul>
+        </div>
+
+        <h3>💻 Code Walkthrough: Value Head</h3>
+
+        <pre><code class="language-python">class ValueHead(nn.Module):
+    """
+    Value head: Outputs scalar position evaluation.
+
+    Architecture: (128, 8, 8) → Conv 1×1 → Flatten → FC(256) → FC(1) → Tanh → [-1, 1]
+    """
+    def __init__(self, in_channels=128):
+        super(ValueHead, self).__init__()
+
+        # Reduce channels
+        self.conv = nn.Conv2d(in_channels, 1, kernel_size=1)
+        self.bn = nn.BatchNorm2d(1)
+
+        # Fully connected layers (1×8×8 = 64 → 256 → 1)
+        self.fc1 = nn.Linear(64, 256)
+        self.fc2 = nn.Linear(256, 1)
+
+    def forward(self, x):
+        # Reduce channels
+        out = self.conv(x)      # (batch, 128, 8, 8) → (batch, 1, 8, 8)
+        out = self.bn(out)
+        out = F.relu(out)
+
+        # Flatten
+        out = out.view(out.size(0), -1)  # → (batch, 64)
+
+        # Hidden layer
+        out = self.fc1(out)     # → (batch, 256)
+        out = F.relu(out)
+
+        # Output layer
+        value = self.fc2(out)   # → (batch, 1)
+        value = torch.tanh(value)  # Squash to [-1, 1]
+
+        return value
+</code></pre>
+
+        <div class="code-explanation">
+            <strong>🔍 Code Breakdown:</strong>
+            <ul>
+                <li><code>fc1</code>: Hidden layer with 256 units (learns complex evaluation patterns)</li>
+                <li><code>torch.tanh()</code>: Squashes output to [-1, +1] range</li>
+                <li><strong>Interpretation:</strong> +1 = White winning, 0 = draw, -1 = Black winning</li>
+            </ul>
+        </div>
+
+        <h3>🎨 Board State Encoding: The Input Representation</h3>
+
+        <p>Chess boards must be converted to tensors that neural networks can process. We use a <strong>20-plane representation</strong>:</p>
+
+        <div class="diagram">
+            <strong>20-Plane Tensor Encoding (8×8 per plane):</strong>
+            <pre>
+Planes 0-11: Piece Positions (binary: 1=piece present, 0=empty)
+  Plane 0:  White Pawns      (1s where white pawns are)
+  Plane 1:  White Knights    (1s where white knights are)
+  Plane 2:  White Bishops    ...
+  Plane 3:  White Rooks
+  Plane 4:  White Queens
+  Plane 5:  White Kings
+  Plane 6:  Black Pawns
+  Plane 7:  Black Knights
+  Plane 8:  Black Bishops
+  Plane 9:  Black Rooks
+  Plane 10: Black Queens
+  Plane 11: Black Kings
+
+Planes 12-15: Castling Rights (constant across board)
+  Plane 12: White kingside castling  (all 1s if available, all 0s if not)
+  Plane 13: White queenside castling
+  Plane 14: Black kingside castling
+  Plane 15: Black queenside castling
+
+Plane 16: Side to Move (all 1s if White's turn, all 0s if Black's turn)
+
+Plane 17: Fifty-Move Counter (normalized to [0, 1])
+
+Plane 18: Repetition Counter (0, 1, or 2+ repetitions)
+
+Plane 19: En Passant Square (1 at en passant square, 0 elsewhere)
+            </pre>
+        </div>
+
+        <h3>💻 Code Walkthrough: Board Encoding</h3>
+
+        <pre><code class="language-python">def board_to_tensor(board: chess.Board) -> np.ndarray:
+    """Convert chess board to (20, 8, 8) tensor."""
+    tensor = np.zeros((20, 8, 8), dtype=np.float32)
+
+    # Encode piece positions (planes 0-11)
+    for square, piece in board.piece_map().items():
+        rank = chess.square_rank(square)  # 0-7 (1st rank to 8th rank)
+        file = chess.square_file(square)  # 0-7 (a-file to h-file)
+
+        # Calculate plane: White pieces (0-5), Black pieces (6-11)
+        if piece.color == chess.WHITE:
+            plane = piece.piece_type - 1  # PAWN=1 → plane 0
+        else:
+            plane = piece.piece_type - 1 + 6  # PAWN=1 → plane 6
+
+        tensor[plane, rank, file] = 1.0
+
+    # Encode castling rights (planes 12-15)
+    tensor[12, :, :] = float(board.has_kingside_castling_rights(chess.WHITE))
+    tensor[13, :, :] = float(board.has_queenside_castling_rights(chess.WHITE))
+    # ... (similar for Black)
+
+    # Side to move (plane 16)
+    tensor[16, :, :] = float(board.turn == chess.WHITE)
+
+    # Fifty-move counter (plane 17), normalized
+    tensor[17, :, :] = min(board.halfmove_clock, 100) / 100.0
+
+    # En passant square (plane 19)
+    if board.ep_square is not None:
+        ep_rank = chess.square_rank(board.ep_square)
+        ep_file = chess.square_file(board.ep_square)
+        tensor[19, ep_rank, ep_file] = 1.0
+
+    return tensor
+</code></pre>
+
+        <div class="code-explanation">
+            <strong>🔍 Key Points:</strong>
+            <ul>
+                <li><strong>Binary encoding:</strong> 1=feature present, 0=absent (easy for network to learn)</li>
+                <li><strong>Separate planes per piece type:</strong> Network can learn patterns like "knight + pawn"</li>
+                <li><strong>Normalized features:</strong> Fifty-move counter scaled to [0, 1] for stable training</li>
+                <li><strong>Constant planes:</strong> Castling rights same across entire board (broadcast information)</li>
+            </ul>
+        </div>
+
+        <h3>🎯 Move Encoding: From Chess Moves to Integers</h3>
+
+        <p>Neural networks output numbers, not chess moves. We need a bidirectional mapping:</p>
+
+        <div class="diagram">
+            <strong>Move Encoding Scheme (Simplified):</strong>
+            <pre>
+Chess Move ↔ Integer Index [0, 4671]
+
+Encoding:  move_index = from_square × 64 + to_square
+Decoding:  from_square = move_index ÷ 64
+           to_square   = move_index % 64
+
+Example:
+  e2e4 → from=12, to=28 → index = 12×64 + 28 = 796
+  d2d4 → from=11, to=27 → index = 11×64 + 27 = 731
+
+Promotions: Add offset based on piece (Knight=+4096, Bishop=+8192, etc.)
+            </pre>
+        </div>
+
+        <pre><code class="language-python">def move_to_index(move: chess.Move) -> int:
+    """Convert chess.Move to integer index."""
+    from_square = move.from_square  # 0-63
+    to_square = move.to_square      # 0-63
+
+    # Base index
+    index = from_square * 64 + to_square
+
+    # Handle promotions (add offset)
+    if move.promotion:
+        promotion_offset = (move.promotion - 2) * 4096
+        index += promotion_offset
+
+    return index
+
+def index_to_move(index: int, board: chess.Board) -> chess.Move:
+    """Convert index back to chess.Move (with validation)."""
+    # Decode promotion
+    if index >= 4096:
+        promotion_piece = (index // 4096) + 1
+        index = index % 4096
+    else:
+        promotion_piece = None
+
+    # Decode squares
+    from_square = index // 64
+    to_square = index % 64
+
+    # Create move and validate
+    move = chess.Move(from_square, to_square, promotion=promotion_piece)
+    return move if move in board.legal_moves else None
+</code></pre>
+
+        <h3>🚫 Legal Move Masking: Critical for Chess</h3>
+
+        <p>Unlike Go or checkers, chess has many illegal moves. We <strong>must</strong> mask them:</p>
+
+        <div class="key-insight">
+            <strong>⚠️ Why Masking Matters:</strong> Without masking, the network might output high probabilities for illegal moves (e.g., moving opponent's pieces, castling through check). Legal move masking ensures the policy probability distribution only includes valid moves.
+        </div>
+
+        <pre><code class="language-python">def legal_moves_mask(board: chess.Board) -> np.ndarray:
+    """Create binary mask: 1=legal, 0=illegal."""
+    mask = np.zeros(4672, dtype=np.float32)
+
+    for move in board.legal_moves:
+        index = move_to_index(move)
+        if index < 4672:
+            mask[index] = 1.0
+
+    return mask
+
+# Usage in network inference:
+policy_logits, value = network(board_tensor)
+legal_mask = legal_moves_mask(board)
+
+# Mask illegal moves (set to large negative value)
+masked_logits = policy_logits + (legal_mask - 1.0) * 1e9
+
+# Convert to probabilities (only legal moves get non-zero prob)
+policy_probs = F.softmax(masked_logits, dim=1)
+</code></pre>
+
+        <div class="checkpoint">
+            <h4>✅ Checkpoint: Days 1-2 Complete!</h4>
+            <p><strong>What you've built:</strong></p>
+            <ul class="checklist">
+                <li>ResNet-based policy-value network (1.4M parameters)</li>
+                <li>Board encoding: chess.Board → (20, 8, 8) tensor</li>
+                <li>Move encoding: chess.Move ↔ integer index</li>
+                <li>Legal move masking for safe inference</li>
+                <li>Batch processing utilities</li>
+            </ul>
+            <p><strong>Validation:</strong></p>
+            <ul class="checklist">
+                <li>Network forward pass produces correct shapes</li>
+                <li>Value output in [-1, 1] range</li>
+                <li>Board encoding preserves all information</li>
+                <li>Move encoding is bijective (round-trip works)</li>
+            </ul>
+            <p><strong>Files created:</strong> <code>net/model.py</code>, <code>net/encoding.py</code>, <code>net/__init__.py</code></p>
+            <p><strong>Next:</strong> Generate training data from MCTS self-play games!</p>
+        </div>
+
+        <h2 id="day3-4">📅 Days 3-4: Dataset Creation (Coming Next)</h2>
+
+        <div class="day-marker">📅 NEXT - Days 3-4</div>
+
+        <div class="learning-objective">
+            <h3>Learning Objectives - Days 3-4</h3>
+            <p>By the end of Days 3-4, you will:</p>
+            <ul>
+                <li>Generate 100 games of MCTS self-play (200 sims/move)</li>
+                <li>Extract 5,000-10,000 training positions</li>
+                <li>Understand what makes good training data</li>
+                <li>Create PyTorch Dataset and DataLoader</li>
+                <li>Split data into train/validation sets (90/10)</li>
+                <li>Validate data quality and distribution</li>
+            </ul>
+        </div>
+
+        <h3>🎯 Goal: Generate Training Data</h3>
+
+        <p>Neural networks learn from examples. We need to generate thousands of chess positions with labels:</p>
+
+        <div class="diagram">
+            <strong>Training Example Structure:</strong>
+            <pre>
+One Training Example = {
+    board_state: (20, 8, 8) tensor,
+    move_played: integer index [0, 4671],
+    game_outcome: +1 (White won), 0 (draw), or -1 (Black won),
+    legal_mask: (4672,) binary mask
+}
+
+Dataset = Collection of 5,000-10,000 such examples
+            </pre>
+        </div>
+
+        <h3>📊 What Makes Good Training Data?</h3>
+
+        <div class="key-insight">
+            <strong>💡 Data Quality Principles:</strong>
+            <ul>
+                <li><strong>Diversity:</strong> Different openings, middlegames, endgames</li>
+                <li><strong>Balance:</strong> Roughly equal wins/draws/losses for each color</li>
+                <li><strong>Quality:</strong> Moves from strong play (MCTS 200 sims, not random)</li>
+                <li><strong>Relevance:</strong> Positions your engine actually encounters</li>
+            </ul>
+        </div>
+
+        <p><em>(Full implementation guide coming in Days 3-4...)</em></p>
+
+        <h2 id="day8-10">📅 Days 8-10: Training Loop (Preview)</h2>
+
+        <h3>The Supervised Learning Process</h3>
+
+        <p>Once we have data, training follows a standard supervised learning pattern:</p>
+
+        <div class="diagram">
+            <strong>Training Loop (Simplified):</strong>
+            <pre>
+For each epoch:
+    For each batch of positions:
+        1. Forward pass: network(batch) → policy_logits, values
+        2. Compute loss:
+           - Policy loss: How far off are predicted move probs?
+           - Value loss: How far off is position evaluation?
+        3. Backward pass: Compute gradients
+        4. Update weights: Take small step toward better predictions
+
+    Validate on held-out set
+    Save checkpoint if improved
+            </pre>
+        </div>
+
+        <h3>Loss Functions Explained</h3>
+
+        <div class="math">
+            <strong>Total Loss = Policy Loss + Value Loss + L2 Regularization</strong>
+        </div>
+
+        <p><strong>1. Policy Loss (Cross-Entropy):</strong> Measures how different the network's move predictions are from the moves actually played:</p>
+
+        <pre><code class="language-python">policy_loss = CrossEntropyLoss(
+    predicted_policy,  # Network's move probabilities
+    actual_move        # Move that was actually played (from MCTS)
+)</code></pre>
+
+        <p><strong>2. Value Loss (Mean Squared Error):</strong> Measures how far the network's position evaluation is from the actual game outcome:</p>
+
+        <pre><code class="language-python">value_loss = MSE(
+    predicted_value,   # Network's evaluation (e.g., +0.3)
+    game_outcome       # Actual result (+1, 0, or -1)
+)</code></pre>
+
+        <p><strong>3. L2 Regularization:</strong> Prevents overfitting by penalizing large weights:</p>
+
+        <pre><code class="language-python">l2_loss = lambda * sum(w^2 for all weights w)</code></pre>
+
+        <h2 id="integration">🔗 Integration: From Neural Network to NN-MCTS</h2>
+
+        <h3>The Ultimate Goal (Phase 3b)</h3>
+
+        <p>Once the network is trained, we replace the hand-crafted evaluator in MCTS:</p>
+
+        <div class="architecture-diagram">
+            <strong>Phase 2 (Current) vs Phase 3b (Goal):</strong>
+            <pre style="text-align: left;">
+<strong>Phase 2: MCTS with Hand-Crafted Eval</strong>
+MCTS Node → Rollout (30 moves with evaluator) → Score
+         → Backpropagate average score
+
+<strong>Phase 3b: MCTS with Neural Network</strong>
+MCTS Node → Network(position) → {policy, value}
+         → Use policy for PUCT priors
+         → Use value as leaf evaluation (no rollout!)
+         → Backpropagate value
+            </pre>
+        </div>
+
+        <div class="key-insight">
+            <strong>🚀 The AlphaZero Innovation:</strong> By using the neural network's value as a leaf evaluation, we eliminate the need for rollouts entirely. This makes MCTS faster and more accurate. The policy further guides search toward promising moves.
+        </div>
+
+        <h2>📚 Conceptual Deep Dives</h2>
+
+        <h3>🤔 FAQ: Common Questions</h3>
+
+        <div class="interactive-demo">
+            <h4>Q: Why 20 input planes instead of just encoding pieces?</h4>
+            <p><strong>A:</strong> Each plane captures specific information:</p>
+            <ul>
+                <li>Separate piece planes: Network learns "knight + bishop battery" patterns</li>
+                <li>Castling planes: Affects king safety evaluation</li>
+                <li>Side to move: Same position is different based on whose turn it is</li>
+                <li>Fifty-move counter: Helps network recognize drawing positions</li>
+            </ul>
+            <p>More information → better decisions, as long as features are relevant.</p>
+        </div>
+
+        <div class="interactive-demo">
+            <h4>Q: Why start with only 4 residual blocks?</h4>
+            <p><strong>A:</strong> Risk-reduction philosophy!</p>
+            <ul>
+                <li><strong>Fast iteration:</strong> 4 blocks train in 1-2 hours on Mac mini</li>
+                <li><strong>Validate pipeline:</strong> Ensure encoding, training, evaluation all work</li>
+                <li><strong>Scale later:</strong> Once proven, increase to 20-40 blocks for strength</li>
+            </ul>
+            <p>AlphaZero uses 40 blocks, but needed Google's TPUs. Start small, scale smart.</p>
+        </div>
+
+        <div class="interactive-demo">
+            <h4>Q: What's the difference between logits and probabilities?</h4>
+            <p><strong>A:</strong> Technical but important:</p>
+            <ul>
+                <li><strong>Logits:</strong> Raw network outputs (can be any value, positive or negative)</li>
+                <li><strong>Probabilities:</strong> After softmax, sum to 1.0, all non-negative</li>
+            </ul>
+            <p>Example: Logits [2.3, 1.1, -0.5, 0.8] → Softmax → Probs [0.45, 0.13, 0.03, 0.10, ...]</p>
+            <p>We apply softmax after masking illegal moves to get valid probability distributions.</p>
+        </div>
+
+        <div class="interactive-demo">
+            <h4>Q: Can I use a different architecture (Transformer, etc.)?</h4>
+            <p><strong>A:</strong> Absolutely! ResNets are proven for board games, but alternatives exist:</p>
+            <ul>
+                <li><strong>Transformers:</strong> Attention mechanisms, used in Leela Chess Zero variants</li>
+                <li><strong>MobileNets:</strong> Efficient for mobile/embedded devices</li>
+                <li><strong>Hybrid:</strong> ResNet backbone + attention heads</li>
+            </ul>
+            <p>Start with ResNet (proven to work), then experiment once you have a baseline.</p>
+        </div>
+
+        <h3>🌍 Real-World Context: AlphaZero's Journey</h3>
+
+        <p>Understanding AlphaZero's development helps contextualize what we're building:</p>
+
+        <div class="timeline">
+            <div class="timeline-item">
+                <strong>2016: AlphaGo</strong> - Supervised learning on human games, then RL<br>
+                <em>Required:</em> Expert human games as starting point
+            </div>
+            <div class="timeline-item">
+                <strong>2017: AlphaGo Zero</strong> - Pure self-play from random initialization<br>
+                <em>Innovation:</em> No human knowledge, stronger than original
+            </div>
+            <div class="timeline-item">
+                <strong>2017: AlphaZero</strong> - Generalized to chess, shogi, Go<br>
+                <em>Impact:</em> Superhuman in chess (beat Stockfish), discovered novel strategies
+            </div>
+            <div class="timeline-item">
+                <strong>Your Project</strong> - Following the same path at smaller scale<br>
+                <em>Advantage:</em> Can run on consumer hardware with careful scaling
+            </div>
+        </div>
+
+        <h2>🎯 Success Criteria: How to Know You're On Track</h2>
+
+        <h3>Validation Gates (Must Pass to Continue)</h3>
+
+        <div class="checkpoint">
+            <h4>✅ Gate 1: Architecture Validation (Days 1-2)</h4>
+            <ul class="checklist">
+                <li>Network forward pass produces correct shapes</li>
+                <li>Policy output: (batch, 4672)</li>
+                <li>Value output: (batch, 1) in range [-1, 1]</li>
+                <li>Legal move masking eliminates illegal moves</li>
+                <li>Board encoding is information-preserving</li>
+                <li>Move encoding is bijective (round-trip works)</li>
+            </ul>
+            <p><strong>Status:</strong> ✅ PASSED (Days 1-2 complete!)</p>
+        </div>
+
+        <div class="checkpoint">
+            <h4>📅 Gate 2: Dataset Quality (Days 3-7)</h4>
+            <ul>
+                <li>Generated 5,000+ training positions</li>
+                <li>Balanced outcomes (not all White wins)</li>
+                <li>Diverse positions (openings, middlegames, endgames)</li>
+                <li>High-quality moves (from MCTS, not random)</li>
+                <li>DataLoader works without errors</li>
+                <li>Train/val split is correct</li>
+            </ul>
+            <p><strong>Status:</strong> 📅 Pending (Days 3-7)</p>
+        </div>
+
+        <div class="checkpoint">
+            <h4>📅 Gate 3: Training Success (Days 8-10)</h4>
+            <ul>
+                <li>Loss decreases over 10 epochs</li>
+                <li>No NaN/Inf in gradients or losses</li>
+                <li>Policy accuracy >40% (top-1), >70% (top-5)</li>
+                <li>Value MSE <0.3 on validation set</li>
+                <li>Network prefers legal moves >95% of mass</li>
+            </ul>
+            <p><strong>Status:</strong> 📅 Pending (Days 8-10)</p>
+        </div>
+
+        <div class="checkpoint">
+            <h4>📅 Gate 4: Practical Strength (Days 11-14)</h4>
+            <ul>
+                <li>NN evaluation correlates with hand-crafted (R² >0.6)</li>
+                <li>NN-minimax (depth-1) beats random >90%</li>
+                <li>NN-minimax finds mate-in-1 >70%</li>
+                <li>Ready for MCTS integration</li>
+            </ul>
+            <p><strong>Status:</strong> 📅 Pending (Days 11-14)</p>
+        </div>
+
+        <h2>🎓 Learning Resources</h2>
+
+        <h3>📖 Recommended Reading</h3>
+
+        <div class="timeline">
+            <div class="timeline-item">
+                <strong>Beginner:</strong> "Deep Learning" by Goodfellow et al. (Chapter 9: CNNs)<br>
+                <em>Free online:</em> <a href="https://www.deeplearningbook.org/">deeplearningbook.org</a>
+            </div>
+            <div class="timeline-item">
+                <strong>Intermediate:</strong> "Mastering Chess and Shogi by Self-Play" (AlphaZero paper)<br>
+                <em>Link:</em> DeepMind's AlphaZero publication
+            </div>
+            <div class="timeline-item">
+                <strong>Practical:</strong> PyTorch official tutorials (especially CNNs and ResNets)<br>
+                <em>Link:</em> pytorch.org/tutorials
+            </div>
+            <div class="timeline-item">
+                <strong>Chess-Specific:</strong> Leela Chess Zero documentation<br>
+                <em>Link:</em> lczero.org (open-source AlphaZero for chess)
+            </div>
+        </div>
+
+        <h3>💡 Key Concepts Glossary</h3>
+
+        <table>
+            <tr>
+                <th>Term</th>
+                <th>Simple Explanation</th>
+            </tr>
+            <tr>
+                <td><strong>Residual Block</strong></td>
+                <td>Neural network layer with a "skip connection" that adds the input directly to the output, enabling very deep networks</td>
+            </tr>
+            <tr>
+                <td><strong>Policy</strong></td>
+                <td>Probability distribution over moves (which moves are good?)</td>
+            </tr>
+            <tr>
+                <td><strong>Value</strong></td>
+                <td>Evaluation of position (-1 to +1, who's winning?)</td>
+            </tr>
+            <tr>
+                <td><strong>Logits</strong></td>
+                <td>Raw network outputs before converting to probabilities</td>
+            </tr>
+            <tr>
+                <td><strong>Softmax</strong></td>
+                <td>Function that converts logits to probabilities (sums to 1)</td>
+            </tr>
+            <tr>
+                <td><strong>Cross-Entropy Loss</strong></td>
+                <td>Measures difference between predicted and actual probability distributions</td>
+            </tr>
+            <tr>
+                <td><strong>MSE</strong></td>
+                <td>Mean Squared Error - measures difference between numbers</td>
+            </tr>
+            <tr>
+                <td><strong>Supervised Learning</strong></td>
+                <td>Learning from labeled examples (position → move, outcome)</td>
+            </tr>
+            <tr>
+                <td><strong>Self-Play RL</strong></td>
+                <td>Learning by playing against yourself and improving from results</td>
+            </tr>
+            <tr>
+                <td><strong>Epoch</strong></td>
+                <td>One complete pass through the entire training dataset</td>
+            </tr>
+        </table>
+
+        <h2>🚀 Next Steps: Moving Forward</h2>
+
+        <div class="success">
+            <h3>🎉 You've Completed Days 1-2!</h3>
+            <p>You've built a complete neural network architecture from scratch. This is a significant achievement!</p>
+            <p><strong>What you have:</strong></p>
+            <ul>
+                <li>✅ AlphaZero-style policy-value network</li>
+                <li>✅ Board encoding system</li>
+                <li>✅ Move encoding/decoding</li>
+                <li>✅ Legal move masking</li>
+                <li>✅ Ready for training pipeline</li>
+            </ul>
+        </div>
+
+        <h3>📅 The Road Ahead</h3>
+
+        <div class="timeline">
+            <div class="timeline-item">
+                <strong>Days 3-4:</strong> Generate training data from MCTS self-play<br>
+                <em>Goal:</em> 5,000-10,000 high-quality training examples
+            </div>
+            <div class="timeline-item">
+                <strong>Days 5-7:</strong> Build PyTorch Dataset and DataLoader<br>
+                <em>Goal:</em> Efficient data pipeline with train/val split
+            </div>
+            <div class="timeline-item">
+                <strong>Days 8-10:</strong> Implement and run training loop<br>
+                <em>Goal:</em> Trained network with >40% policy accuracy
+            </div>
+            <div class="timeline-item">
+                <strong>Days 11-14:</strong> Evaluate and integrate with MCTS<br>
+                <em>Goal:</em> Working NN-MCTS engine
+            </div>
+            <div class="timeline-item">
+                <strong>Phase 4:</strong> Self-play reinforcement learning<br>
+                <em>Goal:</em> Network improves through self-play, reaching 1600-1800+ Elo
+            </div>
+        </div>
+
+        <div class="footer-nav">
+            <h3>📚 Tutorial Navigation</h3>
+            <a href="minimax_tutorial.html">← Previous: Minimax & Evaluation</a>
+            <a href="#day3-4">Next: Dataset Creation →</a>
+            <br><br>
+            <a href="NEXT_STEPS_PLAN.md">View Full Roadmap</a> |
+            <a href="DAY1-2_SUMMARY.md">Day 1-2 Summary</a> |
+            <a href="README.md">Project Home</a>
+        </div>
+
+    </div>
+
+    <script>
+        // Add syntax highlighting if Prism.js is loaded
+        if (typeof Prism !== 'undefined') {
+            Prism.highlightAll();
+        }
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
