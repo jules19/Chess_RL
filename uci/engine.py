@@ -363,6 +363,30 @@ class UCIEngine:
 
         self.log_debug(f"Position set: {self.board.fen()}")
 
+        # Check if the position is a game-ending state (for PGN export)
+        if self.pgn_export_enabled and self.game_moves:
+            if self.board.is_checkmate():
+                self.game_result = "1-0" if self.board.turn == chess.BLACK else "0-1"
+                self.save_pgn_game()
+                # Reset for next game
+                self.game_moves = []
+                self.game_start_fen = None
+                self.game_result = "*"
+            elif self.board.is_stalemate() or self.board.is_insufficient_material():
+                self.game_result = "1/2-1/2"
+                self.save_pgn_game()
+                # Reset for next game
+                self.game_moves = []
+                self.game_start_fen = None
+                self.game_result = "*"
+            elif self.board.is_fifty_moves() or self.board.is_repetition():
+                self.game_result = "1/2-1/2"
+                self.save_pgn_game()
+                # Reset for next game
+                self.game_moves = []
+                self.game_start_fen = None
+                self.game_result = "*"
+
     def get_best_move(self) -> Optional[chess.Move]:
         """Calculate best move using selected engine type."""
         if self.board.is_game_over():
@@ -452,12 +476,24 @@ class UCIEngine:
                 # Make the move on a copy to check game state
                 temp_board = self.board.copy()
                 temp_board.push(best_move)
+                game_ended = False
                 if temp_board.is_checkmate():
                     self.game_result = "1-0" if temp_board.turn == chess.BLACK else "0-1"
+                    game_ended = True
                 elif temp_board.is_stalemate() or temp_board.is_insufficient_material():
                     self.game_result = "1/2-1/2"
+                    game_ended = True
                 elif temp_board.is_fifty_moves() or temp_board.is_repetition():
                     self.game_result = "1/2-1/2"
+                    game_ended = True
+
+                # Save the game immediately if it ended, or save incrementally
+                if game_ended:
+                    self.save_pgn_game()
+                    # Reset for next game
+                    self.game_moves = []
+                    self.game_start_fen = None
+                    self.game_result = "*"
         else:
             # No legal moves (shouldn't happen if board state is correct)
             self.uci_print("bestmove 0000", flush=True)
