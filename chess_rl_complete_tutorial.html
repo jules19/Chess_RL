@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess RL: Complete Tutorial - From Random to AlphaZero</title>
+    <style>
+        /* ===== GLOBAL STYLES ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+
+        /* ===== SIDEBAR NAVIGATION ===== */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-header {
+            padding: 30px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-bottom: 3px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.4em;
+            margin-bottom: 10px;
+        }
+
+        .progress-indicator {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .nav-section {
+            padding: 10px 0;
+        }
+
+        .nav-section h3 {
+            padding: 15px 20px 10px;
+            font-size: 0.75em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #95a5a6;
+        }
+
+        .sidebar nav ul {
+            list-style: none;
+        }
+
+        .sidebar nav ul li {
+            border-left: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar nav ul li.current {
+            border-left-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .sidebar nav ul li a {
+            display: block;
+            padding: 12px 20px;
+            color: #ecf0f1;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar nav ul li a:hover {
+            background: rgba(255,255,255,0.1);
+            padding-left: 25px;
+        }
+
+        .sidebar nav ul li.current a {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .sidebar nav ul ul {
+            background: rgba(0,0,0,0.1);
+        }
+
+        .sidebar nav ul ul li a {
+            padding-left: 40px;
+            font-size: 0.9em;
+        }
+
+        .coming-soon {
+            opacity: 0.5;
+            font-style: italic;
+        }
+
+        .phase-badge {
+            display: inline-block;
+            background: #667eea;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.7em;
+            margin-left: 8px;
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .content {
+            margin-left: 280px;
+            min-height: 100vh;
+        }
+
+        .content-inner {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px;
+            background: white;
+            min-height: 100vh;
+        }
+
+        /* ===== TYPOGRAPHY ===== */
+        h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin: 30px 0 20px;
+            border-bottom: 4px solid #667eea;
+            padding-bottom: 15px;
+        }
+
+        h2 {
+            color: #34495e;
+            font-size: 2em;
+            margin: 50px 0 20px;
+            border-left: 6px solid #667eea;
+            padding-left: 20px;
+            background: linear-gradient(90deg, #f8f9fa 0%, white 100%);
+            padding: 15px 20px;
+            border-radius: 4px;
+        }
+
+        h3 {
+            color: #555;
+            font-size: 1.5em;
+            margin: 30px 0 15px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 8px;
+        }
+
+        h4 {
+            color: #666;
+            font-size: 1.2em;
+            margin: 20px 0 10px;
+        }
+
+        p {
+            margin: 15px 0;
+        }
+
+        ul, ol {
+            margin: 15px 0 15px 30px;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+
+        /* ===== CODE STYLES ===== */
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Courier New', Courier, monospace;
+            color: #e74c3c;
+            font-size: 0.9em;
+        }
+
+        pre {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            line-height: 1.5;
+            border-left: 4px solid #667eea;
+            margin: 20px 0;
+        }
+
+        pre code {
+            background-color: transparent;
+            color: #ecf0f1;
+            padding: 0;
+        }
+
+        /* ===== CALLOUT BOXES ===== */
+        .learning-objective {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            margin: 30px 0;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
+        }
+
+        .learning-objective h3, .learning-objective h4 {
+            color: white;
+            border: none;
+            margin-top: 0;
+            padding-bottom: 0;
+        }
+
+        .key-insight {
+            background-color: #e8f4f8;
+            border-left: 5px solid #3498db;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 4px;
+        }
+
+        .key-insight strong {
+            color: #2980b9;
+        }
+
+        .warning {
+            background-color: #fff3cd;
+            border-left: 5px solid #ffc107;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 4px;
+        }
+
+        .success {
+            background-color: #d4edda;
+            border-left: 5px solid #28a745;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 4px;
+        }
+
+        .checkpoint {
+            background-color: #f0f0ff;
+            border: 2px solid #667eea;
+            padding: 25px;
+            margin: 30px 0;
+            border-radius: 8px;
+        }
+
+        .checkpoint h4 {
+            color: #667eea;
+            margin-top: 0;
+            font-size: 1.3em;
+        }
+
+        .diagram {
+            background-color: #f9f9f9;
+            border: 2px solid #ddd;
+            padding: 20px;
+            margin: 25px 0;
+            font-family: 'Courier New', Courier, monospace;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+
+        .code-explanation {
+            background-color: #fffef0;
+            border-left: 4px solid #f39c12;
+            padding: 15px;
+            margin: 15px 0 25px 0;
+            font-size: 0.95em;
+        }
+
+        /* ===== PHASE SECTIONS ===== */
+        .phase {
+            margin: 60px 0;
+            border: 3px solid #667eea;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .phase summary {
+            font-size: 1.8em;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 25px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            user-select: none;
+            list-style: none;
+            transition: all 0.3s ease;
+        }
+
+        .phase summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .phase summary::before {
+            content: '▶ ';
+            display: inline-block;
+            transition: transform 0.3s ease;
+        }
+
+        .phase[open] summary::before {
+            transform: rotate(90deg);
+        }
+
+        .phase summary:hover {
+            background: linear-gradient(135deg, #5568d3 0%, #6941a0 100%);
+        }
+
+        .phase-content {
+            padding: 40px;
+            background: white;
+        }
+
+        .phase-coming-soon {
+            opacity: 0.6;
+        }
+
+        .phase-coming-soon summary {
+            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+        }
+
+        /* ===== NAVIGATION AIDS ===== */
+        .section-nav {
+            display: flex;
+            justify-content: space-between;
+            margin: 40px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .section-nav a {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .section-nav a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .breadcrumb {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+        }
+
+        .breadcrumb a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        /* ===== TABLES ===== */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        /* ===== CHECKLIST ===== */
+        ul.checklist {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        ul.checklist li:before {
+            content: "✅ ";
+            margin-right: 10px;
+        }
+
+        ul.checklist-pending li:before {
+            content: "📅 ";
+        }
+
+        /* ===== DAY MARKERS ===== */
+        .day-marker {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 0.95em;
+            margin: 15px 0;
+            box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+        }
+
+        .day-marker.complete {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        .day-marker.current {
+            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+        }
+
+        /* ===== PROGRESS BAR ===== */
+        .progress-bar {
+            background: #e0e0e0;
+            height: 30px;
+            border-radius: 15px;
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+            height: 100%;
+            border-radius: 15px;
+            transition: width 0.5s ease;
+        }
+
+        .progress-label {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            line-height: 30px;
+            color: white;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            z-index: 1;
+        }
+
+        /* ===== PRINT STYLES ===== */
+        @media print {
+            .sidebar {
+                display: none;
+            }
+
+            .content {
+                margin-left: 0;
+            }
+
+            .phase {
+                page-break-inside: avoid;
+                border: 1px solid #ddd;
+            }
+
+            .phase summary {
+                background: #667eea;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            details {
+                display: block !important;
+            }
+
+            details[open] {
+                display: block !important;
+            }
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+
+            .content {
+                margin-left: 0;
+            }
+
+            .content-inner {
+                padding: 20px;
+            }
+
+            .section-nav {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+
+        /* ===== INTRO SECTION ===== */
+        .hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 40px;
+            margin: -40px -40px 40px;
+            border-radius: 0 0 20px 20px;
+            text-align: center;
+        }
+
+        .hero h1 {
+            color: white;
+            border: none;
+            margin: 0;
+            padding: 0;
+            font-size: 3em;
+        }
+
+        .hero p {
+            font-size: 1.3em;
+            margin: 20px 0;
+            opacity: 0.95;
+        }
+
+        /* ===== GLOSSARY ===== */
+        .glossary-term {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            border-radius: 4px;
+        }
+
+        .glossary-term dt {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+
+        .glossary-term dd {
+            margin-left: 0;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <!-- SIDEBAR NAVIGATION -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h1>🏆 Chess RL Complete Tutorial</h1>
+            <div class="progress-indicator">
+                Phase 3 Complete • 60% Progress
+            </div>
+        </div>
+
+        <div class="nav-section">
+            <h3>Introduction</h3>
+            <nav>
+                <ul>
+                    <li><a href="#intro">Welcome & Overview</a></li>
+                    <li><a href="#journey">The Learning Journey</a></li>
+                </ul>
+            </nav>
+        </div>
+
+        <div class="nav-section">
+            <h3>Tutorial Phases</h3>
+            <nav>
+                <ul>
+                    <li><a href="#phase0">📍 Phase 0: Random Player</a></li>
+                    <li><a href="#phase1">📍 Phase 1: Minimax & Evaluation</a></li>
+                    <li><a href="#phase2">📍 Phase 2: Monte Carlo Tree Search</a></li>
+                    <li class="current">
+                        <a href="#phase3">📍 Phase 3: Neural Networks</a>
+                        <ul>
+                            <li><a href="#phase3-day1">Days 1-2: Architecture</a></li>
+                            <li><a href="#phase3-day3">Days 3-4: Dataset</a></li>
+                            <li><a href="#phase3-day8">Days 8-10: Training</a></li>
+                        </ul>
+                    </li>
+                    <li class="coming-soon"><a href="#phase4">📍 Phase 4: Self-Play RL</a></li>
+                    <li class="coming-soon"><a href="#phase5">📍 Phase 5: Scaling Up</a></li>
+                </ul>
+            </nav>
+        </div>
+
+        <div class="nav-section">
+            <h3>Reference</h3>
+            <nav>
+                <ul>
+                    <li><a href="#glossary">Complete Glossary</a></li>
+                    <li><a href="#resources">Learning Resources</a></li>
+                    <li><a href="#timeline">AlphaZero Timeline</a></li>
+                </ul>
+            </nav>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="content">
+        <div class="content-inner">
+
+            <!-- HERO SECTION -->
+            <div class="hero" id="intro">
+                <h1>Building a Chess Engine<br>From Random to AlphaZero</h1>
+                <p>A comprehensive, hands-on tutorial for building chess AI from first principles</p>
+                <p style="font-size: 0.9em; opacity: 0.8;">Risk-Reduction Philosophy • Baby Steps • Continuous Validation</p>
+            </div>
+
+            <!-- INTRODUCTION -->
+            <section id="journey">
+                <h2>🌟 The Learning Journey</h2>
+
+                <div class="learning-objective">
+                    <h3>What You'll Build</h3>
+                    <p>This tutorial guides you through building <strong>six progressively sophisticated chess engines</strong>, each playable and independently useful, culminating in an AlphaZero-style self-learning system.</p>
+
+                    <p><strong>The Complete Journey:</strong></p>
+                    <ul class="checklist">
+                        <li><strong>Phase 0:</strong> Random Player (baseline, 1 hour)</li>
+                        <li><strong>Phase 1:</strong> Minimax with hand-crafted evaluation (~1200-1400 Elo, 1 week)</li>
+                        <li><strong>Phase 2:</strong> Monte Carlo Tree Search (~1400-1600 Elo, 1 week)</li>
+                        <li><strong>Phase 3:</strong> Neural Network evaluation (~1400-1600 Elo, 2 weeks)</li>
+                        <li><strong>Phase 4:</strong> Self-Play Reinforcement Learning (1600-1800+ Elo, 2-4 weeks)</li>
+                        <li><strong>Phase 5:</strong> Scale up with larger networks and more compute (1800+ Elo, ongoing)</li>
+                    </ul>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-label">Overall Progress: 60% Complete (Phases 0-3 Done)</div>
+                    <div class="progress-fill" style="width: 60%;"></div>
+                </div>
+
+                <h3>🎯 Why This Approach?</h3>
+
+                <div class="key-insight">
+                    <strong>💡 The Risk-Reduction Philosophy:</strong> Instead of jumping straight to deep learning and self-play, we build a <em>progression</em> of engines. Each phase:
+                    <ul>
+                        <li><strong>Delivers a playable chess program</strong> (you can always stop here)</li>
+                        <li><strong>Teaches fundamental concepts</strong> needed for the next phase</li>
+                        <li><strong>Has clear validation criteria</strong> (know when you're on track)</li>
+                        <li><strong>Builds on previous work</strong> (nothing is thrown away)</li>
+                        <li><strong>Works on consumer hardware</strong> (no cloud costs until you choose to scale)</li>
+                    </ul>
+                </div>
+
+                <div class="warning">
+                    <strong>⚠️ Prerequisites:</strong>
+                    <ul>
+                        <li>Python programming (intermediate level)</li>
+                        <li>Basic understanding of algorithms and data structures</li>
+                        <li>Familiarity with chess rules (not an expert, just know how pieces move)</li>
+                        <li>Willingness to learn machine learning concepts (we'll teach from scratch)</li>
+                    </ul>
+                </div>
+
+                <h3>📚 How to Use This Tutorial</h3>
+
+                <p>This is designed as both a <strong>linear guide</strong> (read front-to-back) and a <strong>reference manual</strong> (jump to specific sections):</p>
+
+                <ul>
+                    <li><strong>First-time learners:</strong> Read sequentially, Phase 0 → Phase 5</li>
+                    <li><strong>Returning students:</strong> Use the sidebar to jump to specific phases</li>
+                    <li><strong>Reference lookup:</strong> Check the glossary or search (Ctrl+F)</li>
+                    <li><strong>Code review:</strong> All code is inline with detailed explanations</li>
+                </ul>
+
+                <div class="success">
+                    <h4>✅ By the End of This Tutorial, You Will:</h4>
+                    <ul class="checklist">
+                        <li>Understand game tree search (minimax, MCTS)</li>
+                        <li>Build hand-crafted evaluation functions</li>
+                        <li>Implement neural networks from scratch (policy-value architecture)</li>
+                        <li>Understand reinforcement learning through self-play</li>
+                        <li>Know how AlphaZero achieved superhuman chess strength</li>
+                        <li>Have 6 working chess engines of increasing sophistication</li>
+                        <li>Be able to extend and scale the system further</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- PHASE 0: RANDOM PLAYER -->
+            <details class="phase" id="phase0" open>
+                <summary>📍 Phase 0: Random Player Foundation</summary>
+                <div class="phase-content">
+                    <div class="breadcrumb">
+                        <a href="#intro">Home</a> → Phase 0: Random Player
+                    </div>
+
+                    <div class="day-marker complete">✅ Foundation - 1 Hour</div>
+
+                    <div class="learning-objective">
+                        <h3>Learning Objectives - Phase 0</h3>
+                        <p>By the end of this phase, you will:</p>
+                        <ul class="checklist">
+                            <li>Set up the development environment</li>
+                            <li>Understand the python-chess library</li>
+                            <li>Build a complete game loop (random vs random)</li>
+                            <li>Implement move validation and game termination</li>
+                            <li>Create a playable baseline for comparison</li>
+                        </ul>
+                    </div>
+
+                    <h3>🎯 Goal: The Simplest Possible Chess Program</h3>
+
+                    <p>Before building sophisticated AI, we need a <strong>working baseline</strong>. This phase teaches:</p>
+                    <ul>
+                        <li>How to represent chess boards and moves in code</li>
+                        <li>How to check for game termination (checkmate, stalemate, draws)</li>
+                        <li>How to build a complete game loop</li>
+                    </ul>
+
+                    <div class="key-insight">
+                        <strong>💡 Why Start with Random?</strong> The random player establishes a <em>baseline</em> for measuring improvement. Every future engine must beat random play by a large margin. It also validates that your chess infrastructure (move generation, game rules) works correctly before adding complexity.
+                    </div>
+
+                    <h3>🛠️ Setup: Install Dependencies</h3>
+
+                    <p>We'll use the <code>python-chess</code> library, which handles all the complex chess rules:</p>
+
+                    <pre><code class="language-bash"># Create project directory
+mkdir Chess_RL
+cd Chess_RL
+
+# Create virtual environment (optional but recommended)
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install python-chess
+pip install python-chess>=1.999</code></pre>
+
+                    <div class="code-explanation">
+                        <strong>🔍 Why python-chess?</strong>
+                        <ul>
+                            <li>Handles all chess rules (castling, en passant, etc.)</li>
+                            <li>Move generation is fast and bug-free</li>
+                            <li>Saves 2-4 weeks of implementing bitboards from scratch</li>
+                            <li>Battle-tested in thousands of chess programs</li>
+                        </ul>
+                    </div>
+
+                    <h3>💻 Code: Random vs Random Game</h3>
+
+                    <p>Create <code>cli/play.py</code>:</p>
+
+                    <pre><code class="language-python">#!/usr/bin/env python3
+"""
+Phase 0: Random Player - The Simplest Chess Program
+
+This demonstrates:
+1. Complete game loop
+2. Random move selection
+3. Game termination detection
+4. Result reporting
+"""
+
+import chess
+import random
+
+
+def random_move(board):
+    """
+    Select a random legal move from the current position.
+
+    Args:
+        board: chess.Board object
+
+    Returns:
+        chess.Move object (randomly selected)
+    """
+    legal_moves = list(board.legal_moves)
+    if not legal_moves:
+        return None
+    return random.choice(legal_moves)
+
+
+def play_random_vs_random():
+    """Play a complete game: Random vs Random."""
+    # Create starting position
+    board = chess.Board()
+    move_count = 0
+
+    print("🎲 Random vs Random Chess Game")
+    print("Starting position:")
+    print(board)
+    print()
+
+    # Game loop
+    while not board.is_game_over():
+        # Select and make move
+        move = random_move(board)
+        board.push(move)
+        move_count += 1
+
+        # Display current position
+        print(f"Move {move_count}: {move}")
+        print(board)
+        print()
+
+    # Game over - report result
+    result = board.result()
+    outcome = board.outcome()
+
+    print("=" * 50)
+    print(f"🏁 GAME OVER after {move_count} moves")
+    print("=" * 50)
+    print(f"Result: {result}")
+    print(f"Termination: {outcome.termination.name}")
+
+    if outcome.winner is None:
+        print("Draw!")
+    elif outcome.winner == chess.WHITE:
+        print("White wins!")
+    else:
+        print("Black wins!")
+
+
+if __name__ == "__main__":
+    play_random_vs_random()
+</code></pre>
+
+                    <div class="code-explanation">
+                        <strong>🔍 Code Walkthrough:</strong>
+                        <ul>
+                            <li><code>chess.Board()</code>: Creates starting position</li>
+                            <li><code>board.legal_moves</code>: All legal moves in current position</li>
+                            <li><code>board.push(move)</code>: Makes a move on the board</li>
+                            <li><code>board.is_game_over()</code>: Checks for checkmate/stalemate/draw</li>
+                            <li><code>board.result()</code>: Returns "1-0" (White wins), "0-1" (Black wins), or "1/2-1/2" (draw)</li>
+                        </ul>
+                    </div>
+
+                    <h3>🧪 Testing: Run Your First Game</h3>
+
+                    <pre><code class="language-bash">python cli/play.py</code></pre>
+
+                    <p>You should see a complete chess game play out with random moves!</p>
+
+                    <h3>📊 What to Observe</h3>
+
+                    <div class="diagram">
+<strong>Typical Random Game Characteristics:</strong>
+<pre>
+Game Length:      40-100 moves (random is inefficient)
+Termination:      Usually checkmate (random stumbles into it)
+Piece Trades:     Frequent (no strategy, just chaos)
+Checkmates:       Often take many moves to deliver
+Draw Rate:        Low (~10-20%, random rarely achieves draws)
+</pre>
+                    </div>
+
+                    <div class="checkpoint">
+                        <h4>✅ Phase 0 Validation Checklist</h4>
+                        <p>Before moving to Phase 1, verify:</p>
+                        <ul class="checklist">
+                            <li>Game completes without errors</li>
+                            <li>All games terminate (checkmate, stalemate, or draw)</li>
+                            <li>Move count is reasonable (20-150 moves)</li>
+                            <li>Both colors can win</li>
+                            <li>Draws are detected correctly</li>
+                        </ul>
+
+                        <p><strong>Test:</strong> Run 10 games and record results. You should see a mix of White wins, Black wins, and occasional draws.</p>
+                    </div>
+
+                    <h3>🎓 Key Concepts Learned</h3>
+
+                    <table>
+                        <tr>
+                            <th>Concept</th>
+                            <th>What You Learned</th>
+                        </tr>
+                        <tr>
+                            <td>Game Loop</td>
+                            <td>Initialize → Select Move → Make Move → Check Termination → Repeat</td>
+                        </tr>
+                        <tr>
+                            <td>Move Generation</td>
+                            <td>python-chess generates all legal moves automatically</td>
+                        </tr>
+                        <tr>
+                            <td>Game Termination</td>
+                            <td>Checkmate, stalemate, 50-move rule, threefold repetition</td>
+                        </tr>
+                        <tr>
+                            <td>Random Baseline</td>
+                            <td>Establishes 0% skill - all future engines must beat this</td>
+                        </tr>
+                    </table>
+
+                    <div class="success">
+                        <h4>🎉 Phase 0 Complete!</h4>
+                        <p>You've built a working chess program! It's not smart, but it's a solid foundation.</p>
+                        <p><strong>What's next:</strong> In Phase 1, we'll add <em>evaluation</em> (understanding which positions are good) and <em>search</em> (looking ahead to find forcing moves).</p>
+                    </div>
+
+                    <div class="section-nav">
+                        <a href="#intro" class="prev">← Introduction</a>
+                        <a href="#phase1" class="next">Next: Minimax & Evaluation →</a>
+                    </div>
+                </div>
+            </details>
+
+            <!-- Placeholder for remaining phases - I'll continue building this in the next message -->
+            <div style="text-align: center; padding: 40px; color: #666;">
+                <p><strong>Tutorial continues with Phases 1-5...</strong></p>
+                <p><em>(Building complete file - this is part 1 of the comprehensive tutorial)</em></p>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- JAVASCRIPT FOR NAVIGATION -->
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                    // Update sidebar active state
+                    document.querySelectorAll('.sidebar nav ul li').forEach(li => {
+                        li.classList.remove('current');
+                    });
+                    this.closest('li')?.classList.add('current');
+                }
+            });
+        });
+
+        // Open phase based on URL hash
+        window.addEventListener('load', function() {
+            const hash = window.location.hash;
+            if (hash) {
+                const target = document.querySelector(hash);
+                if (target && target.tagName === 'DETAILS') {
+                    target.open = true;
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            }
+        });
+
+        // Update hash when opening/closing phases
+        document.querySelectorAll('details.phase').forEach(phase => {
+            phase.addEventListener('toggle', function() {
+                if (this.open) {
+                    window.location.hash = this.id;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
