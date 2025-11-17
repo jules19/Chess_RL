@@ -11,7 +11,7 @@ Incremental development of a Chess program using Reinforcement Learning
 2. **Risk Reduction Strategy**: Read [`RISK_REDUCTION.md`](RISK_REDUCTION.md) to understand the incremental approach
 3. **Development Plan**: Check [`PLAN.md`](PLAN.md) for the full roadmap
 
-**Current Status:** ✅ Phases 0-2 Complete! 🚧 Phase 3a (Neural Network Training) in Planning
+**Current Status:** ✅ Phases 0-3b Validated! 🚀 Ready for scale-up training (10K games)
 
 **What's Working:**
 - ✅ Phase 0 (Day 1): Random move engine (~600 Elo)
@@ -26,11 +26,14 @@ Incremental development of a Chess program using Reinforcement Learning
   - Evaluator-guided rollouts
   - Tactical blunder filtering
   - Smart move prioritization
-- ✅ Phase 3a Planning (Day 8): Neural Network Ready
-  - ResNet architecture designed (4 blocks, 128 channels, ~830K params)
-  - Training pipeline implemented (`training/train.py`, `training/dataset.py`)
-  - Evaluation framework ready (`training/evaluate.py`)
-  - Comprehensive documentation (`PHASE_3A_PLAN.md`, `DAY_8_SUMMARY.md`)
+- ✅ Phase 3a/3b Validation (Day 15): Neural Network Pipeline ✨
+  - PyTorch + MPS (Apple GPU) acceleration working on M1
+  - Training pipeline validated (trained small model on 50 games)
+  - Model learns opening principles (Nf3, e3, Nc3, d4)
+  - NN evaluator wrapper (`engine/nn_evaluator.py`)
+  - NN-MCTS integration (`search/nn_mcts.py`)
+  - Complete end-to-end pipeline validated
+  - See `PHASE_3AB_VALIDATION_SUMMARY.md` for details
 
 **Quick Start:**
 - **Play in terminal**: `python3 cli/play.py random` (or `minimax`, `mcts`)
@@ -40,8 +43,8 @@ Incremental development of a Chess program using Reinforcement Learning
 - **Training (pending)**: `python3 training/train.py --pgn data/games.pgn --epochs 10`
 
 **Next Steps:**
-- Phase 3a: Train neural network on expert games (~1400-1600 Elo)
-- Phase 3b: Integrate NN with MCTS (~1700-1800 Elo)
+- Phase 3a Scale-Up: Train on 10K games for competitive model (~1400-1600 Elo)
+- Phase 3b Optimization: Optimize NN-MCTS for strength (~1700-1800 Elo)
 - Phase 4: Self-play reinforcement learning (1800+ Elo)
 
 **Why this approach?** Build a progression of playable chess engines, each independently useful, while learning and validating as you go. No cloud costs for the first month.

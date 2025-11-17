@@ -1,10 +1,10 @@
 # Project Status
 
-## Current Phase: Phase 3a - Supervised Learning 🚧 IN PLANNING
+## Current Phase: Phase 3a/3b - Neural Network Training & Integration ✅ VALIDATED
 
-**Status:** Phase 0-2 Complete, Phase 3a Planning Complete
-**Date:** 2025-11-16
-**Progress:** Neural network architecture ready, training pipeline implemented, awaiting dependency installation
+**Status:** Phase 0-3b Validated, Ready for Scale-Up Training
+**Date:** 2025-11-17
+**Progress:** Complete pipeline validated on M1 MacBook Pro with MPS acceleration. Small model (50 games) successfully trained and integrated into MCTS. Ready to scale up with 10K+ games.
 
 ---
 
@@ -66,29 +66,66 @@
 - ✅ Policy distribution tests pass
 - ✅ Visit count tests pass
 
+### Phase 3a/3b: Pipeline Validation (Day 15) ✅
+**Completed:** 2025-11-17
+**Status:** VALIDATED - Ready for scale-up
+**Files:**
+- `training/train.py` - Training loop with Tensorboard
+- `training/dataset.py` - PGN to training examples
+- `engine/nn_evaluator.py` - Neural network evaluator wrapper
+- `search/nn_mcts.py` - NN-guided MCTS implementation
+- `test/compare_mcts_vs_nn_mcts.py` - Comparison framework
+
+**Validation Experiment:**
+- Model: 2 ResBlocks, 64 channels (779K params)
+- Dataset: 50 games, 2,858 positions
+- Device: MPS (Apple M1 GPU)
+- Training: 5 epochs, ~45 seconds
+- Results: Loss 8.46→5.57, Accuracy 2.1%→3.15%
+
+**Pipeline Validation:**
+- ✅ PyTorch + MPS acceleration working
+- ✅ Dataset loading from PGN files
+- ✅ Training converges successfully
+- ✅ Model learns opening principles (Nf3, e3, Nc3, d4)
+- ✅ Checkpoints save/load correctly
+- ✅ NN evaluator integration functional
+- ✅ NN-MCTS search completes successfully
+- ✅ End-to-end pipeline validated
+
+**Key Findings:**
+- M1 MacBook Pro sufficient for training (no cloud needed)
+- Small model (50 games) learns legitimate chess principles
+- Integration clean (3 files, 709 lines of code)
+- Performance acceptable for validation (~1.3 sims/sec NN-MCTS)
+
+**Next:** Scale up to 1K-10K games for competitive model
+
 ---
 
-## 🚧 CURRENT PHASE: Phase 3a - Supervised Learning
+## 🚧 CURRENT PHASE: Phase 3a - Scale-Up Training
 
-**Status:** Planning Complete, Ready for Implementation
-**Goal:** Train neural network to ~1400-1600 Elo using expert games
-**Timeline:** 1-2 weeks
-**Date Started:** 2025-11-16
+**Status:** Pipeline Validated, Ready for Full Training
+**Goal:** Train competitive neural network (~1400-1600 Elo) on 10K games
+**Timeline:** Next session (2-4 hours)
+**Date:** 2025-11-17
 
-### Completed (Day 8)
-- ✅ Neural network architecture reviewed (`net/model.py`, `net/encoding.py`)
-- ✅ Training pipeline implemented (`training/train.py`)
-- ✅ Dataset creation implemented (`training/dataset.py`)
-- ✅ Evaluation framework implemented (`training/evaluate.py`)
-- ✅ Data filtering utilities implemented (`training/filter_games.py`)
-- ✅ Comprehensive documentation (`PHASE_3A_PLAN.md`, `DAY_8_SUMMARY.md`)
+### Completed Validation (Day 15)
+- ✅ PyTorch + MPS acceleration verified on M1
+- ✅ Small model trained successfully (50 games)
+- ✅ NN evaluator wrapper created
+- ✅ NN-MCTS integration implemented
+- ✅ Full pipeline validated end-to-end
+- ✅ Documentation updated (`PHASE_3AB_VALIDATION_SUMMARY.md`)
 
-### Pending
-- ⏸️ Install PyTorch and dependencies
-- ⏸️ Download and filter Lichess games
-- ⏸️ Train neural network (10 epochs on 10K games)
-- ⏸️ Evaluate against minimax/MCTS baseline
-- ⏸️ Document results
+### Next Steps (Scale-Up)
+- ⏸️ Download 10K+ games from Lichess database
+- ⏸️ Filter for high-quality games (2000+ Elo, 600+ sec)
+- ⏸️ Train full model (4 ResBlocks, 128 channels, 10 epochs)
+- ⏸️ Evaluate against minimax/MCTS baselines
+- ⏸️ Integrate strong model into NN-MCTS
+- ⏸️ Measure Elo improvement
+- ⏸️ Document final results
 
 ### Architecture
 **Model:** PolicyValueNetwork (AlphaZero-style)
