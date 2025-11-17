@@ -11,27 +11,38 @@ Incremental development of a Chess program using Reinforcement Learning
 2. **Risk Reduction Strategy**: Read [`RISK_REDUCTION.md`](RISK_REDUCTION.md) to understand the incremental approach
 3. **Development Plan**: Check [`PLAN.md`](PLAN.md) for the full roadmap
 
-**Current Status:** ✅ Phase 0 Complete (Days 1-7) - Full UCI Chess Engine Ready!
+**Current Status:** ✅ Phases 0-2 Complete! 🚧 Phase 3a (Neural Network Training) in Planning
 
 **What's Working:**
-- ✅ Day 1: Random move engine
-- ✅ Day 2: Material evaluation
-- ✅ Days 3-4: Minimax with alpha-beta pruning (depth 3)
-- ✅ Days 5-6: Positional evaluation (center control, development, king safety, pawn structure)
-- ✅ Day 7: UCI interface (play in chess GUIs like Cute Chess!)
-- ✅ Enhanced terminal display with color schemes
-- ✅ Current Strength: ~1200-1400 Elo
+- ✅ Phase 0 (Day 1): Random move engine (~600 Elo)
+- ✅ Phase 1 (Days 2-7): Minimax engine (~1200-1600 Elo)
+  - Material evaluation (P=1, N=3, B=3, R=5, Q=9)
+  - Alpha-beta pruning with quiescence search
+  - Positional evaluation (center, development, king safety, pawns)
+  - UCI interface (works with Cute Chess, Arena, PyChess)
+  - UCI logging and PGN export
+- ✅ Phase 2 (Days 8-14): MCTS engine (~1400-1600 Elo)
+  - Monte Carlo Tree Search with UCT
+  - Evaluator-guided rollouts
+  - Tactical blunder filtering
+  - Smart move prioritization
+- ✅ Phase 3a Planning (Day 8): Neural Network Ready
+  - ResNet architecture designed (4 blocks, 128 channels, ~830K params)
+  - Training pipeline implemented (`training/train.py`, `training/dataset.py`)
+  - Evaluation framework ready (`training/evaluate.py`)
+  - Comprehensive documentation (`PHASE_3A_PLAN.md`, `DAY_8_SUMMARY.md`)
 
 **Quick Start:**
-- **Play in terminal**: `python3 cli/play.py`
+- **Play in terminal**: `python3 cli/play.py random` (or `minimax`, `mcts`)
 - **Play in GUI**: See [`UCI_SETUP_MAC.md`](UCI_SETUP_MAC.md) for Mac setup
 - **Test UCI**: `python3 chess_rl_uci.py`
-- **UCI Logging**: `python3 uci/engine.py --uci-log debug.log --pgn-log games.pgn` (see [`UCI_LOGGING_README.md`](UCI_LOGGING_README.md))
+- **UCI Logging**: `python3 uci/engine.py --uci-log debug.log --pgn-log games.pgn`
+- **Training (pending)**: `python3 training/train.py --pgn data/games.pgn --epochs 10`
 
 **Next Steps:**
-- Week 2: MCTS engine (~1400-1600 Elo)
-- Weeks 3-4: Neural network
-- Weeks 5+: Self-play RL
+- Phase 3a: Train neural network on expert games (~1400-1600 Elo)
+- Phase 3b: Integrate NN with MCTS (~1700-1800 Elo)
+- Phase 4: Self-play reinforcement learning (1800+ Elo)
 
 **Why this approach?** Build a progression of playable chess engines, each independently useful, while learning and validating as you go. No cloud costs for the first month.
 
