@@ -15,7 +15,14 @@ The network takes board positions as input and outputs:
 Start small (4-6 ResBlocks) and scale up after validation.
 """
 
-from .model import PolicyValueNetwork, ResidualBlock, create_model
+# The encoding functions are pure numpy/python-chess logic and must stay
+# importable without torch (so encoding tests can run in light environments).
+# Only the model itself requires torch.
+try:
+    from .model import PolicyValueNetwork, ResidualBlock, create_model
+except ImportError:  # torch not installed
+    PolicyValueNetwork = ResidualBlock = create_model = None
+
 from .encoding import (
     board_to_tensor,
     tensor_to_board_debug,

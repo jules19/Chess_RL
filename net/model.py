@@ -324,6 +324,77 @@ class PolicyValueNetwork(nn.Module):
         print("=" * 70)
 
 
+def auto_device():
+    """
+    Pick the best available torch device: CUDA GPU > Apple Metal (MPS) > CPU.
+
+    Returns:
+        torch.device
+    """
+    if torch.cuda.is_available():
+        return torch.device('cuda')
+    if torch.backends.mps.is_available():
+        return torch.device('mps')
+    return torch.device('cpu')
+
+
+def load_model(checkpoint_path, device=None):
+    """
+    Load a PolicyValueNetwork from a checkpoint, inferring the architecture
+    from the checkpoint itself.
+
+    ⚠️ LESSON LEARNED: An earlier version of this codebase required the caller
+    to pass num_res_blocks/num_channels when loading — and different call
+    sites hardcoded DIFFERENT values (2 blocks/64 channels in one file,
+    4 blocks/128 in another). Loading a checkpoint with the wrong architecture
+    fails with a confusing state_dict error, or worse, silently changes what
+    you think you're evaluating. The fix: a checkpoint should be
+    self-describing. We infer the architecture directly from the saved weight
+    shapes, so there is nothing to get out of sync.
+
+    Handles both checkpoint formats:
+    - Full training checkpoint: {'model_state_dict': ..., 'epoch': ..., ...}
+    - Bare state_dict (legacy best_model.pt files)
+
+    Args:
+        checkpoint_path: Path to a .pt checkpoint file
+        device: torch.device or string; auto-detected if None
+
+    Returns:
+        (model, checkpoint_dict) — model is in eval mode on the target device;
+        checkpoint_dict is the raw loaded checkpoint (bare state_dicts are
+        wrapped as {'model_state_dict': ...}) so callers can read metadata.
+    """
+    if device is None:
+        device = auto_device()
+    device = torch.device(device)
+
+    checkpoint = torch.load(checkpoint_path, map_location=device)
+    if isinstance(checkpoint, dict) and 'model_state_dict' in checkpoint:
+        state_dict = checkpoint['model_state_dict']
+    else:
+        state_dict = checkpoint
+        checkpoint = {'model_state_dict': state_dict}
+
+    # Infer architecture from the weight shapes:
+    # conv_input.weight has shape (num_channels, input_channels, 3, 3)
+    num_channels, input_channels = state_dict['conv_input.weight'].shape[:2]
+    # Residual blocks are named res_blocks.0, res_blocks.1, ...
+    block_ids = {int(key.split('.')[1]) for key in state_dict if key.startswith('res_blocks.')}
+    num_res_blocks = max(block_ids) + 1
+
+    model = PolicyValueNetwork(
+        input_channels=input_channels,
+        num_res_blocks=num_res_blocks,
+        num_channels=num_channels,
+    )
+    model.load_state_dict(state_dict)
+    model.to(device)
+    model.eval()
+
+    return model, checkpoint
+
+
 def create_model(num_res_blocks=4, num_channels=128):
     """
     Factory function to create a policy-value network.

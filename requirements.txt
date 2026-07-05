@@ -1,4 +1,11 @@
-python-chess>=1.999
-numpy>=1.24.0
-torch>=2.0.0
-torchvision>=0.15.0
+# Dependencies are defined in pyproject.toml — prefer:
+#   pip install -e .               (engines only: Phases 0-2)
+#   pip install -e ".[train]"      (+ neural network training: Phases 3-4)
+#   pip install -e ".[train,dev]"  (+ test suite)
+#
+# This file is kept for `pip install -r requirements.txt` convenience:
+chess>=1.9
+numpy>=1.24
+torch>=2.0
+tqdm>=4.60
+tensorboard>=2.10

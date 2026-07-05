@@ -107,13 +107,10 @@ def run_comparison(model_path, num_games=3, simulations_per_move=50):
     print(f"  Simulations per move: {simulations_per_move}")
     print(f"  Model: {model_path}")
 
-    # Create NN-MCTS player
+    # Create NN-MCTS player (architecture read from checkpoint, device auto)
     nn_mcts_player = NNMCTSPlayer(
         model_path,
         simulations=simulations_per_move,
-        device='mps',
-        num_res_blocks=2,
-        num_channels=64
     )
 
     # Create baseline MCTS player function

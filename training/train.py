@@ -271,9 +271,11 @@ class Trainer:
             print(f"  Val   - Policy Accuracy: {val_accuracy:.2%}")
             print(f"  Learning Rate: {current_lr:.6f}")
 
-            # Save checkpoint every epoch
-            checkpoint_path = os.path.join(checkpoint_dir, f"model_epoch_{epoch}.pt")
-            torch.save({
+            # Save checkpoint every epoch.
+            # Checkpoints are SELF-DESCRIBING: they carry the architecture
+            # config, so loaders never need to guess num_res_blocks/channels
+            # (see net.model.load_model for why this matters).
+            checkpoint = {
                 'epoch': epoch,
                 'model_state_dict': self.model.state_dict(),
                 'optimizer_state_dict': self.optimizer.state_dict(),
@@ -281,15 +283,21 @@ class Trainer:
                 'train_loss': train_loss,
                 'val_loss': val_loss,
                 'val_accuracy': val_accuracy,
-            }, checkpoint_path)
+                # Architecture metadata (also inferable from the weights)
+                'input_channels': self.model.input_channels,
+                'num_res_blocks': self.model.num_res_blocks,
+                'num_channels': self.model.num_channels,
+            }
+            checkpoint_path = os.path.join(checkpoint_dir, f"model_epoch_{epoch}.pt")
+            torch.save(checkpoint, checkpoint_path)
             print(f"  Saved: {checkpoint_path}")
 
-            # Save best model
+            # Save best model (same self-describing format, not a bare state_dict)
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
                 best_epoch = epoch
                 best_path = os.path.join(checkpoint_dir, "best_model.pt")
-                torch.save(self.model.state_dict(), best_path)
+                torch.save(checkpoint, best_path)
                 print(f"  ✓ New best model! (val_loss: {val_loss:.4f})")
 
         # Training complete

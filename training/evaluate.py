@@ -30,7 +30,9 @@ import argparse
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from net.model import create_model
+import numpy as np
+
+from net.model import load_model
 from net.encoding import board_to_tensor, legal_moves_mask, index_to_move
 
 
@@ -57,11 +59,8 @@ class NeuralNetworkPlayer:
         self.device = torch.device(device)
         self.temperature = temperature
 
-        # Load model
-        self.model = create_model()
-        self.model.load_state_dict(torch.load(model_path, map_location=self.device))
-        self.model.to(self.device)
-        self.model.eval()
+        # Load model (architecture inferred from the checkpoint itself)
+        self.model, _ = load_model(model_path, self.device)
 
         print(f"Loaded NN player from: {model_path}")
 
@@ -97,9 +96,25 @@ class NeuralNetworkPlayer:
                     if move and move in board.legal_moves:
                         return move, value.item()
             else:
-                # Stochastic: sample from policy distribution
-                # (Not implemented for now - use greedy)
-                pass
+                # Stochastic: sample from the temperature-adjusted policy.
+                #
+                # Temperature reshapes the distribution: p_i^(1/T) / sum(...)
+                #   T → 0:   sharpens toward the single best move (greedy)
+                #   T = 1:   samples from the raw policy
+                #   T > 1:   flattens toward uniform (more exploration)
+                #
+                # Sampling matters for evaluation: two greedy engines play the
+                # SAME game every time, so a "10-game match" is really one
+                # game repeated. A little temperature gives game variety.
+                legal_indices = np.nonzero(legal_mask.squeeze(0).cpu().numpy())[0]
+                legal_probs = policy_probs[legal_indices]
+                legal_probs = legal_probs ** (1.0 / self.temperature)
+                legal_probs = legal_probs / legal_probs.sum()
+
+                sampled_idx = np.random.choice(legal_indices, p=legal_probs)
+                move = index_to_move(int(sampled_idx), board)
+                if move:
+                    return move, value.item()
 
         # Fallback: return first legal move (should rarely happen)
         return list(board.legal_moves)[0], 0.0

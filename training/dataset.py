@@ -115,11 +115,11 @@ class ChessDataset(Dataset):
                         board_tensor = board_to_tensor(board)
                         move_index = move_to_index(move)
 
-                        # Sanity check
-                        if move_index >= 4672:
-                            board.push(move)
-                            move_count += 1
-                            continue
+                        # The encoding guarantees indices < 4672. The old code
+                        # silently skipped out-of-range moves here, which hid a
+                        # promotion-encoding bug and quietly removed every queen
+                        # promotion from the training data. Fail loudly instead.
+                        assert move_index < 4672, f"Move {move} encoded out of range: {move_index}"
 
                     except Exception as e:
                         print(f"Warning: Failed to encode position in game {game_count + 1}: {e}")
