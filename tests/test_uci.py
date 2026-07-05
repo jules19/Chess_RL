@@ -13,7 +13,12 @@ import sys
 import chess
 import pytest
 
-UCI_CMD = [sys.executable, "uci/engine.py"]
+# Launch via the repo-root launcher — the same entry point users configure
+# in their GUI — not uci/engine.py directly. (Running uci/engine.py puts
+# uci/ first on sys.path, where the engine.py FILE shadows the engine/
+# PACKAGE; that plus a hardcoded path once made these tests pass locally
+# and fail in CI. Test the path your users actually take.)
+UCI_CMD = [sys.executable, "chess_rl_uci.py"]
 
 
 def run_uci_session(commands, timeout=120):
