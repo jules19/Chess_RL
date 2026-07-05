@@ -13,13 +13,51 @@ Key improvements:
 """
 
 import chess
+import chess.polyglot
+import time
 import sys
 import os
+from collections import namedtuple
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from engine.evaluator import evaluate
+
+
+# ---------------------------------------------------------------------------
+# Transposition table
+# ---------------------------------------------------------------------------
+#
+# Chess positions repeat during search: 1.d4 d5 2.c4 and 1.c4 d5 2.d4 reach
+# the SAME position through different move orders (a "transposition"). Without
+# a cache, the engine re-searches that identical subtree from scratch every
+# time it's reached. A transposition table is a hash map from position →
+# previously computed search result.
+#
+# The subtlety: alpha-beta doesn't always compute the EXACT value of a node.
+# When a cutoff happens, we only learn a BOUND on the value:
+#   EXACT       - full search completed, score is the true minimax value
+#   LOWER_BOUND - search was cut off high (fail-high): true value >= score
+#   UPPER_BOUND - search was cut off low  (fail-low):  true value <= score
+# A stored bound can still narrow the (alpha, beta) window on a later visit,
+# and the stored best move improves move ordering even when the score can't
+# be reused directly.
+#
+# Positions are keyed by Zobrist hash: a 64-bit signature built by XOR-ing
+# random numbers for every (piece, square) pair plus castling/en-passant/
+# side-to-move. python-chess provides it via chess.polyglot.zobrist_hash().
+
+TT_EXACT = 0
+TT_LOWER_BOUND = 1
+TT_UPPER_BOUND = 2
+
+# depth: remaining search depth the score was computed with (a score from a
+#        deeper search is trustworthy for a shallower one, not vice versa)
+# score: evaluation in centipawns from White's perspective
+# flag:  TT_EXACT / TT_LOWER_BOUND / TT_UPPER_BOUND
+# best_move: best move found at this node (for move ordering on re-visits)
+TTEntry = namedtuple('TTEntry', ['depth', 'score', 'flag', 'best_move'])
 
 
 def quiescence_search(board: chess.Board, alpha: float, beta: float,
@@ -180,9 +218,10 @@ def order_moves(board: chess.Board, moves: list) -> list:
 
 
 def minimax(board: chess.Board, depth: int, alpha: float, beta: float,
-            maximizing: bool, nodes_searched: list = None) -> float:
+            maximizing: bool, nodes_searched: list = None,
+            tt: dict = None) -> float:
     """
-    Minimax search with alpha-beta pruning.
+    Minimax search with alpha-beta pruning and optional transposition table.
 
     This is the core search algorithm. It recursively explores the game tree,
     assuming both players play optimally (minimax), and uses alpha-beta
@@ -195,12 +234,40 @@ def minimax(board: chess.Board, depth: int, alpha: float, beta: float,
         beta: Best score Black can guarantee (upper bound)
         maximizing: True if maximizing player (White), False for minimizing (Black)
         nodes_searched: Optional list to track nodes (for debugging)
+        tt: Optional transposition table (dict). Pass the same dict across
+            calls (and across iterative-deepening iterations) to reuse work.
 
     Returns:
         Best evaluation score from this position (in centipawns, White's perspective)
     """
     if nodes_searched is not None:
         nodes_searched[0] += 1
+
+    # --- Transposition table probe -------------------------------------
+    # If we've already searched this position at least this deep, we may be
+    # able to return immediately (EXACT hit) or narrow the search window
+    # (bound hit). Either way, the stored best move improves ordering.
+    # Only use the TT for depth >= 2: computing the Zobrist hash costs more
+    # than a frontier (depth-1) search saves. Measure before optimizing —
+    # our first version hashed every node and was SLOWER than no TT at all.
+    use_tt = tt is not None and depth >= 2
+    key = None
+    hash_move = None
+    alpha_orig, beta_orig = alpha, beta
+    if use_tt:
+        key = chess.polyglot.zobrist_hash(board)
+        entry = tt.get(key)
+        if entry is not None:
+            hash_move = entry.best_move
+            if entry.depth >= depth:
+                if entry.flag == TT_EXACT:
+                    return entry.score
+                elif entry.flag == TT_LOWER_BOUND:
+                    alpha = max(alpha, entry.score)
+                elif entry.flag == TT_UPPER_BOUND:
+                    beta = min(beta, entry.score)
+                if alpha >= beta:
+                    return entry.score
 
     # Base case: game over
     if board.is_game_over():
@@ -217,44 +284,74 @@ def minimax(board: chess.Board, depth: int, alpha: float, beta: float,
     if not legal_moves:
         return evaluate(board)
 
-    # Order moves for better pruning
+    # Order moves for better pruning; the hash move (best move from a
+    # previous, shallower search of this position) goes first — it's the
+    # single most effective move-ordering heuristic in chess engines.
     ordered_moves = order_moves(board, legal_moves)
+    if hash_move is not None and hash_move in legal_moves:
+        ordered_moves.remove(hash_move)
+        ordered_moves.insert(0, hash_move)
+
+    best_move = None
 
     if maximizing:
         # White's turn: maximize score
         max_eval = float('-inf')
         for move in ordered_moves:
             board.push(move)
-            eval_score = minimax(board, depth - 1, alpha, beta, False, nodes_searched)
+            eval_score = minimax(board, depth - 1, alpha, beta, False, nodes_searched, tt)
             board.pop()
 
-            max_eval = max(max_eval, eval_score)
+            if eval_score > max_eval:
+                max_eval = eval_score
+                best_move = move
             alpha = max(alpha, eval_score)
 
             # Beta cutoff: Black won't allow this branch
             if beta <= alpha:
                 break  # Prune remaining moves
 
-        return max_eval
+        value = max_eval
     else:
         # Black's turn: minimize score
         min_eval = float('inf')
         for move in ordered_moves:
             board.push(move)
-            eval_score = minimax(board, depth - 1, alpha, beta, True, nodes_searched)
+            eval_score = minimax(board, depth - 1, alpha, beta, True, nodes_searched, tt)
             board.pop()
 
-            min_eval = min(min_eval, eval_score)
+            if eval_score < min_eval:
+                min_eval = eval_score
+                best_move = move
             beta = min(beta, eval_score)
 
             # Alpha cutoff: White won't allow this branch
             if beta <= alpha:
                 break  # Prune remaining moves
 
-        return min_eval
+        value = min_eval
+
+    # --- Transposition table store --------------------------------------
+    # Classify what we learned about this node:
+    #   value <= original alpha → we failed low; the true value could be even
+    #                             lower, so `value` is only an UPPER bound
+    #   value >= original beta  → we failed high (cutoff); the true value
+    #                             could be even higher: LOWER bound
+    #   otherwise               → the search window never cut off: EXACT
+    if use_tt:
+        if value <= alpha_orig:
+            flag = TT_UPPER_BOUND
+        elif value >= beta_orig:
+            flag = TT_LOWER_BOUND
+        else:
+            flag = TT_EXACT
+        tt[key] = TTEntry(depth, value, flag, best_move)
+
+    return value
 
 
-def best_move_minimax(board: chess.Board, depth: int = 3, verbose: bool = False) -> chess.Move:
+def best_move_minimax(board: chess.Board, depth: int = 3, verbose: bool = False,
+                      tt: dict = None, first_move: chess.Move = None) -> chess.Move:
     """
     Find the best move using minimax search with alpha-beta pruning.
 
@@ -269,6 +366,9 @@ def best_move_minimax(board: chess.Board, depth: int = 3, verbose: bool = False)
                depth=4: Strong play, slower
                depth=5+: Very strong but much slower
         verbose: If True, print search statistics
+        tt: Optional transposition table dict, shared across calls
+        first_move: Optional move to search first at the root (used by
+                    iterative deepening to try the previous best move first)
 
     Returns:
         Best move found by search
@@ -290,6 +390,9 @@ def best_move_minimax(board: chess.Board, depth: int = 3, verbose: bool = False)
 
     # Order moves for better pruning at root
     ordered_moves = order_moves(board, legal_moves)
+    if first_move is not None and first_move in legal_moves:
+        ordered_moves.remove(first_move)
+        ordered_moves.insert(0, first_move)
 
     if verbose:
         print(f"Searching {len(legal_moves)} moves at depth {depth}...")
@@ -299,13 +402,13 @@ def best_move_minimax(board: chess.Board, depth: int = 3, verbose: bool = False)
 
         # After making our move, opponent tries to minimize (if we're White) or maximize (if we're Black)
         if board.turn == chess.BLACK:  # We just played as White
-            score = minimax(board, depth - 1, alpha, beta, False, nodes_searched)
+            score = minimax(board, depth - 1, alpha, beta, False, nodes_searched, tt)
             if score > best_score:
                 best_score = score
                 best_move = move
             alpha = max(alpha, score)
         else:  # We just played as Black
-            score = minimax(board, depth - 1, alpha, beta, True, nodes_searched)
+            score = minimax(board, depth - 1, alpha, beta, True, nodes_searched, tt)
             if score < best_score:
                 best_score = score
                 best_move = move
@@ -319,6 +422,83 @@ def best_move_minimax(board: chess.Board, depth: int = 3, verbose: bool = False)
     if verbose:
         print(f"\nBest move: {best_move} (score: {best_score/100:.2f} pawns)")
         print(f"Nodes searched: {nodes_searched[0]:,}")
+
+    return best_move
+
+
+def best_move_iterative(board: chess.Board, max_depth: int = 5,
+                        time_limit: float = 5.0,
+                        verbose: bool = False) -> chess.Move:
+    """
+    Iterative deepening: search depth 1, then 2, then 3... until we run out
+    of time or reach max_depth.
+
+    At first glance this looks wasteful — why re-search the shallow depths?
+    Two reasons it's actually FASTER than searching depth N directly:
+
+    1. Game trees grow exponentially, so all the shallow searches combined
+       cost a small fraction of the final deep search (roughly 1/branching
+       factor extra work).
+    2. Each iteration seeds the next one: the previous best move is searched
+       first at the root, and the transposition table remembers best moves
+       throughout the tree. Better move ordering → dramatically more
+       alpha-beta cutoffs → the deep search runs far faster than a cold one.
+
+    It also solves time management: a fixed-depth engine takes 0.1s in simple
+    positions and 60s in complex ones. Iterative deepening always has a
+    complete answer from the last finished depth when the clock runs out —
+    which is exactly what UCI "go movetime" needs.
+
+    (Real engines also abort MID-iteration when time expires; we only check
+    between iterations to keep the code simple. That means we can overshoot
+    the time limit by the length of one iteration — see the course exercises.)
+
+    Args:
+        board: Current chess position
+        max_depth: Deepest search to attempt
+        time_limit: Soft time budget in seconds
+        verbose: Print per-iteration statistics
+
+    Returns:
+        Best move from the deepest completed iteration
+    """
+    legal_moves = list(board.legal_moves)
+    if not legal_moves:
+        return None
+    if len(legal_moves) == 1:
+        return legal_moves[0]
+
+    tt = {}  # Shared across iterations — this is what makes deepening cheap
+    best_move = None
+    start_time = time.time()
+    last_iteration_time = 0.0
+
+    # Each depth costs roughly branching-factor times the previous one.
+    # Empirically ~3-6x for this engine; we use 3 as an optimistic estimate.
+    GROWTH_ESTIMATE = 3.0
+
+    for depth in range(1, max_depth + 1):
+        elapsed = time.time() - start_time
+
+        # PREDICTIVE time check: don't start an iteration we can't finish.
+        # Checking `elapsed >= time_limit` alone is a trap — depth N+1 takes
+        # several times longer than depth N, so starting an iteration at 1.9s
+        # of a 2s budget can blow the budget by 10x. Estimate the next
+        # iteration's cost from the last one and stop early instead.
+        # (Real engines go further and abort MID-search when the clock
+        # expires — that's a course exercise.)
+        if depth > 1 and elapsed + last_iteration_time * GROWTH_ESTIMATE > time_limit:
+            break
+
+        iteration_start = time.time()
+        best_move = best_move_minimax(
+            board, depth=depth, verbose=False, tt=tt, first_move=best_move
+        )
+        last_iteration_time = time.time() - iteration_start
+
+        if verbose:
+            print(f"  depth {depth}: best={best_move} "
+                  f"({time.time() - start_time:.2f}s elapsed, TT entries: {len(tt):,})")
 
     return best_move
 

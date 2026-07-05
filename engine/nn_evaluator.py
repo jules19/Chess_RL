@@ -19,8 +19,8 @@ import os
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from net.model import create_model
-from net.encoding import board_to_tensor, legal_moves_mask, index_to_move
+from net.model import load_model, auto_device
+from net.encoding import board_to_tensor, legal_moves_mask, index_to_move, move_to_index
 
 
 class NeuralNetworkEvaluator:
@@ -32,27 +32,28 @@ class NeuralNetworkEvaluator:
     specified device (CPU or GPU).
     """
 
-    def __init__(self, model_path, device='mps', num_res_blocks=2, num_channels=64):
+    def __init__(self, model_path, device=None):
         """
         Initialize neural network evaluator.
 
+        The model architecture is read from the checkpoint itself — callers
+        no longer pass num_res_blocks/num_channels. (An earlier version took
+        those as arguments with defaults that DISAGREED with the training
+        script, so checkpoints failed to load. See net.model.load_model.)
+
         Args:
             model_path: Path to trained model checkpoint (.pt file)
-            device: Device to run on ('cpu', 'cuda', or 'mps')
-            num_res_blocks: Number of residual blocks in the model
-            num_channels: Number of channels in residual blocks
+            device: Device to run on ('cpu', 'cuda', or 'mps');
+                    best available device auto-detected if None
         """
-        self.device = torch.device(device)
+        self.device = torch.device(device) if device else auto_device()
 
-        # Load model
-        self.model = create_model(num_res_blocks=num_res_blocks, num_channels=num_channels)
-        self.model.load_state_dict(torch.load(model_path, map_location=self.device))
-        self.model.to(self.device)
-        self.model.eval()
+        # Load model (architecture inferred from checkpoint)
+        self.model, _ = load_model(model_path, self.device)
 
         print(f"Loaded NN evaluator from {model_path}")
         print(f"  Device: {self.device}")
-        print(f"  Model: {num_res_blocks} ResBlocks, {num_channels} channels")
+        print(f"  Model: {self.model.num_res_blocks} ResBlocks, {self.model.num_channels} channels")
 
     def evaluate(self, board: chess.Board) -> float:
         """
@@ -114,13 +115,9 @@ class NeuralNetworkEvaluator:
 
             move_probs = {}
             for move in board.legal_moves:
-                try:
-                    from net.encoding import move_to_index
-                    move_idx = move_to_index(move)
-                    move_probs[move] = policy_probs[move_idx]
-                except:
-                    # If encoding fails, assign uniform probability
-                    move_probs[move] = 1.0 / len(list(board.legal_moves))
+                # move_to_index always returns a valid in-range index; if it
+                # ever fails we want the crash, not a silent uniform fallback
+                move_probs[move] = policy_probs[move_to_index(move)]
 
             # Normalize probabilities
             total_prob = sum(move_probs.values())
@@ -148,19 +145,18 @@ class NeuralNetworkEvaluator:
         return max(move_probs.items(), key=lambda x: x[1])[0]
 
 
-def create_nn_evaluator(model_path, device='mps', **kwargs):
+def create_nn_evaluator(model_path, device=None):
     """
     Factory function to create a neural network evaluator.
 
     Args:
         model_path: Path to trained model checkpoint
-        device: Device to run on ('cpu', 'cuda', or 'mps')
-        **kwargs: Additional arguments for model architecture
+        device: Device to run on ('cpu', 'cuda', or 'mps'); auto if None
 
     Returns:
         NeuralNetworkEvaluator instance
     """
-    return NeuralNetworkEvaluator(model_path, device=device, **kwargs)
+    return NeuralNetworkEvaluator(model_path, device=device)
 
 
 if __name__ == "__main__":
@@ -179,8 +175,8 @@ if __name__ == "__main__":
     print("Testing Neural Network Evaluator")
     print("="*70)
 
-    # Create evaluator
-    nn_eval = create_nn_evaluator(model_path, device='mps', num_res_blocks=2, num_channels=64)
+    # Create evaluator (architecture read from the checkpoint, device auto-detected)
+    nn_eval = create_nn_evaluator(model_path)
 
     # Test on starting position
     print("\n1. Starting position:")

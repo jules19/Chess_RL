@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "chess-rl"
+version = "0.4.0"
+description = "Incremental development of a chess engine, from random mover to AlphaZero-style self-play RL — structured as a hands-on course"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+
+# Core dependencies: enough for Phases 0-2 (random, minimax, MCTS engines)
+# and all the pure-logic parts of Phase 3+ (encoding, PUCT with fake network)
+dependencies = [
+    "chess>=1.9",
+    "numpy>=1.24",
+]
+
+[project.optional-dependencies]
+# Phase 3+ (neural network training, NN-guided search, self-play RL)
+train = [
+    "torch>=2.0",
+    "tqdm>=4.60",
+    "tensorboard>=2.10",
+]
+dev = [
+    "pytest>=7.0",
+]
+
+[tool.setuptools]
+# NOTE (course exercise): these are top-level package names, which is poor
+# hygiene for a published library ("net" or "engine" could collide with other
+# packages in site-packages). Restructuring into a single `chess_rl/` package
+# under src/ is Module 8, Exercise 3.
+packages = ["engine", "net", "search", "selfplay", "training", "cli", "uci"]
+
+[tool.pytest.ini_options]
+# Only collect from tests/ — the legacy test/ directory contains long-running
+# interactive scripts (tournaments, profiling), not unit tests.
+testpaths = ["tests"]
+markers = [
+    "slow: tests that take more than ~10 seconds (deselect with '-m \"not slow\"')",
+]

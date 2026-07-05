@@ -46,3 +46,6 @@ models/
 replay/
 runs/
 data/
+
+# Self-play outputs
+selfplay_checkpoints/

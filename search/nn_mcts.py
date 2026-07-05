@@ -198,24 +198,18 @@ class NNMCTSPlayer:
     network instead of hand-crafted heuristics.
     """
 
-    def __init__(self, model_path, simulations=200, device='mps',
-                 num_res_blocks=2, num_channels=64, use_policy=False):
+    def __init__(self, model_path, simulations=200, device=None, use_policy=False):
         """
         Initialize NN-MCTS player.
 
         Args:
-            model_path: Path to trained model checkpoint
+            model_path: Path to trained model checkpoint (architecture is
+                        read from the checkpoint itself)
             simulations: Number of MCTS simulations per move
-            device: Device to run on ('cpu', 'cuda', or 'mps')
-            num_res_blocks: Number of residual blocks in model
-            num_channels: Number of channels in model
+            device: Device to run on ('cpu', 'cuda', or 'mps'); auto if None
             use_policy: If True, use NN policy to guide rollouts
         """
-        self.nn_evaluator = NeuralNetworkEvaluator(
-            model_path, device=device,
-            num_res_blocks=num_res_blocks,
-            num_channels=num_channels
-        )
+        self.nn_evaluator = NeuralNetworkEvaluator(model_path, device=device)
         self.simulations = simulations
         self.use_policy = use_policy
 
@@ -255,9 +249,8 @@ if __name__ == "__main__":
     print("Testing NN-MCTS")
     print("="*70)
 
-    # Create NN-MCTS player
-    player = NNMCTSPlayer(model_path, simulations=50, device='mps',
-                         num_res_blocks=2, num_channels=64)
+    # Create NN-MCTS player (architecture read from checkpoint, device auto)
+    player = NNMCTSPlayer(model_path, simulations=50)
 
     # Test on starting position
     board = chess.Board()
