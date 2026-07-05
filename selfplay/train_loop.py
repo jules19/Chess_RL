@@ -115,6 +115,23 @@ def save_checkpoint(model, path, iteration):
     }, path)
 
 
+def load_resume_state(checkpoint_dir):
+    """
+    Reference solution — course Module 6, exercise 5.
+
+    Restore everything a killed run needs to continue, from the artifacts
+    the loop already writes every iteration:
+      champion.pt        -> the current best network + iteration number
+      replay_buffer.npz  -> the training-data window
+
+    Returns:
+        (champion_model, replay_buffer, last_completed_iteration)
+    """
+    champion, checkpoint = load_model(os.path.join(checkpoint_dir, "champion.pt"))
+    buffer = ReplayBuffer.load(os.path.join(checkpoint_dir, "replay_buffer.npz"))
+    return champion, buffer, int(checkpoint.get('selfplay_iteration', 0))
+
+
 def run_training_loop(iterations=5,
                       games_per_iter=10,
                       simulations=50,
@@ -133,6 +150,7 @@ def run_training_loop(iterations=5,
                       checkpoint_dir="selfplay_checkpoints",
                       device=None,
                       seed=None,
+                      resume=False,
                       verbose=True):
     """
     Run the full self-play RL loop. Returns the champion model.
@@ -149,20 +167,29 @@ def run_training_loop(iterations=5,
     os.makedirs(checkpoint_dir, exist_ok=True)
 
     # The CHAMPION generates data; a CANDIDATE clone trains and challenges
-    if init_checkpoint:
+    start_iteration = 0
+    if resume:
+        champion, buffer, start_iteration = load_resume_state(checkpoint_dir)
+        champion.to(device)
+        champion.eval()
+        print(f"Resumed from {checkpoint_dir}: iteration {start_iteration}, "
+              f"{len(buffer):,} buffered positions")
+    elif init_checkpoint:
         champion, _ = load_model(init_checkpoint, device)
+        buffer = ReplayBuffer(capacity=buffer_capacity)
         print(f"Initialized champion from {init_checkpoint}")
     else:
         champion = create_model(num_res_blocks=res_blocks, num_channels=channels)
         champion.to(device)
         champion.eval()
+        buffer = ReplayBuffer(capacity=buffer_capacity)
         print("Initialized champion with RANDOM weights (tabula rasa, like AlphaZero)")
 
-    buffer = ReplayBuffer(capacity=buffer_capacity)
     promotions = 0
+    end_iteration = start_iteration + iterations
 
-    for iteration in range(1, iterations + 1):
-        print(f"\n{'=' * 70}\nIteration {iteration}/{iterations}\n{'=' * 70}")
+    for iteration in range(start_iteration + 1, end_iteration + 1):
+        print(f"\n{'=' * 70}\nIteration {iteration}/{end_iteration}\n{'=' * 70}")
 
         # 1. GENERATE - champion self-play with exploration noise
         print(f"Self-play: {games_per_iter} games @ {simulations} sims/move")
@@ -238,6 +265,9 @@ def main():
     parser.add_argument('--channels', type=int, default=128)
     parser.add_argument('--init-checkpoint', type=str, default=None,
                         help='Warm-start from a supervised checkpoint (Phase 3a)')
+    parser.add_argument('--resume', action='store_true',
+                        help='Continue a killed run from checkpoint-dir '
+                             '(champion.pt + replay_buffer.npz)')
     parser.add_argument('--checkpoint-dir', type=str, default='selfplay_checkpoints')
     parser.add_argument('--device', type=str, default=None)
     parser.add_argument('--seed', type=int, default=None)
@@ -262,6 +292,7 @@ def main():
         checkpoint_dir=args.checkpoint_dir,
         device=args.device,
         seed=args.seed,
+        resume=args.resume,
     )
 
 

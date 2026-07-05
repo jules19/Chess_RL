@@ -12,11 +12,6 @@ import pytest
 EXPLOSIVE_FEN = "r1bq1rk1/pp2ppbp/2np1np1/8/2BNP3/2N1B3/PPP2PPP/R2Q1RK1 w - - 0 1"
 
 
-@pytest.mark.skip(reason="Course Module 2, exercise 2: implement mid-search "
-                         "abort in search/minimax.py (raise a SearchTimeout "
-                         "from inside minimax() when a deadline passes; catch "
-                         "it in best_move_iterative and return the previous "
-                         "iteration's move), then delete this skip line")
 def test_time_budget_is_a_hard_promise():
     """Contract: best_move_iterative(board, max_depth, time_limit) returns
     within time_limit plus a small grace period, EVEN when an iteration's

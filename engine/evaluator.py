@@ -392,6 +392,34 @@ def evaluate_pawn_structure(board: chess.Board) -> int:
     return score
 
 
+ROOK_OPEN_FILE_BONUS = 25  # centipawns per rook on a fully open file
+
+
+def rook_open_file_bonus(board: chess.Board) -> int:
+    """
+    Reference solution — course Module 1, exercise 2.
+
+    A rook on an open file (no pawns of either color on it) controls the
+    whole file: +25cp per White rook so placed, -25cp per Black rook.
+
+    Implementation note: board.pawns is a bitboard of ALL pawns (both
+    colors), and chess.BB_FILES[f] masks one file — one AND tells us if a
+    file is open, no square loop needed.
+
+    Returns:
+        Bonus in centipawns from White's perspective
+    """
+    bonus = 0
+    for square, piece in board.piece_map().items():
+        if piece.piece_type != chess.ROOK:
+            continue
+        file_index = chess.square_file(square)
+        file_is_open = not (chess.BB_FILES[file_index] & board.pawns)
+        if file_is_open:
+            bonus += ROOK_OPEN_FILE_BONUS if piece.color == chess.WHITE else -ROOK_OPEN_FILE_BONUS
+    return bonus
+
+
 def evaluate(board: chess.Board) -> int:
     """
     Main evaluation function with full positional understanding.
@@ -436,6 +464,7 @@ def evaluate(board: chess.Board) -> int:
     score += evaluate_piece_development(board)    # ~10-40 in opening
     score += evaluate_king_safety(board)          # ~20-80 in opening/middlegame
     score += evaluate_pawn_structure(board)       # ~10-60 depending on position
+    score += rook_open_file_bonus(board)          # +25 per rook on an open file
 
     # Small bonus for giving check (encourages attacking the king)
     if board.is_check():

@@ -266,6 +266,45 @@ def legal_moves_mask(board: chess.Board) -> np.ndarray:
     return mask
 
 
+def mirror_board_tensor(tensor: np.ndarray) -> np.ndarray:
+    """
+    Reference solution — course Module 4, Part A exercise 3.
+
+    Mirror a board tensor horizontally (a-file <-> h-file). The tensor is
+    (plane, rank, file), so this is a flip along axis 2. Every plane is
+    either per-square (piece positions, en passant — flipping is exactly
+    right) or board-constant (side to move, counters — flipping is a no-op).
+
+    ⚠️ Castling planes are board-constant too, which is only correct for
+    positions WITHOUT castling rights: mirroring a real kingside right into
+    a queenside right needs plane 12<->13 and 14<->15 swaps AND the rooks/
+    king to match — that's the stretch goal, and why the course test uses a
+    '-' castling position.
+
+    Args:
+        tensor: (20, 8, 8) board encoding
+
+    Returns:
+        New (20, 8, 8) array, mirrored
+    """
+    return np.flip(tensor, axis=2).copy()
+
+
+def mirror_move(move: chess.Move) -> chess.Move:
+    """
+    Mirror a move horizontally: e2e4 -> d2d4 (files flip, ranks stay,
+    promotion piece is preserved).
+
+    Square trick: a square index is rank*8 + file, and file XOR 7 flips
+    a<->h, b<->g, ... — so square ^ 7 mirrors the file bits in place.
+    """
+    return chess.Move(
+        move.from_square ^ 7,
+        move.to_square ^ 7,
+        promotion=move.promotion,
+    )
+
+
 def batch_board_to_tensor(boards: list):
     """
     Convert a batch of boards to a batched tensor.

@@ -6,10 +6,6 @@ import chess
 import pytest
 
 
-@pytest.mark.skip(reason="Course Module 3, exercise 4: thread an optional "
-                         "rng (random.Random) through mcts_search / "
-                         "best_move_mcts and every place search/mcts.py uses "
-                         "the random module, then delete this skip line")
 def test_mcts_is_reproducible_with_a_seeded_rng():
     """Contract: best_move_mcts and mcts_search accept rng=random.Random(...)
     and use it for EVERY random choice (move shuffling in MCTSNode, rollout

@@ -11,9 +11,6 @@ import pytest
 HANGING_QUEEN_FEN = "rnbqkbnr/pppp1ppp/8/4p3/3QP3/8/PPPP1PPP/RNB1KBNR b KQkq - 0 1"
 
 
-@pytest.mark.skip(reason="Course Module 5, exercise 1: implement "
-                         "material_policy_value(board) in search/puct.py, "
-                         "then delete this skip line")
 def test_material_value_function_finds_the_hanging_queen():
     """Contract: search/puct.py gains
 

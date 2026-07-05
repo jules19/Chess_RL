@@ -116,6 +116,36 @@ def uniform_policy_value(board: chess.Board) -> Tuple[Dict[chess.Move, float], f
     return {move: prior for move in legal_moves}, 0.0
 
 
+def material_policy_value(board: chess.Board) -> Tuple[Dict[chess.Move, float], float]:
+    """
+    Reference solution — course Module 5, exercise 1.
+
+    Module 1's knowledge plugged into PUCT: uniform priors (no move
+    knowledge), but a material-count value. Even this crude value function
+    transforms the search — a hanging queen becomes visible one ply deep,
+    where the zero-knowledge uniform_policy_value sees nothing.
+
+    The trap this exercise exists for: the search expects the value FROM
+    THE SIDE TO MOVE's perspective. Material counting is naturally
+    White-positive, so it must be negated when Black is to move — get that
+    wrong and PUCT diligently AVOIDS winning material.
+    """
+    from engine.evaluator import PIECE_VALUES
+
+    legal_moves = list(board.legal_moves)
+    prior = 1.0 / len(legal_moves)
+    priors = {move: prior for move in legal_moves}
+
+    material = 0
+    for piece in board.piece_map().values():
+        value = PIECE_VALUES[piece.piece_type]
+        material += value if piece.color == chess.WHITE else -value
+
+    side_to_move_material = material if board.turn == chess.WHITE else -material
+    # Squash centipawns into the [-1, 1] range the search expects
+    return priors, max(-1.0, min(1.0, side_to_move_material / 1000.0))
+
+
 def network_policy_value(model, device=None) -> Callable:
     """
     Adapt a trained PolicyValueNetwork into a policy_value_fn for puct_search.

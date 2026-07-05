@@ -98,7 +98,8 @@ class MCTSNode:
     """
 
     def __init__(self, board: chess.Board, parent: Optional['MCTSNode'] = None,
-                 move: Optional[chess.Move] = None, filter_blunders: bool = True):
+                 move: Optional[chess.Move] = None, filter_blunders: bool = True,
+                 rng: Optional[random.Random] = None):
         """
         Initialize a new MCTS node.
 
@@ -107,8 +108,11 @@ class MCTSNode:
             parent: Parent node (None for root)
             move: The move that led to this position (None for root)
             filter_blunders: If True, filter out moves that hang pieces (default: True)
+            rng: Random source for reproducible search (default: the global
+                 random module). Reference solution — course Module 3, ex. 4.
         """
         self.board = board.copy()
+        self.rng = rng if rng is not None else random
         self.parent = parent
         self.move = move  # Move that led to this position
         self.filter_blunders = filter_blunders
@@ -130,7 +134,7 @@ class MCTSNode:
         else:
             self.untried_moves = all_moves
 
-        random.shuffle(self.untried_moves)  # Randomize order to avoid bias
+        self.rng.shuffle(self.untried_moves)  # Randomize order to avoid bias
 
     def is_fully_expanded(self) -> bool:
         """Check if all legal moves have been tried."""
@@ -218,13 +222,15 @@ class MCTSNode:
         new_board.push(move)
 
         # Create child node
-        child = MCTSNode(new_board, parent=self, move=move, filter_blunders=self.filter_blunders)
+        child = MCTSNode(new_board, parent=self, move=move,
+                         filter_blunders=self.filter_blunders, rng=self.rng)
         self.children[move] = child
 
         return child
 
 
-def simulate_random(board: chess.Board, max_moves: int = 200) -> float:
+def simulate_random(board: chess.Board, max_moves: int = 200,
+                    rng: Optional[random.Random] = None) -> float:
     """
     Simulate a random game from the given position (random rollout).
 
@@ -241,6 +247,7 @@ def simulate_random(board: chess.Board, max_moves: int = 200) -> float:
         -1.0 = Black wins
          0.0 = Draw
     """
+    rng = rng if rng is not None else random
     sim_board = board.copy()
     moves = 0
 
@@ -249,7 +256,7 @@ def simulate_random(board: chess.Board, max_moves: int = 200) -> float:
         legal_moves = list(sim_board.legal_moves)
         if not legal_moves:
             break
-        move = random.choice(legal_moves)
+        move = rng.choice(legal_moves)
         sim_board.push(move)
         moves += 1
 
@@ -263,7 +270,8 @@ def simulate_random(board: chess.Board, max_moves: int = 200) -> float:
 
 
 def get_prioritized_moves(board: chess.Board, legal_moves: List[chess.Move],
-                          sample_size: int) -> List[chess.Move]:
+                          sample_size: int,
+                          rng: Optional[random.Random] = None) -> List[chess.Move]:
     """
     Intelligently sample moves, prioritizing forcing moves over quiet moves.
 
@@ -284,6 +292,8 @@ def get_prioritized_moves(board: chess.Board, legal_moves: List[chess.Move],
     Returns:
         List of prioritized moves (forcing moves + sample of quiet moves)
     """
+    rng = rng if rng is not None else random
+
     if len(legal_moves) <= sample_size:
         return legal_moves
 
@@ -302,7 +312,7 @@ def get_prioritized_moves(board: chess.Board, legal_moves: List[chess.Move],
     # Then fill remaining slots with quiet moves
     if len(forcing) >= sample_size:
         # Too many forcing moves - sample from them
-        return random.sample(forcing, sample_size)
+        return rng.sample(forcing, sample_size)
     else:
         # Take all forcing moves + sample quiet moves to reach sample_size
         sampled = forcing.copy()
@@ -310,13 +320,14 @@ def get_prioritized_moves(board: chess.Board, legal_moves: List[chess.Move],
 
         if remaining_slots > 0 and quiet:
             num_quiet = min(remaining_slots, len(quiet))
-            sampled.extend(random.sample(quiet, num_quiet))
+            sampled.extend(rng.sample(quiet, num_quiet))
 
         return sampled if sampled else legal_moves
 
 
 def simulate_with_evaluator(board: chess.Board, max_moves: int = 50,
-                            sample_size: int = 10) -> float:
+                            sample_size: int = 10,
+                            rng: Optional[random.Random] = None) -> float:
     """
     Simulate a game using the evaluator for guidance (smart rollout).
 
@@ -347,7 +358,7 @@ def simulate_with_evaluator(board: chess.Board, max_moves: int = 50,
 
         # OPTIMIZATION 1: Sample subset of moves (3-5x speedup)
         # OPTIMIZATION 2: Prioritize forcing moves (better accuracy, enables smaller sample_size)
-        moves_to_evaluate = get_prioritized_moves(sim_board, legal_moves, sample_size)
+        moves_to_evaluate = get_prioritized_moves(sim_board, legal_moves, sample_size, rng=rng)
 
         # Pick move with simple 1-ply evaluation from sampled moves
         best_move = None
@@ -408,7 +419,8 @@ def mcts_search(board: chess.Board, simulations: int = 200,
                 exploration_constant: float = 1.41,
                 sample_size: int = 10,
                 filter_blunders: bool = True,
-                verbose: bool = False) -> Optional[chess.Move]:
+                verbose: bool = False,
+                rng: Optional[random.Random] = None) -> Optional[chess.Move]:
     """
     Perform MCTS search to find the best move.
 
@@ -438,7 +450,7 @@ def mcts_search(board: chess.Board, simulations: int = 200,
         return None
 
     # Create root node
-    root = MCTSNode(board, filter_blunders=filter_blunders)
+    root = MCTSNode(board, filter_blunders=filter_blunders, rng=rng)
 
     start_time = time.time()
 
@@ -459,9 +471,9 @@ def mcts_search(board: chess.Board, simulations: int = 200,
 
         # 3. SIMULATION - Play out game
         if use_evaluator:
-            value = simulate_with_evaluator(search_board, sample_size=sample_size)
+            value = simulate_with_evaluator(search_board, sample_size=sample_size, rng=rng)
         else:
-            value = simulate_random(search_board)
+            value = simulate_random(search_board, rng=rng)
 
         # Adjust value to be from the perspective of the leaf node's parent
         # The simulation returns White's perspective. We need the parent's perspective.
@@ -502,7 +514,8 @@ def mcts_search(board: chess.Board, simulations: int = 200,
 def best_move_mcts(board: chess.Board, simulations: int = 200,
                    use_evaluator: bool = True, sample_size: int = 10,
                    filter_blunders: bool = True,
-                   verbose: bool = False) -> Optional[chess.Move]:
+                   verbose: bool = False,
+                   rng: Optional[random.Random] = None) -> Optional[chess.Move]:
     """
     Wrapper function for MCTS search (matches interface of other engines).
 
@@ -519,7 +532,7 @@ def best_move_mcts(board: chess.Board, simulations: int = 200,
     """
     return mcts_search(board, simulations=simulations,
                       use_evaluator=use_evaluator, sample_size=sample_size,
-                      filter_blunders=filter_blunders, verbose=verbose)
+                      filter_blunders=filter_blunders, verbose=verbose, rng=rng)
 
 
 if __name__ == "__main__":

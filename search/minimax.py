@@ -60,9 +60,42 @@ TT_UPPER_BOUND = 2
 TTEntry = namedtuple('TTEntry', ['depth', 'score', 'flag', 'best_move'])
 
 
+# ---------------------------------------------------------------------------
+# Hard time control (reference solution — course Module 2, exercise 2)
+# ---------------------------------------------------------------------------
+#
+# The predictive stop in best_move_iterative estimates the next iteration at
+# ~3x the last one, but tactical positions can be 10x — so the search can
+# still commit to an iteration it can't afford. The fix is a hard deadline
+# checked INSIDE the search: every TIME_CHECK_INTERVAL nodes we glance at
+# the clock and, if the deadline passed, unwind the whole recursion with an
+# exception. The driver catches it and falls back to the previous
+# iteration's move (which is complete and trustworthy — partial iterations
+# are NOT: the best move might be in the unsearched remainder).
+#
+# Why check every N nodes instead of every node? time.time() costs more
+# than most of what a node does; checking every ~1024 nodes makes the
+# overhead invisible while bounding the overshoot to (1024 / nodes-per-
+# second) seconds.
+
+class SearchTimeout(Exception):
+    """Raised inside the search tree when the hard deadline passes."""
+
+
+TIME_CHECK_INTERVAL = 1024
+
+
+def _check_deadline(deadline, nodes_searched):
+    if (deadline is not None
+            and nodes_searched is not None
+            and nodes_searched[0] % TIME_CHECK_INTERVAL == 0
+            and time.time() > deadline):
+        raise SearchTimeout()
+
+
 def quiescence_search(board: chess.Board, alpha: float, beta: float,
                       maximizing: bool, nodes_searched: list = None,
-                      max_depth: int = 10) -> float:
+                      max_depth: int = 10, deadline: float = None) -> float:
     """
     Quiescence search - searches only "noisy" moves (captures, checks, promotions)
     until position is quiet. This prevents the horizon effect where the engine
@@ -88,6 +121,7 @@ def quiescence_search(board: chess.Board, alpha: float, beta: float,
     """
     if nodes_searched is not None:
         nodes_searched[0] += 1
+    _check_deadline(deadline, nodes_searched)
 
     # Check for game over
     if board.is_game_over():
@@ -147,7 +181,7 @@ def quiescence_search(board: chess.Board, alpha: float, beta: float,
     if maximizing:
         for move in ordered_moves:
             board.push(move)
-            score = quiescence_search(board, alpha, beta, False, nodes_searched, max_depth - 1)
+            score = quiescence_search(board, alpha, beta, False, nodes_searched, max_depth - 1, deadline)
             board.pop()
 
             if score >= beta:
@@ -158,7 +192,7 @@ def quiescence_search(board: chess.Board, alpha: float, beta: float,
     else:
         for move in ordered_moves:
             board.push(move)
-            score = quiescence_search(board, alpha, beta, True, nodes_searched, max_depth - 1)
+            score = quiescence_search(board, alpha, beta, True, nodes_searched, max_depth - 1, deadline)
             board.pop()
 
             if score <= alpha:
@@ -219,7 +253,7 @@ def order_moves(board: chess.Board, moves: list) -> list:
 
 def minimax(board: chess.Board, depth: int, alpha: float, beta: float,
             maximizing: bool, nodes_searched: list = None,
-            tt: dict = None) -> float:
+            tt: dict = None, deadline: float = None) -> float:
     """
     Minimax search with alpha-beta pruning and optional transposition table.
 
@@ -242,6 +276,7 @@ def minimax(board: chess.Board, depth: int, alpha: float, beta: float,
     """
     if nodes_searched is not None:
         nodes_searched[0] += 1
+    _check_deadline(deadline, nodes_searched)
 
     # --- Transposition table probe -------------------------------------
     # If we've already searched this position at least this deep, we may be
@@ -276,7 +311,8 @@ def minimax(board: chess.Board, depth: int, alpha: float, beta: float,
     # Base case: reached search depth limit
     # Instead of evaluating immediately, use quiescence search to resolve tactics
     if depth == 0:
-        return quiescence_search(board, alpha, beta, maximizing, nodes_searched)
+        return quiescence_search(board, alpha, beta, maximizing, nodes_searched,
+                                 deadline=deadline)
 
     legal_moves = list(board.legal_moves)
 
@@ -299,7 +335,7 @@ def minimax(board: chess.Board, depth: int, alpha: float, beta: float,
         max_eval = float('-inf')
         for move in ordered_moves:
             board.push(move)
-            eval_score = minimax(board, depth - 1, alpha, beta, False, nodes_searched, tt)
+            eval_score = minimax(board, depth - 1, alpha, beta, False, nodes_searched, tt, deadline)
             board.pop()
 
             if eval_score > max_eval:
@@ -317,7 +353,7 @@ def minimax(board: chess.Board, depth: int, alpha: float, beta: float,
         min_eval = float('inf')
         for move in ordered_moves:
             board.push(move)
-            eval_score = minimax(board, depth - 1, alpha, beta, True, nodes_searched, tt)
+            eval_score = minimax(board, depth - 1, alpha, beta, True, nodes_searched, tt, deadline)
             board.pop()
 
             if eval_score < min_eval:
@@ -351,7 +387,8 @@ def minimax(board: chess.Board, depth: int, alpha: float, beta: float,
 
 
 def best_move_minimax(board: chess.Board, depth: int = 3, verbose: bool = False,
-                      tt: dict = None, first_move: chess.Move = None) -> chess.Move:
+                      tt: dict = None, first_move: chess.Move = None,
+                      deadline: float = None) -> chess.Move:
     """
     Find the best move using minimax search with alpha-beta pruning.
 
@@ -402,13 +439,13 @@ def best_move_minimax(board: chess.Board, depth: int = 3, verbose: bool = False,
 
         # After making our move, opponent tries to minimize (if we're White) or maximize (if we're Black)
         if board.turn == chess.BLACK:  # We just played as White
-            score = minimax(board, depth - 1, alpha, beta, False, nodes_searched, tt)
+            score = minimax(board, depth - 1, alpha, beta, False, nodes_searched, tt, deadline)
             if score > best_score:
                 best_score = score
                 best_move = move
             alpha = max(alpha, score)
         else:  # We just played as Black
-            score = minimax(board, depth - 1, alpha, beta, True, nodes_searched, tt)
+            score = minimax(board, depth - 1, alpha, beta, True, nodes_searched, tt, deadline)
             if score < best_score:
                 best_score = score
                 best_move = move
@@ -471,34 +508,58 @@ def best_move_iterative(board: chess.Board, max_depth: int = 5,
     tt = {}  # Shared across iterations — this is what makes deepening cheap
     best_move = None
     start_time = time.time()
+    deadline = start_time + time_limit
     last_iteration_time = 0.0
 
     # Each depth costs roughly branching-factor times the previous one.
     # Empirically ~3-6x for this engine; we use 3 as an optimistic estimate.
     GROWTH_ESTIMATE = 3.0
 
+    # HARD-ABORT TRAP (reference solution — course Module 2, exercise 2):
+    # SearchTimeout unwinds the recursion PAST the board.pop() calls, so an
+    # aborted search leaves its board with moves still pushed. Searching a
+    # COPY makes the corruption harmless — the caller's board is untouched.
+    # (The course test catches the naive version: an aborted search on the
+    # caller's board makes the returned move illegal on it.)
+    search_board = board.copy()
+
     for depth in range(1, max_depth + 1):
         elapsed = time.time() - start_time
 
-        # PREDICTIVE time check: don't start an iteration we can't finish.
-        # Checking `elapsed >= time_limit` alone is a trap — depth N+1 takes
-        # several times longer than depth N, so starting an iteration at 1.9s
-        # of a 2s budget can blow the budget by 10x. Estimate the next
-        # iteration's cost from the last one and stop early instead.
-        # (Real engines go further and abort MID-search when the clock
-        # expires — that's a course exercise.)
+        # PREDICTIVE time check: don't start an iteration we probably can't
+        # finish. Checking `elapsed >= time_limit` alone is a trap — depth
+        # N+1 takes several times longer than depth N, so starting an
+        # iteration at 1.9s of a 2s budget can blow the budget by 10x.
+        # This is only a heuristic (real growth can exceed the estimate,
+        # e.g. 10x in tactical positions), which is why the hard deadline
+        # below backs it up.
         if depth > 1 and elapsed + last_iteration_time * GROWTH_ESTIMATE > time_limit:
             break
 
         iteration_start = time.time()
-        best_move = best_move_minimax(
-            board, depth=depth, verbose=False, tt=tt, first_move=best_move
-        )
+        try:
+            best_move = best_move_minimax(
+                search_board, depth=depth, verbose=False, tt=tt,
+                first_move=best_move, deadline=deadline
+            )
+        except SearchTimeout:
+            # The interrupted iteration is incomplete and untrustworthy —
+            # the true best move might be in the unsearched remainder — so
+            # we KEEP the previous iteration's move, not any partial result.
+            if verbose:
+                print(f"  depth {depth}: aborted at deadline "
+                      f"({time.time() - start_time:.2f}s elapsed)")
+            break
         last_iteration_time = time.time() - iteration_start
 
         if verbose:
             print(f"  depth {depth}: best={best_move} "
                   f"({time.time() - start_time:.2f}s elapsed, TT entries: {len(tt):,})")
+
+    if best_move is None:
+        # Deadline expired inside the depth-1 iteration (tiny budgets):
+        # any sensible answer beats returning nothing
+        best_move = order_moves(board, legal_moves)[0]
 
     return best_move
 

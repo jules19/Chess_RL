@@ -11,9 +11,6 @@ import pytest
 FEN = "r1bq1rk1/pp2ppbp/2np1np1/8/2BNP3/2N1B3/PPP2PPP/R2Q1RK1 w - - 0 1"
 
 
-@pytest.mark.skip(reason="Course Module 4, Part A exercise 3: implement "
-                         "mirror_board_tensor(tensor) and mirror_move(move) "
-                         "in net/encoding.py, then delete this skip line")
 def test_horizontal_mirror_round_trips():
     """Contract: net/encoding.py gains
 

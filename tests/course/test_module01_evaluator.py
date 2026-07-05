@@ -3,15 +3,13 @@
 import chess
 import pytest
 
-# Same material on both sides in both positions; the ONLY difference is
-# whether the d-file (where the white rook sits) is open or blocked by pawns.
+# Both positions are internally symmetric (same pawn structure for both
+# colors); the difference that matters is whether the d-file — where the
+# white rook sits — has pawns on it (closed) or none (open).
 OPEN_FILE_FEN = "4k3/ppp2ppp/8/8/8/8/PPP2PPP/3RK3 w - - 0 1"
-CLOSED_FILE_FEN = "4k3/ppp1pppp/8/8/8/8/PPP1PPPP/3RK3 w - - 0 1"
+CLOSED_FILE_FEN = "4k3/pppp1ppp/8/8/8/8/PPPP1PPP/3RK3 w - - 0 1"
 
 
-@pytest.mark.skip(reason="Course Module 1, exercise 2: implement "
-                         "rook_open_file_bonus(board) in engine/evaluator.py, "
-                         "wire it into evaluate(), then delete this skip line")
 def test_rook_on_open_file_earns_a_bonus():
     """Contract: engine/evaluator.py gains
 

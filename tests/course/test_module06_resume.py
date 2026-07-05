@@ -4,10 +4,6 @@ import numpy as np
 import pytest
 
 
-@pytest.mark.skip(reason="Course Module 6, exercise 5: implement "
-                         "load_resume_state(checkpoint_dir) in "
-                         "selfplay/train_loop.py and a --resume flag that "
-                         "uses it, then delete this skip line")
 def test_resume_state_round_trips(tmp_path):
     """Contract: selfplay/train_loop.py gains
 
