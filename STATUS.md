@@ -31,6 +31,10 @@ every push (`.github/workflows/ci.yml`). All green.
   temperature selection (`search/puct.py`).
 - **Added:** complete Phase 4 self-play skeleton (`selfplay/`), verified
   end-to-end at toy scale on CPU.
+- **Added:** UCI now covers every engine stage — new `puct` engine type
+  loads a trained checkpoint ("Model File" option) with graceful fallback,
+  and `go movetime`/`wtime`/`btime` are honored via iterative deepening.
+  Protocol-level subprocess tests in `tests/test_uci.py`.
 - **Added:** packaging (`pyproject.toml`), pytest suite, CI.
 - **Restructured:** documentation into a course (`course/`, 9 modules);
   historical docs preserved in `docs/history/` and `docs/plans/`.

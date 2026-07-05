@@ -37,6 +37,10 @@ python3 cli/play.py                 # interactive menu with all 17 modes
 
 Connect to a chess GUI (Arena, Cute Chess, PyChess) via UCI:
 `python3 chess_rl_uci.py` — setup guide in [docs/UCI_SETUP_MAC.md](docs/UCI_SETUP_MAC.md).
+**Every stage is playable from the GUI**: pick `random`, `material`,
+`minimax`, `mcts`, or `puct` via the "Engine Type" option (`puct` loads a
+trained checkpoint set by "Model File"). GUI time controls are honored via
+iterative deepening.
 
 Train the network on expert games (Phase 3a):
 ```bash
