@@ -33,8 +33,17 @@ import os
 from datetime import datetime
 from typing import Optional, TextIO
 
-# Import our engine modules
-sys.path.insert(0, '/home/user/Chess_RL')
+# Add the project root to sys.path, derived from this file's location.
+#
+# This is load-bearing for two reasons (both learned the hard way):
+# 1. An earlier version hardcoded an absolute path here — it worked on the
+#    machine it was written on and nowhere else (CI caught it).
+# 2. When running `python3 uci/engine.py` directly, sys.path[0] is uci/,
+#    so `import engine` would otherwise resolve to THIS FILE (uci/engine.py
+#    shadows the engine/ package) and crash. Putting the project root ahead
+#    of the script directory makes the package win.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from engine.evaluator import evaluate, best_move_material
 from search.minimax import best_move_minimax, best_move_iterative
 from search.mcts import best_move_mcts
