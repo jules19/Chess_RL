@@ -15,7 +15,9 @@ deterministic engines replay the same game forever (which is why
 
 1. Install a reference engine and a match runner:
    `cutechess-cli` + Stockfish (its `UCI_LimitStrength`/`UCI_Elo` options go
-   down to ~1320).
+   down to ~1320). *Locked-down machine? Both are pre-installed in the
+   Docker GUI container — see [docs/DOCKER_GUI.md](../../docs/DOCKER_GUI.md),
+   including the exact `docker exec … cutechess-cli` incantation.*
 2. Your engine already speaks UCI (`uci/engine.py`) — this is the moment
    Phase 1's UCI work pays off.
 3. Run a real match:

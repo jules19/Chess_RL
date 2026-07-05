@@ -36,8 +36,12 @@ from typing import Optional, TextIO
 # Import our engine modules
 sys.path.insert(0, '/home/user/Chess_RL')
 from engine.evaluator import evaluate, best_move_material
-from search.minimax import best_move_minimax
+from search.minimax import best_move_minimax, best_move_iterative
 from search.mcts import best_move_mcts
+from search.puct import best_move_puct
+# NOTE: torch and the trained model are imported lazily, only when the GUI
+# selects Engine Type = puct — the UCI engine must keep working in
+# environments without torch installed.
 
 
 class UCIEngine:
@@ -50,6 +54,13 @@ class UCIEngine:
         self.mcts_simulations = 200  # default for MCTS
         self.mcts_use_evaluator = True  # default: use evaluator rollouts
         self.debug = False
+
+        # PUCT engine (Phase 3/4): neural network + AlphaZero-style search.
+        # The model is loaded lazily on first use and cached.
+        self.puct_simulations = 200
+        self.model_path = "checkpoints/best_model.pt"
+        self._puct_policy_value = None   # cached network adapter
+        self._puct_loaded_path = None    # path the cache was built from
 
         # UCI transaction logging
         self.uci_log_enabled = False
@@ -199,10 +210,12 @@ class UCIEngine:
         self.uci_print("")
 
         # Declare available options
-        self.uci_print("option name Engine Type type combo default minimax var random var material var minimax var mcts")
+        self.uci_print("option name Engine Type type combo default minimax var random var material var minimax var mcts var puct")
         self.uci_print("option name Search Depth type spin default 3 min 1 max 6")
         self.uci_print("option name MCTS Simulations type spin default 200 min 50 max 1000")
         self.uci_print("option name MCTS Use Evaluator type check default true")
+        self.uci_print("option name PUCT Simulations type spin default 200 min 16 max 3200")
+        self.uci_print(f"option name Model File type string default {self.model_path}")
         self.uci_print("option name Debug type check default false")
 
         # Logging options
@@ -226,7 +239,7 @@ class UCIEngine:
     def handle_setoption(self, name: str, value: str):
         """Handle 'setoption' command - configure engine options."""
         if name == "Engine Type":
-            if value in ["random", "material", "minimax", "mcts"]:
+            if value in ["random", "material", "minimax", "mcts", "puct"]:
                 self.engine_type = value
                 self.log_debug(f"Engine type set to {value}")
             else:
@@ -257,6 +270,21 @@ class UCIEngine:
         elif name == "MCTS Use Evaluator":
             self.mcts_use_evaluator = (value.lower() == "true")
             self.log_debug(f"MCTS Use Evaluator set to {self.mcts_use_evaluator}")
+
+        elif name == "PUCT Simulations":
+            try:
+                sims = int(value)
+                if 16 <= sims <= 3200:
+                    self.puct_simulations = sims
+                    self.log_debug(f"PUCT simulations set to {sims}")
+                else:
+                    self.log_debug(f"PUCT simulations out of range: {sims}")
+            except ValueError:
+                self.log_debug(f"Invalid PUCT simulations value: {value}")
+
+        elif name == "Model File":
+            self.model_path = value
+            self.log_debug(f"Model file set to {value}")
 
         elif name == "Debug":
             self.debug = (value.lower() == "true")
@@ -387,8 +415,56 @@ class UCIEngine:
                 self.game_start_fen = None
                 self.game_result = "*"
 
-    def get_best_move(self) -> Optional[chess.Move]:
-        """Calculate best move using selected engine type."""
+    def _get_puct_policy_value(self):
+        """
+        Lazily load the trained network for the PUCT engine, caching the
+        adapter. Returns None (with an 'info string' explaining why) if the
+        model can't be loaded — the caller falls back to minimax so the GUI
+        never hangs without a bestmove.
+
+        Anything we print here MUST be a UCI 'info string' line: chess GUIs
+        parse stdout, and a stray plain print corrupts the protocol.
+        """
+        if (self._puct_policy_value is not None
+                and self._puct_loaded_path == self.model_path):
+            return self._puct_policy_value
+
+        try:
+            from net.model import load_model
+            from search.puct import network_policy_value
+        except ImportError as e:
+            self.uci_print(f"info string PUCT unavailable (torch not installed: {e}); "
+                           f"falling back to minimax", flush=True)
+            return None
+
+        try:
+            model, _ = load_model(self.model_path)
+        except FileNotFoundError:
+            self.uci_print(f"info string Model file not found: {self.model_path} "
+                           f"(set with: setoption name Model File value <path>); "
+                           f"falling back to minimax", flush=True)
+            return None
+        except Exception as e:
+            self.uci_print(f"info string Failed to load model {self.model_path}: {e}; "
+                           f"falling back to minimax", flush=True)
+            return None
+
+        self._puct_policy_value = network_policy_value(model)
+        self._puct_loaded_path = self.model_path
+        self.uci_print(f"info string Loaded model {self.model_path} "
+                       f"({model.num_res_blocks} blocks, {model.num_channels} channels)",
+                       flush=True)
+        return self._puct_policy_value
+
+    def get_best_move(self, movetime_s: Optional[float] = None) -> Optional[chess.Move]:
+        """
+        Calculate best move using selected engine type.
+
+        Args:
+            movetime_s: Optional time budget in seconds (from 'go movetime'
+                        or derived from 'go wtime/btime'). Currently honored
+                        by the minimax engine via iterative deepening.
+        """
         if self.board.is_game_over():
             return None
 
@@ -403,12 +479,23 @@ class UCIEngine:
             return best_move_material(self.board)
 
         elif self.engine_type == "minimax":
+            if movetime_s is not None:
+                # Time-budgeted search: iterative deepening decides the depth
+                return best_move_iterative(self.board, max_depth=10,
+                                           time_limit=movetime_s)
             return best_move_minimax(self.board, self.search_depth)
 
         elif self.engine_type == "mcts":
             return best_move_mcts(self.board,
                                  simulations=self.mcts_simulations,
                                  use_evaluator=self.mcts_use_evaluator)
+
+        elif self.engine_type == "puct":
+            policy_value_fn = self._get_puct_policy_value()
+            if policy_value_fn is None:
+                return best_move_minimax(self.board, self.search_depth)
+            return best_move_puct(self.board, policy_value_fn,
+                                  simulations=self.puct_simulations)
 
         # Fallback
         return random.choice(legal_moves)
@@ -426,6 +513,12 @@ class UCIEngine:
         """
         # Parse go parameters
         search_depth = self.search_depth  # default from options
+        movetime_s = None
+        my_time_ms, my_inc_ms = None, 0
+
+        # Whose clock is ours depends on the side to move
+        time_key = "wtime" if self.board.turn == chess.WHITE else "btime"
+        inc_key = "winc" if self.board.turn == chess.WHITE else "binc"
 
         idx = 0
         while idx < len(parts):
@@ -436,13 +529,39 @@ class UCIEngine:
                 except (ValueError, IndexError):
                     idx += 1
             elif parts[idx] == "movetime":
-                # We don't implement time management yet, just acknowledge
-                idx += 2
+                try:
+                    movetime_s = int(parts[idx + 1]) / 1000.0
+                    idx += 2
+                except (ValueError, IndexError):
+                    idx += 1
+            elif parts[idx] == time_key:
+                try:
+                    my_time_ms = int(parts[idx + 1])
+                    idx += 2
+                except (ValueError, IndexError):
+                    idx += 1
+            elif parts[idx] == inc_key:
+                try:
+                    my_inc_ms = int(parts[idx + 1])
+                    idx += 2
+                except (ValueError, IndexError):
+                    idx += 1
             elif parts[idx] == "infinite":
                 # For now, treat as normal search
                 idx += 1
             else:
                 idx += 1
+
+        # Derive a per-move budget from the game clock if no explicit
+        # movetime: spend ~1/30th of the remaining time plus the increment.
+        # (Assume the game lasts ~30 more of our moves — crude but standard.)
+        if movetime_s is None and my_time_ms is not None:
+            movetime_s = (my_time_ms / 30.0 + my_inc_ms) / 1000.0
+
+        # An explicit 'go depth N' means fixed depth — don't let a clock
+        # sent alongside it turn the search time-budgeted instead.
+        if search_depth != self.search_depth:
+            movetime_s = None
 
         # Override search depth for this move if specified in go command
         original_depth = self.search_depth
@@ -450,7 +569,7 @@ class UCIEngine:
             self.search_depth = search_depth
 
         # Calculate best move
-        best_move = self.get_best_move()
+        best_move = self.get_best_move(movetime_s=movetime_s)
 
         # Restore original depth
         self.search_depth = original_depth
