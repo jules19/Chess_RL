@@ -120,6 +120,44 @@ class NeuralNetworkPlayer:
         return list(board.legal_moves)[0], 0.0
 
 
+class MinimaxPlayer:
+    """Baseline opponent: the Phase 1 alpha-beta engine, wrapped in the
+    player interface (select_move(board) -> (move, value)) this module uses.
+
+    ⚠️ LESSON LEARNED: an earlier version of main() imported MinimaxPlayer
+    from search.minimax — a class that never existed — inside a try/except
+    that printed a warning and skipped the whole baseline match. The
+    evaluation script's most important feature silently did nothing. That's
+    the "silent guards hide bugs" antipattern (course Module 8, case study 2)
+    live in the tool that was supposed to measure everything else.
+    """
+
+    def __init__(self, depth=3):
+        from search.minimax import best_move_minimax
+        self._best_move = best_move_minimax
+        self.depth = depth
+
+    def select_move(self, board):
+        from engine.evaluator import evaluate as evaluate_fn
+        move = self._best_move(board, depth=self.depth)
+        # Report the static eval so game logs stay informative
+        return move, max(-1.0, min(1.0, evaluate_fn(board) / 1000.0))
+
+
+class MCTSPlayer:
+    """Baseline opponent: the Phase 2 rollout-MCTS engine (see MinimaxPlayer
+    for why these wrappers live here)."""
+
+    def __init__(self, num_simulations=200):
+        from search.mcts import best_move_mcts
+        self._best_move = best_move_mcts
+        self.num_simulations = num_simulations
+
+    def select_move(self, board):
+        move = self._best_move(board, simulations=self.num_simulations)
+        return move, 0.0
+
+
 def play_game(white_player, black_player, max_moves=150, verbose=False):
     """
     Play one game between two players.
@@ -270,64 +308,35 @@ def main():
     # Load NN player
     nn_player = NeuralNetworkPlayer(args.model_path, device=args.device)
 
-    # Import baseline engines
-    try:
-        from search.minimax import MinimaxPlayer
-        minimax_available = True
-    except ImportError:
-        print("Warning: MinimaxPlayer not available")
-        minimax_available = False
+    # Tournament vs Minimax.
+    # No try/except-and-skip here: if a baseline can't run, we want a loud
+    # crash, not an evaluation that silently measures nothing.
+    print("\n" + "="*70)
+    print("1. Neural Network vs Minimax (depth 3)")
+    print("="*70)
 
-    try:
-        from search.mcts import MCTSPlayer
-        mcts_available = True
-    except ImportError:
-        print("Warning: MCTSPlayer not available")
-        mcts_available = False
-
-    # Tournament vs Minimax
-    if minimax_available:
-        print("\n" + "="*70)
-        print("1. Neural Network vs Minimax (depth 3)")
-        print("="*70)
-
-        try:
-            from engine.evaluator import evaluate as evaluate_fn
-            minimax_player = MinimaxPlayer(depth=3, evaluator=evaluate_fn)
-
-            wins, losses, draws = tournament(
-                nn_player, minimax_player,
-                num_games=args.games,
-                player1_name="Neural Network",
-                player2_name="Minimax (depth 3)"
-            )
-
-            print_tournament_results(wins, losses, draws, "Neural Network", "Minimax (depth 3)")
-
-        except Exception as e:
-            print(f"Error running Minimax tournament: {e}")
+    minimax_player = MinimaxPlayer(depth=3)
+    wins, losses, draws = tournament(
+        nn_player, minimax_player,
+        num_games=args.games,
+        player1_name="Neural Network",
+        player2_name="Minimax (depth 3)"
+    )
+    print_tournament_results(wins, losses, draws, "Neural Network", "Minimax (depth 3)")
 
     # Tournament vs MCTS
-    if mcts_available:
-        print("\n" + "="*70)
-        print("2. Neural Network vs MCTS (200 simulations)")
-        print("="*70)
+    print("\n" + "="*70)
+    print("2. Neural Network vs MCTS (200 simulations)")
+    print("="*70)
 
-        try:
-            from engine.evaluator import evaluate as evaluate_fn
-            mcts_player = MCTSPlayer(num_simulations=200, evaluator=evaluate_fn)
-
-            wins, losses, draws = tournament(
-                nn_player, mcts_player,
-                num_games=args.games,
-                player1_name="Neural Network",
-                player2_name="MCTS (200 sims)"
-            )
-
-            print_tournament_results(wins, losses, draws, "Neural Network", "MCTS (200 sims)")
-
-        except Exception as e:
-            print(f"Error running MCTS tournament: {e}")
+    mcts_player = MCTSPlayer(num_simulations=200)
+    wins, losses, draws = tournament(
+        nn_player, mcts_player,
+        num_games=args.games,
+        player1_name="Neural Network",
+        player2_name="MCTS (200 sims)"
+    )
+    print_tournament_results(wins, losses, draws, "Neural Network", "MCTS (200 sims)")
 
     print("\n" + "="*70)
     print("✅ Evaluation Complete")

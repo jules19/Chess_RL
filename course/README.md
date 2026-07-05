@@ -12,10 +12,22 @@ follows the same rhythm:
 3. **Do** — exercises make you modify or extend the real code
 4. **Checkpoint** — a pytest command tells you objectively whether it works
 
-The tests are your autograder. When a module says *run
-`pytest tests/test_minimax.py`*, a green result means you haven't broken
-anything — and after some exercises, tests you **un-skip or write yourself**
-prove your extension works.
+Two kinds of tests act as your autograder, and they check different things:
+
+- **`tests/`** — the project's regression suite. Green means *the codebase
+  works*; it passes on a fresh clone before you've done anything. Its job
+  during the course is to tell you instantly when your changes break
+  something.
+- **`tests/course/`** — the exercise tests. Each flagship exercise has a
+  **deliberately skipped** test whose docstring is the exercise contract:
+  implement it, delete the `@pytest.mark.skip` line, and green means *your
+  code works*. These fail until you do the work — they are the checkpoints
+  that can't be faked. See [tests/course/README.md](../tests/course/README.md).
+
+Beyond the tests, every module ends with **Check your understanding**
+questions (with collapsed answers) — predict first, then peek. If your
+prediction was wrong, that's the signal to reread before moving on: passing
+tests with a wrong mental model is how the next module's bug gets written.
 
 ## Prerequisites
 
@@ -40,7 +52,7 @@ pytest -q                        # everything should pass before you start
 | # | Module | You build / study | Checkpoint |
 |---|--------|-------------------|------------|
 | 0 | [Orientation](module-00-orientation/README.md) | Run every engine, map the repo | `pytest -q` all green |
-| 1 | [Board & Evaluation](module-01-board-and-evaluation/README.md) | Random player, material + positional evaluation | play & beat the random engine |
+| 1 | [Board & Evaluation](module-01-board-and-evaluation/README.md) | Random player, material + positional evaluation | un-skip `tests/course/test_module01` + your arena result |
 | 2 | [Minimax Search](module-02-minimax-search/README.md) | Alpha-beta, quiescence, transposition table, iterative deepening | `pytest tests/test_minimax.py` |
 | 3 | [Monte Carlo Tree Search](module-03-mcts/README.md) | UCT, rollouts, exploration vs exploitation | `pytest tests/test_mcts.py` |
 | 4 | [The Neural Network](module-04-neural-network/README.md) | Board encoding, ResNet policy-value net, supervised training | `pytest tests/test_encoding.py tests/test_model.py` |

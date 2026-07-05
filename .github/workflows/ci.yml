@@ -21,8 +21,10 @@ jobs:
       - name: Install CPU torch
         run: pip install torch --index-url https://download.pytorch.org/whl/cpu
 
-      - name: Install package with dev extras
-        run: pip install -e ".[dev]"
+      - name: Install package with train+dev extras
+        # torch is already satisfied by the CPU wheel above, so [train]
+        # only adds the light deps (tqdm, tensorboard) that training/ needs
+        run: pip install -e ".[train,dev]"
 
       - name: Run test suite
         run: pytest -q

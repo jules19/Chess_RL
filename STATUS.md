@@ -13,10 +13,25 @@
 | 3b | NN-guided search: `nn_mcts.py` + **true PUCT (`search/puct.py`)** | ✅ | ⚠️ PUCT search unit-tested with fake network; needs a trained model for strength claims |
 | 4 | Self-play RL: replay buffer, arena gate, training loop | ✅ | ⚠️ runs end-to-end at toy scale (verified); **no long training run yet** |
 
-**Test suite:** 53 pytest tests in `tests/`, run by GitHub Actions CI on
+**Test suite:** 65 pytest tests in `tests/` (plus 6 deliberately-skipped
+course exercise tests in `tests/course/`), run by GitHub Actions CI on
 every push (`.github/workflows/ci.yml`). All green.
 
 ## Recent changes (2026-07)
+
+- **Pedagogy review actioned** (external instructional-design review of the
+  course): added `tests/course/` — skip-marked exercise tests that fail
+  until the student does the work, making the "un-skip the test" checkpoint
+  mechanic real; added "Check your understanding" predict-then-peek Q&A to
+  every module; rewrote Module 6's checkpoint to grade interpretation of
+  arena evidence rather than a luck-dependent promotion; added Module 4
+  data logistics (small Lichess dump, zstd recipe, time estimates) and an
+  honest ML-prerequisites note; fixed factual drift (parameter count is
+  1.8M, not the long-claimed ~830K).
+- **Fixed: `training/evaluate.py` baseline matches were silently broken** —
+  it imported `MinimaxPlayer`/`MCTSPlayer` classes that never existed,
+  inside a try/except that skipped the matches with a warning. Real player
+  wrappers added; `training/` now has smoke tests (`tests/test_training.py`).
 
 - **Fixed: promotion move encoding.** Queen promotions overflowed the
   4672-dim policy vector and were silently dropped; knight promotions
