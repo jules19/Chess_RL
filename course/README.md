@@ -60,9 +60,21 @@ pytest -q                        # everything should pass before you start
 | 6 | [Self-Play RL](module-06-selfplay-rl/README.md) | Replay buffer, arena gating, the full training loop | `pytest tests/test_selfplay.py` + run the loop |
 | 7 | [Measure & Scale](module-07-measure-and-scale/README.md) | Real Elo measurement, scaling knobs, what to do with more compute | a measured (not guessed) rating |
 | 8 | [Engineering Extras](module-08-engineering/README.md) | Packaging, CI, performance work — the software craft around the science | your own green CI run |
+| 9 | [Capstone](module-09-capstone/README.md) | The experiment report: measured ladder, training story, one designed experiment, postmortem | a report you could defend |
 
 Modules 0-3 need no ML background and no torch. Modules 4-6 are the
 AlphaZero core. Modules 7-8 turn a project into an engineering habit.
+Module 9 is the summative assessment — the one checkpoint with no command
+to run.
+
+## Stuck? Solutions exist — but attempt first
+
+Reference implementations for all `tests/course/` exercises live on the
+**`course-solutions`** branch (`git diff main course-solutions` shows every
+solution as a readable diff). The norm: struggle for at least 30 minutes,
+then peek at the *approach*, close it, and implement from memory. Solutions
+you've read teach a tenth of what solutions you've fought for do — but a
+permanently stuck learner learns nothing, so the rope is there.
 
 ## Two running themes
 
