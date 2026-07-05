@@ -1,0 +1,14 @@
+[
+    {
+        "command": "/opt/venv/bin/python3 /app/chess_rl_uci.py",
+        "name": "Chess_RL",
+        "protocol": "uci",
+        "workingDirectory": "/app"
+    },
+    {
+        "command": "/usr/games/stockfish",
+        "name": "Stockfish",
+        "protocol": "uci",
+        "workingDirectory": "/config"
+    }
+]

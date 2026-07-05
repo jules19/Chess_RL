@@ -1,0 +1,31 @@
+# Cute Chess GUI in your browser, with this repo's engine mounted live.
+#
+#   cd docker
+#   docker compose up --build
+#   open http://localhost:5800
+#
+# The repo is bind-mounted at /app: edits on the host are what the engine
+# runs on the next new game. GUI settings persist in a named volume.
+
+services:
+  chess-gui:
+    build:
+      context: .
+      args:
+        # Set to "false" for a smaller image without torch (Phases 0-2 only)
+        INSTALL_TORCH: "true"
+    container_name: chess_rl_gui
+    ports:
+      # Bound to localhost only — the GUI has no authentication by default
+      - "127.0.0.1:5800:5800"
+    volumes:
+      # The repo, live. The GUI launches /app/chess_rl_uci.py from here.
+      - ..:/app
+      # Persistent GUI settings (engine list, board preferences, ...)
+      - cutechess-config:/config
+    environment:
+      - DARK_MODE=1
+    restart: unless-stopped
+
+volumes:
+  cutechess-config:
