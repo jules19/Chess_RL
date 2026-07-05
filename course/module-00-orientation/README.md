@@ -58,6 +58,29 @@ course/     you are here
    worth 1 point, and run `pytest -q`. Watch which tests catch it, then
    revert. This is the feedback loop you'll live in.
 
+## Check your understanding
+
+Predict each answer before opening the details.
+
+<details>
+<summary><b>Q1.</b> You lower the queen's value to 1 point in <code>engine/evaluator.py</code> and run <code>pytest -q</code>. Which test fails first, and why that one?</summary>
+
+`tests/test_minimax.py::test_captures_hanging_queen` — the engine no longer
+thinks a free queen is worth capturing, so depth-3 search picks a different
+move. Notice what *didn't* fail: the encoding and PUCT tests, because they
+don't depend on the evaluator. Test failures localize faults — that's why
+the modules keep search and knowledge separated.
+</details>
+
+<details>
+<summary><b>Q2.</b> The mate-in-1 test passes for minimax, MCTS, <em>and</em> PUCT-with-a-fake-network. What do those three engines share that makes a forced mate findable without any chess knowledge?</summary>
+
+Terminal positions don't need evaluation — the game rules give the exact
+value (mate = win). All three searches propagate exact terminal values back
+to the root, so any search that can *reach* the mate proves it. Knowledge
+only matters where the game hasn't ended yet.
+</details>
+
 ## Checkpoint
 
 - [ ] `pytest -q` passes

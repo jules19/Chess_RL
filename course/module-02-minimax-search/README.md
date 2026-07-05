@@ -43,12 +43,14 @@ exact place it's implemented:
    with move ordering enabled vs `order_moves` replaced by an identity
    function. Write the two numbers in a comment or notebook.
 2. **Exercise: mid-search abort.** `best_move_iterative()` only checks the
-   clock *between* iterations. Add a hard deadline that aborts *inside*
-   `minimax()` (hint: raise a `SearchTimeout` exception every 1024 nodes if
-   past the deadline; catch it in the driver and fall back to the previous
-   iteration's move). Then tighten the assertion in
-   `test_iterative_deepening_respects_time_budget` from `< 8.0` seconds to
-   `< 2.0` and make it pass.
+   clock *between* iterations, and its predictive stop assumes each depth
+   costs ~3x the last — but in tactical positions the real ratio can be 10x,
+   so the search can still blow a 6-second budget by ten seconds. Add a hard
+   deadline that aborts *inside* `minimax()` (raise a `SearchTimeout`
+   every ~1024 nodes when past the deadline; catch it in the driver and
+   fall back to the previous iteration's move). Your checkpoint is
+   `tests/course/test_module02_search.py` — run it *before* implementing
+   to watch the ~18-second failure, then un-skip and make it pass.
 3. **Exercise: killer moves.** Quiet moves that caused a cutoff at one node
    often cause cutoffs at sibling nodes. Keep two "killer" moves per depth
    and try them right after the hash move. Measure the node reduction.
@@ -57,14 +59,50 @@ exact place it's implemented:
    depth the TT changes speed, not moves — the strength gain appears when a
    time budget lets the faster engine search deeper.)
 
+## Check your understanding
+
+<details>
+<summary><b>Q1 (the rubber-duck question).</b> Why does a TT entry need a <em>flag</em>, not just a score?</summary>
+
+Because alpha-beta often *doesn't compute the true value* of a node — it
+stops as soon as it can prove the node irrelevant. If a cutoff fired, all
+you learned is a one-sided bound: "at least X" (fail-high → LOWER_BOUND) or
+"at most X" (fail-low → UPPER_BOUND). Reusing a bound as if it were exact
+gives wrong answers when the new search window differs from the old one.
+The flag records *which* of the three facts you actually proved. If you
+want to see it break: change the store logic to always write `TT_EXACT` and
+watch `test_transposition_table_preserves_score_and_cuts_nodes` fail on the
+"same score" assertion.
+</details>
+
+<details>
+<summary><b>Q2.</b> Predict: at a <em>fixed</em> depth of 3, does adding the TT change which move the engine picks? Its strength?</summary>
+
+Neither — at fixed depth the TT is a pure speed optimization (same tree,
+fewer node visits). Strength changes only when a *time budget* lets the
+faster engine reach a deeper iteration than it otherwise would. This is
+exercise 4's answer, and it generalizes: optimizations buy strength only
+through the exchange rate of time-per-move.
+</details>
+
+<details>
+<summary><b>Q3.</b> Move ordering never changes the final minimax value. So why is it worth ~half the engine's speed?</summary>
+
+Alpha-beta prunes a branch only after it has seen a move good enough to
+prove the branch irrelevant. Search the best move first and the proof
+arrives immediately — sibling after sibling gets cut. Search it last and
+you've paid for the whole subtree before learning you didn't need it. Same
+answer, wildly different node counts (exercise 1 puts numbers on it).
+</details>
+
 ## Checkpoint
 
 ```bash
-pytest tests/test_minimax.py -q
+pytest tests/test_minimax.py -q                 # regression suite still green
+pytest tests/course/test_module02_search.py -q  # un-skipped and passing
 ```
 
-- [ ] All green, including your tightened time-budget test (exercise 2)
-- [ ] You can explain to a rubber duck why a TT entry needs a *flag*, not
-      just a score
+- [ ] Both green
+- [ ] You answered Q1 correctly *before* peeking
 
 Next: [Module 3 — Monte Carlo Tree Search](../module-03-mcts/README.md)

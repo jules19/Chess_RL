@@ -19,9 +19,21 @@ long-running ML project accumulates the same kinds.
    three files until checkpoints became self-describing. Any value written
    twice will eventually differ.
 4. **Docs rot faster than code.** The old README declared Phase 3b "future
-   work" after its code was merged. The fix isn't more docs — it's *fewer,
-   load-bearing* docs plus history in git where it can't lie
-   (`docs/history/` preserves the originals).
+   work" after its code was merged, and this course itself shipped claiming
+   the network had "~830K parameters" (actual: 1.8M — the number was copied
+   from a planning doc nobody ran). The fix isn't more docs — it's *fewer,
+   load-bearing* docs, numbers derived from code, and history in git where
+   it can't lie (`docs/history/` preserves the originals).
+5. **Untested tools break silently — even the measuring instruments.**
+   `training/evaluate.py` shipped importing `MinimaxPlayer` and
+   `MCTSPlayer` — classes that never existed — inside a try/except that
+   printed a warning and skipped the baseline matches. The script that was
+   supposed to measure everything else measured nothing, for months,
+   because `training/` had zero test coverage. It was found by an external
+   review, not by a user; the fix and its regression tests are in
+   `training/evaluate.py` (see the LESSON LEARNED docstring) and
+   `tests/test_training.py`. Coverage isn't about percentages — it's about
+   which tools you're trusting blind.
 
 ## What's already in place (study it)
 
@@ -32,9 +44,10 @@ long-running ML project accumulates the same kinds.
 ## Exercises
 
 1. **Keep CI honest.** Add a `pytest --durations=5` step to CI and set a
-   budget: if the suite exceeds 60s, mark the slowest tests `@pytest.mark.slow`
-   and exclude them from the default run. Fast suites get run; slow ones get
-   skipped by humans.
+   budget: if the suite exceeds 60s, mark the slowest tests
+   `@pytest.mark.slow` and exclude them from the default run (one test is
+   already marked — find it, and check `pytest -m "not slow"` actually
+   deselects it). Fast suites get run; slow ones get skipped by humans.
 2. **Delete the sys.path hacks.** Every entry-point script does
    `sys.path.insert(0, ...)`. With the package installed (`pip install -e .`)
    they're redundant. Remove them, convert the scripts' `__main__` blocks to

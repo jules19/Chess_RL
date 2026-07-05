@@ -27,7 +27,7 @@ AlphaZero core; Modules 7-8 cover honest measurement and engineering craft.
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[train,dev]"    # ".[dev]" alone skips torch (Phases 0-2 only)
-pytest -q                        # 53 tests, ~10 seconds, all green
+pytest -q                        # fast suite, all green (skips = course exercises)
 
 python3 cli/play.py human-minimax   # play the Phase 1 engine (depth-3 alpha-beta)
 python3 cli/play.py human-mcts      # play the Phase 2 engine (MCTS)

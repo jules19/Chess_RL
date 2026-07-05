@@ -84,6 +84,7 @@ def test_puct_without_model_falls_back_gracefully():
     assert any("info string" in l and "falling back" in l for l in lines)
 
 
+@pytest.mark.slow
 def test_puct_with_real_checkpoint(tmp_path):
     """End-to-end Phase 3/4 stage: save a real (untrained) checkpoint, point
     the UCI engine at it, and get a legal move out of PUCT search."""

@@ -55,6 +55,27 @@ wall-clock by halving games, run both configurations for 5 iterations, and
 arena the two champions. Which conversion of compute won? Data beats
 intuition here, which is the point of the module.
 
+## Check your understanding
+
+<details>
+<summary><b>Q1.</b> Your engine scores 6/10 against Stockfish-1400. Compute (roughly) the Elo difference this implies — and the honest range.</summary>
+
+Point estimate: ΔElo = −400·log10(1/0.6 − 1) ≈ **+70**. But the 95% band on
+a 10-game score of 60% spans roughly 30–85%, i.e. anywhere from about
+−150 to +300 Elo. Ten games told you almost nothing — which is the whole
+argument for the 100-game minimum in this module.
+</details>
+
+<details>
+<summary><b>Q2.</b> Why do two deterministic engines make a "10-game match" meaningless in a different way than noise does?</summary>
+
+Same position + same engines + no randomness → the identical game replays
+ten times. You have a sample size of one wearing a costume. Fixes: vary
+openings (cutechess's `-openings` flag), or a little temperature
+(`training/evaluate.py` supports it). Noise you can average away; zero
+variance you cannot.
+</details>
+
 ## Checkpoint
 
 - [ ] A measured rating with an error bar, from ≥100 games against a

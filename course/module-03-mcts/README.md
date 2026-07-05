@@ -50,20 +50,59 @@ Module 5 swaps them in — and deletes rollouts entirely.
    `filter_blunders=True` papers over weak rollouts with a hand-written
    tactical veto. Measure its Elo contribution (10 games on vs off). Keep
    this number in mind when the neural network makes the crutch unnecessary.
-4. **Write a failing test first.** Add a test asserting MCTS (200 sims,
+4. **De-flake the search.** First write a test asserting MCTS (200 sims,
    evaluator rollouts) finds mate-in-1 from
-   `6k1/5ppp/8/8/8/8/5PPP/4R1K1 w`. If it flakes, make it deterministic by
-   seeding `random` — learning to de-flake stochastic tests is part of the
-   module.
+   `6k1/5ppp/8/8/8/8/5PPP/4R1K1 w` — run it 10 times and watch it flake.
+   The cure is reproducibility: thread an optional `rng: random.Random`
+   parameter through `mcts_search`/`best_move_mcts` and every place
+   `search/mcts.py` reaches for the global `random` module. (Why not just
+   `random.seed(7)`? It "works" — and silently changes the behavior of
+   every other consumer of `random` in the process. Explicit rngs are the
+   habit that transfers.) Checkpoint:
+   `tests/course/test_module03_mcts.py` — un-skip and make it pass.
+
+## Check your understanding
+
+<details>
+<summary><b>Q1 (the rubber-duck question).</b> Which two pieces of <code>mcts.py</code> will Module 5 replace with neural network calls?</summary>
+
+The **simulation step** (`simulate_with_evaluator` — the whole rollout is
+replaced by one call to the value head) and the **uniform treatment of
+untried moves** in expansion/selection (replaced by policy-head priors in
+the PUCT formula). Everything else — selection walk, expansion,
+backpropagation with sign flips — survives into `puct.py` almost unchanged.
+</details>
+
+<details>
+<summary><b>Q2.</b> Predict: you delete the <code>value = -value</code> sign flip in <code>backpropagate</code>. What does the engine now do, concretely?</summary>
+
+It plays for its *opponent*: every simulation result credited to a node is
+also credited (same sign) to the parent, so moves that are good for the
+side who just moved look good for the side choosing — the engine actively
+walks into mates. Run `tests/test_mcts.py::test_backpropagation_updates_and_alternates_perspective`
+after making the change and watch it pin the bug in milliseconds. This is
+the #1 real-world MCTS bug; you'll meet it again wearing NN clothes in
+Module 5.
+</details>
+
+<details>
+<summary><b>Q3.</b> Why is the final move chosen by <em>visit count</em> instead of best average value?</summary>
+
+A move visited 3 times with a lucky 0.9 average is noise; a move visited
+150 times with 0.6 held that value under repeated adversarial scrutiny —
+UCT only keeps visiting a child that keeps looking good. Visits are
+value + confidence in one number. (Foreshadowing: in Module 6 the visit
+distribution literally becomes the training target.)
+</details>
 
 ## Checkpoint
 
 ```bash
-pytest tests/test_mcts.py -q
+pytest tests/test_mcts.py -q                  # regression suite still green
+pytest tests/course/test_module03_mcts.py -q  # un-skipped and passing
 ```
 
-- [ ] Green, including your new mate-in-1 test
-- [ ] You can point at the two lines of `mcts.py` that Module 5 will replace
-      with neural network calls
+- [ ] Both green
+- [ ] Q1 answered correctly before peeking
 
 Next: [Module 4 — The Neural Network](../module-04-neural-network/README.md)

@@ -30,11 +30,15 @@ def test_uct_prefers_unvisited_children():
     assert root.best_child() is b
 
 
-def test_hangs_material_detects_hanging_queen():
-    # Moving the queen to h5 hangs nothing... but Qg4 walks into Bxg4
-    board = chess.Board("rnbqkbnr/pppp1ppp/8/4p3/6b1/5N2/PPPPPPPP/RNBQKB1R w KQkq - 0 1")
-    # Qd1 is pinned to nothing; playing d3 doesn't hang material
-    assert not hangs_material(board, chess.Move.from_uci("d2d3"), threshold=300)
+def test_hangs_material_flags_hanging_and_clears_safe_moves():
+    # Qa4?? steps onto the a-file, straight into the black rook's fire,
+    # undefended: that hangs the queen. Qb2 is off the rook's lines: safe.
+    board = chess.Board("r6k/8/8/8/8/8/8/Q6K w - - 0 1")
+    assert hangs_material(board, chess.Move.from_uci("a1a4"), threshold=300)
+    assert not hangs_material(board, chess.Move.from_uci("a1b2"), threshold=300)
+
+    # A quiet opening move hangs nothing
+    assert not hangs_material(chess.Board(), chess.Move.from_uci("d2d3"), threshold=300)
 
 
 def test_blunder_filter_keeps_at_least_one_move():
