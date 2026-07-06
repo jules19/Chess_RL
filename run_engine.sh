@@ -1,6 +1,17 @@
 #!/bin/bash
-# Activate venv
-source /Users/julian/Programming/Python/JNF_Experiments/Chess_RL/venv/bin/activate
+# UCI engine launcher for chess GUIs and cutechess-cli.
+#
+# Portable: derives the repo location from this script's own path (an
+# earlier version hardcoded one developer's home directory — the same class
+# of bug as the hardcoded sys.path that broke CI; see uci/engine.py).
+# Uses the repo's .venv if present, otherwise system python3.
 
-# Run the engine with Python from the venv
-exec python /Users/julian/Programming/Python/JNF_Experiments/Chess_RL/chess_rl_uci.py
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+if [ -x "$REPO_DIR/.venv/bin/python" ]; then
+    PYTHON="$REPO_DIR/.venv/bin/python"
+else
+    PYTHON="python3"
+fi
+
+exec "$PYTHON" "$REPO_DIR/chess_rl_uci.py" "$@"

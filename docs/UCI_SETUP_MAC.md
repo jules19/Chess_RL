@@ -7,7 +7,7 @@ This guide explains how to use the Chess_RL engine with chess GUIs on macOS.
 **UCI (Universal Chess Interface)** is a standardized protocol that allows chess engines to communicate with chess GUIs (Graphical User Interfaces). Once configured, you can:
 
 - Play against your Chess_RL engine with a nice graphical board
-- Test different engine types (random, material, minimax)
+- Test different engine types (random, material, minimax, mcts, puct)
 - Run engine vs engine matches
 - Analyze positions
 - Track engine improvements over time
@@ -85,14 +85,26 @@ After adding the engine, you can configure it:
      - `random` - Makes random legal moves
      - `material` - Greedy material counting (1-ply)
      - `minimax` - Alpha-beta search with positional eval (default)
+     - `mcts` - Monte Carlo Tree Search with evaluator-guided rollouts
+     - `puct` - AlphaZero-style search with a trained neural network
+       (requires torch and a checkpoint; see **Model File** below —
+       falls back to minimax with an explanatory `info string` otherwise)
 
-   - **Search Depth**: 1-6 (default: 3)
+   - **Search Depth**: 1-6 (default: 3) — minimax only
      - Depth 2: Very fast, ~800 Elo
      - Depth 3: Good balance, ~1200-1400 Elo (recommended)
      - Depth 4: Slower but stronger, ~1500-1600 Elo
      - Depth 5+: Much slower, diminishing returns
 
+   - **MCTS Simulations**: 50-1000 (default: 200) — mcts only
+   - **PUCT Simulations**: 16-3200 (default: 200) — puct only
+   - **Model File**: path to a trained checkpoint
+     (default: `checkpoints/best_model.pt`) — puct only
+
    - **Debug**: Enable to see debug messages (optional)
+
+   *(Elo figures above are historical self-estimates — measuring honestly
+   against calibrated opponents is course Module 7.)*
 
 4. Click **OK**
 
@@ -239,16 +251,20 @@ You can even put your engine on Lichess.org as a bot:
 
 Here's the approximate strength of each engine type:
 
-| Engine Type | Search Depth | Approx. Elo | Playing Style |
+| Engine Type | Setting | Approx. Elo* | Playing Style |
 |-------------|--------------|-------------|---------------|
 | Random      | N/A          | ~600        | Random moves |
 | Material    | 1-ply        | ~1000-1100  | Greedy captures |
-| Minimax     | 2            | ~1000-1200  | Basic tactics |
-| Minimax     | 3            | ~1200-1400  | Positional + tactics |
-| Minimax     | 4            | ~1400-1600  | Strong positional |
-| Minimax     | 5+           | ~1500-1700  | Very strong (slow) |
+| Minimax     | depth 2      | ~1000-1200  | Basic tactics |
+| Minimax     | depth 3      | ~1200-1400  | Positional + tactics |
+| Minimax     | depth 4      | ~1400-1600  | Strong positional |
+| Minimax     | depth 5+     | ~1500-1700  | Very strong (slow) |
+| MCTS        | 200 sims     | ~1400-1600  | Selective search |
+| PUCT + net  | 200+ sims    | depends on your training | What the course builds toward |
 
-As you improve the engine (MCTS, neural networks, etc.), you can track Elo progression!
+*Historical self-estimates. For measured ratings with error bars, see
+course Module 7 — every engine stage above is selectable here, so this GUI
+doubles as your measurement rig.
 
 ## Next Steps
 

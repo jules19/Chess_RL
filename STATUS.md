@@ -1,6 +1,6 @@
 # Project Status
 
-**Last updated:** 2026-07-05
+**Last updated:** 2026-07-06
 
 ## Where things stand
 
@@ -51,8 +51,12 @@ every push (`.github/workflows/ci.yml`). All green.
   and `go movetime`/`wtime`/`btime` are honored via iterative deepening.
   Protocol-level subprocess tests in `tests/test_uci.py`.
 - **Added:** packaging (`pyproject.toml`), pytest suite, CI.
-- **Restructured:** documentation into a course (`course/`, 9 modules);
-  historical docs preserved in `docs/history/` and `docs/plans/`.
+- **Restructured:** documentation into a course (`course/`, modules 0-9
+  including a capstone experiment report); historical docs preserved in
+  `docs/history/` and `docs/plans/`.
+- **Added:** `course-solutions` branch — reference implementations for all
+  six `tests/course/` exercises, skips removed, 71/71 passing. The answer
+  key, deliberately unmerged (`git diff main course-solutions`).
 
 ## What's next (in priority order)
 
