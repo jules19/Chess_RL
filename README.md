@@ -16,7 +16,7 @@ Phase 0        Phase 1        Phase 2     Phase 3        Phase 4
 
 ## 🎓 The Course (start here)
 
-**[course/README.md](course/README.md)** — nine modules that use this
+**[course/README.md](course/README.md)** — ten modules that use this
 codebase as the textbook. Each module: concepts → read the annotated source
 → exercises on the real code → a pytest checkpoint as your autograder.
 Modules 0-3 (search engines) need no ML background; Modules 4-6 are the
@@ -61,7 +61,7 @@ python3 selfplay/train_loop.py --iterations 2 --games-per-iter 2 \
 
 | Path | What it is |
 |------|------------|
-| `course/` | **The course** — 9 modules with exercises and checkpoints |
+| `course/` | **The course** — 10 modules (0-9) with exercises, checkpoints, and a capstone |
 | `engine/` | Evaluation: hand-crafted (`evaluator.py`) and NN wrapper (`nn_evaluator.py`) |
 | `search/` | `minimax.py` (alpha-beta + quiescence + transposition table + iterative deepening), `mcts.py` (rollout MCTS/UCT), `puct.py` (true AlphaZero search, no rollouts), `nn_mcts.py` (transitional Phase 3b) |
 | `net/` | `encoding.py` (board→tensor, move→index), `model.py` (ResNet policy-value network) |

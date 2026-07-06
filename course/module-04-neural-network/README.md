@@ -99,7 +99,9 @@ grab one of those. Two sane options:
 Decompress before filtering (`training/filter_games.py` reads plain PGN):
 ```bash
 zstd -d lichess_db_standard_rated_2013-01.pgn.zst   # or: python3 -m zstandard -d ...
-python3 training/filter_games.py lichess_db_standard_rated_2013-01.pgn data/filtered.pgn
+python3 training/filter_games.py \
+    --input lichess_db_standard_rated_2013-01.pgn \
+    --output data/filtered.pgn --min-elo 2000
 ```
 
 **Time expectations** (estimates — measure your own and write them down,
