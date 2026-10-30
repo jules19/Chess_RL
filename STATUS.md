@@ -1,6 +1,6 @@
 # Project Status
 
-**Last updated:** 2026-07-06
+**Last updated:** 2026-10-30
 
 ## Where things stand
 
@@ -26,6 +26,9 @@ every push (`.github/workflows/ci.yml`). All green.
   validation accuracy was inflated by near-duplicate positions. `split_by_game()`
   now holds out whole games, with a regression test in `tests/test_training.py`.
   Both are written up as Module 8 case studies 6–7.
+- **Course navigation:** Module 8 now links on to Module 9, and the older HTML
+  tutorials in `docs/tutorials/` carry a banner marking them as historical
+  background that the course supersedes.
 - **Documentation check and teaching evaluation** in `docs/pedagogy/`:
   `check_docs.py` runs every command in the learner docs in a sandbox copy and
   checks every file reference; `RUBRIC.md` and `OUTCOME_TEST.md` describe how

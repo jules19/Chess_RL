@@ -32,8 +32,9 @@ measures whether a newcomer who studies it ends up understanding **this project*
 
 ## Results
 
-The method was first used on 2026-10-30 against an earlier, separate learning path (branch
-`docs/learning-path-and-pedagogy`, not merged). There, learners who studied the improved material
+The method was first used on 2026-10-30 against an earlier, separate learning path that was
+written before this course existed and then set aside in its favour (branch
+`docs/learning-path-and-pedagogy`, closed without merging). There, learners who studied the improved material
 scored 14/14 against 12.5/14 on recall, and 20/20 against 18/20 on transfer, with half the reading.
 The differences were concentrated on understanding why MCTS behaves as it does and on knowing the
 project's real state.
