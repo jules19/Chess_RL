@@ -44,7 +44,7 @@ from typing import Optional, TextIO
 #    of the script directory makes the package win.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from engine.evaluator import evaluate, best_move_material
+from engine.evaluator import best_move_material
 from search.minimax import best_move_minimax, best_move_iterative
 from search.mcts import best_move_mcts
 from search.puct import best_move_puct
@@ -60,6 +60,10 @@ class UCIEngine:
         self.board = chess.Board()
         self.engine_type = "minimax"  # default
         self.search_depth = 3  # default
+        # Result of the last minimax search, for the 'info' line:
+        # (score in centipawns from White's perspective, depth searched)
+        self.last_search_score = None
+        self.last_search_depth = None
         self.mcts_simulations = 200  # default for MCTS
         self.mcts_use_evaluator = True  # default: use evaluator rollouts
         self.debug = False
@@ -474,6 +478,9 @@ class UCIEngine:
                         or derived from 'go wtime/btime'). Currently honored
                         by the minimax engine via iterative deepening.
         """
+        self.last_search_score = None
+        self.last_search_depth = None
+
         if self.board.is_game_over():
             return None
 
@@ -490,9 +497,13 @@ class UCIEngine:
         elif self.engine_type == "minimax":
             if movetime_s is not None:
                 # Time-budgeted search: iterative deepening decides the depth
-                return best_move_iterative(self.board, max_depth=10,
-                                           time_limit=movetime_s)
-            return best_move_minimax(self.board, self.search_depth)
+                move, score, depth = best_move_iterative(
+                    self.board, max_depth=10, time_limit=movetime_s, return_score=True)
+            else:
+                move, score = best_move_minimax(self.board, self.search_depth, return_score=True)
+                depth = self.search_depth
+            self.last_search_score, self.last_search_depth = score, depth
+            return move
 
         elif self.engine_type == "mcts":
             return best_move_mcts(self.board,
@@ -592,10 +603,14 @@ class UCIEngine:
                 except Exception as e:
                     self.log_debug(f"Failed to convert move to SAN: {e}")
 
-            # Send evaluation info (optional but nice for GUIs)
-            if self.engine_type == "minimax":
-                score = evaluate(self.board)
-                self.uci_print(f"info depth {search_depth} score cp {score}", flush=True)
+            # Send evaluation info (optional but nice for GUIs). UCI wants the
+            # SEARCH score, from the point of view of the side to move (the
+            # engine). Our search scores are from White's view, so flip for Black.
+            if self.engine_type == "minimax" and self.last_search_score is not None:
+                score = self.last_search_score
+                if self.board.turn == chess.BLACK:
+                    score = -score
+                self.uci_print(f"info depth {self.last_search_depth} score cp {int(score)}", flush=True)
 
             self.uci_print(f"bestmove {best_move.uci()}", flush=True)
 
