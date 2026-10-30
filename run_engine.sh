@@ -1,6 +1,10 @@
 #!/bin/bash
-# Activate venv
-source /Users/julian/Programming/Python/JNF_Experiments/Chess_RL/venv/bin/activate
+# Launch the UCI engine with the project's virtualenv, from wherever the repository lives.
+# Point a chess GUI at this script (see docs/guides/UCI_SETUP_MAC.md).
+DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# Run the engine with Python from the venv
-exec python /Users/julian/Programming/Python/JNF_Experiments/Chess_RL/chess_rl_uci.py
+if [ -f "$DIR/venv/bin/activate" ]; then
+    source "$DIR/venv/bin/activate"
+fi
+
+exec python "$DIR/chess_rl_uci.py"

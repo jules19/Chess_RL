@@ -205,6 +205,12 @@
     <div class="container">
         <h1>🏰 Building a Chess Engine: A Step-by-Step Tutorial</h1>
 
+        <div style="border-left: 4px solid #2563eb; background: #eff6ff; color: #1e3a8a; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
+            <strong>How to use this tutorial:</strong> it's long-form background reading. The step-by-step path, with
+            exercises and answers, is <a href="LEARN.md">LEARN.md</a>; this page goes with units 1–4 (evaluation, minimax, quiescence, UCI). Strength figures quoted on this page (such as Elo ranges) are estimates that were never measured.
+            Measured results (not estimates) are in <a href="STATUS.md">STATUS.md</a>.
+        </div>
+
         <p><em>From zero to checkmate-finding AI: A practical, incremental approach to building your first chess engine</em></p>
 
         <div class="progress-bar">
@@ -271,6 +277,12 @@
         </table>
 
         <h2>🎯 Day 2: Starting Simple - Material Evaluation</h2>
+        <div style="border:1px solid #cbd5e1; background:#f8fafc; color:#0f172a; padding:12px 16px; margin:12px 0 20px; border-radius:6px;">
+            <strong>In this section you'll learn to:</strong><ul style="margin:6px 0"><li>turn a position into one number in centipawns</li><li>build a 1-ply greedy player from an evaluation</li></ul>
+            <strong>Check yourself</strong> (answer before opening):<details style="margin:6px 0"><summary>What is +300 in centipawns, and who is better?</summary><p>About three pawns (a minor piece) of advantage for White. Positive means White, negative means Black.</p></details><details style="margin:6px 0"><summary>What&#x27;s the weakness of a 1-ply greedy player?</summary><p>It never considers the opponent's reply, so it grabs defended material and loses more on the next move.</p></details>
+            <p style="margin:8px 0 0">More practice, with commands and expected output: <a href="docs/learn/01_evaluation.md">Unit 1</a>.</p>
+        </div>
+
 
         <div class="day-marker">Day 2: Foundation</div>
 
@@ -349,6 +361,12 @@
         <p>This is where <strong>search</strong> comes in...</p>
 
         <h2>🔍 Day 3-4: Looking Ahead - Minimax Search</h2>
+        <div style="border:1px solid #cbd5e1; background:#f8fafc; color:#0f172a; padding:12px 16px; margin:12px 0 20px; border-radius:6px;">
+            <strong>In this section you'll learn to:</strong><ul style="margin:6px 0"><li>explain minimax as "assume the opponent's best reply"</li><li>explain why alpha-beta pruning never changes the result</li></ul>
+            <strong>Check yourself</strong> (answer before opening):<details style="margin:6px 0"><summary>When is a branch pruned?</summary><p>When beta ≤ alpha: the opponent already has a better option elsewhere, so this branch can't matter.</p></details><details style="margin:6px 0"><summary>Why does this engine order moves before searching?</summary><p>Trying strong moves (captures, checks) first makes cutoffs happen sooner. In the project, a tactical position drops from 4,033 to 2,886 nodes at depth 3.</p></details>
+            <p style="margin:8px 0 0">More practice, with commands and expected output: <a href="docs/learn/02_minimax.md">Unit 2</a>.</p>
+        </div>
+
 
         <div class="day-marker">Day 3-4: Search</div>
 
@@ -558,6 +576,12 @@ then picks the move with the best guaranteed outcome.
         <p>Time to teach it <strong>positional understanding</strong>...</p>
 
         <h2>♟️ Day 5: Positional Understanding</h2>
+        <div style="border:1px solid #cbd5e1; background:#f8fafc; color:#0f172a; padding:12px 16px; margin:12px 0 20px; border-radius:6px;">
+            <strong>In this section you'll learn to:</strong><ul style="margin:6px 0"><li>read each positional term and say what it rewards</li><li>explain why positional bonuses are much smaller than material</li></ul>
+            <strong>Check yourself</strong> (answer before opening):<details style="margin:6px 0"><summary>Why does this project&#x27;s evaluate() give +20 for the symmetric starting position?</summary><p>Its mobility term counts only the side to move's legal moves: 20 for White.</p></details><details style="margin:6px 0"><summary>Why are centre and development bonuses only tens of centipawns?</summary><p>They must never outweigh real material. A pawn is 100.</p></details>
+            <p style="margin:8px 0 0">More practice, with commands and expected output: <a href="docs/learn/01_evaluation.md">Unit 1</a>.</p>
+        </div>
+
 
         <div class="day-marker">Day 5: Position</div>
 
@@ -878,6 +902,12 @@ print(f"Engine plays: {move}")</code></pre>
         </div>
 
         <h2>🔭 Day 7: Quiescence Search - Fixing the Horizon Effect</h2>
+        <div style="border:1px solid #cbd5e1; background:#f8fafc; color:#0f172a; padding:12px 16px; margin:12px 0 20px; border-radius:6px;">
+            <strong>In this section you'll learn to:</strong><ul style="margin:6px 0"><li>explain the horizon effect with a concrete position</li><li>explain stand pat and why quiescence searches only noisy moves</li></ul>
+            <strong>Check yourself</strong> (answer before opening):<details style="margin:6px 0"><summary>A depth-limited search ends on &quot;queen takes defended pawn&quot;. What goes wrong?</summary><p>It evaluates the position as a pawn up without seeing the recapture of the queen: the horizon effect.</p></details><details style="margin:6px 0"><summary>Which moves does this project&#x27;s quiescence search consider?</summary><p>Captures and promotions, plus checks when there are fewer than 5 noisy moves.</p></details>
+            <p style="margin:8px 0 0">More practice, with commands and expected output: <a href="docs/learn/03_quiescence.md">Unit 3</a>.</p>
+        </div>
+
 
         <div class="day-marker">Day 7: Tactical Perfection</div>
 
@@ -1308,10 +1338,17 @@ print(f"Engine plays: {move}")
         </div>
 
         <div class="key-insight">
-            <strong>💡 Expected Elo Gain:</strong> +100 to +200 Elo. This is considered one of the highest-value improvements in classical chess engine development!
+            <strong>💡 Expected Elo Gain:</strong> +100 to +200 Elo (a typical figure for classical engines; not measured
+            for this engine, and the ~1200 / ~1300-1400 labels above are estimates too). This is considered one of the highest-value improvements in classical chess engine development!
         </div>
 
         <h2>♟️ Day 8: UCI Protocol - Making Your Engine Talk to the World</h2>
+        <div style="border:1px solid #cbd5e1; background:#f8fafc; color:#0f172a; padding:12px 16px; margin:12px 0 20px; border-radius:6px;">
+            <strong>In this section you'll learn to:</strong><ul style="margin:6px 0"><li>hold a UCI conversation by hand</li><li>spot when an engine's output breaks the spec</li></ul>
+            <strong>Check yourself</strong> (answer before opening):<details style="margin:6px 0"><summary>What must the engine reply to &lt;code&gt;isready&lt;/code&gt;?</summary><p><code>readyok</code>.</p></details><details style="margin:6px 0"><summary>This engine prints &lt;code&gt;score cp&lt;/code&gt; from evaluate(). What&#x27;s wrong with that?</summary><p>It's a static evaluation from White's view, not the search score from the side to move as UCI expects.</p></details>
+            <p style="margin:8px 0 0">More practice, with commands and expected output: <a href="docs/learn/04_uci.md">Unit 4</a>.</p>
+        </div>
+
 
         <div class="day-marker">Day 8: Integration</div>
 
@@ -1748,6 +1785,15 @@ Performance: +180 Elo improvement
 
 ✅ Quiescence search validated!</code></pre>
 
+        <div class="key-insight">
+            <strong>⚠️ Read this output critically:</strong> it's an <em>illustration</em>; no recorded run in the
+            repository produced these numbers. The method, though, is sound: a head-to-head score gives a
+            <em>relative</em> Elo difference, <code>Δ = −400 × log10(1/score − 1)</code>. Try it: for a 76% score that gives
+            <strong>+200</strong>, not +180. Check it yourself:
+            <pre><code>python -c "import math; print(-400 * math.log10(1/0.76 - 1))"</code></pre>
+            Also remember that 50 games still leaves roughly ±12 percentage points of uncertainty (95%) on the score.
+        </div>
+
         <div class="success">
             <strong>✅ Achievement Unlocked:</strong> You now have a complete, UCI-compliant chess engine that can:
             <ul>
@@ -1761,6 +1807,12 @@ Performance: +180 Elo improvement
         </div>
 
         <h2>🔬 Day 9: Testing & Validation - "How Strong Is Your Engine?"</h2>
+        <div style="border:1px solid #cbd5e1; background:#f8fafc; color:#0f172a; padding:12px 16px; margin:12px 0 20px; border-radius:6px;">
+            <strong>In this section you'll learn to:</strong><ul style="margin:6px 0"><li>tell a target from a measurement</li><li>design a fair match between deterministic engines</li></ul>
+            <strong>Check yourself</strong> (answer before opening):<details style="margin:6px 0"><summary>Why do two deterministic engines need varied openings?</summary><p>Otherwise every game between them is the same game, so 20 games are really one sample.</p></details><details style="margin:6px 0"><summary>Can beating unrated opponents give an absolute Elo?</summary><p>No. It only gives relative differences. Absolute ratings need opponents with known ratings.</p></details>
+            <p style="margin:8px 0 0">More practice, with commands and expected output: <a href="docs/learn/08_measuring.md">Unit 8</a>.</p>
+        </div>
+
 
         <div class="day-marker">Day 9: Measurement</div>
 
@@ -2070,6 +2122,11 @@ run_tournament(my_engine, "My Engine", depth2_player, "Depth-2", 10)</code></pre
                 <li>Beat Depth-2 70%: ~1200+ Elo</li>
                 <li>Beat Depth-2 90%: ~1400+ Elo</li>
             </ul>
+            <p><strong>⚠️ Caution:</strong> this table is a rule of thumb, not a measurement. None of these opponents
+            has a measured rating, so beating them can't give an <em>absolute</em> Elo. Results against them
+            give only <em>relative</em> differences between your own engines. For a real rating, play many games
+            against calibrated opponents (for example Stockfish at fixed skill levels). See
+            <a href="docs/learn/08_measuring.md">unit 8</a>.</p>
         </div>
 
         <h3>Part 3: Performance Profiling</h3>
@@ -2219,6 +2276,9 @@ print(f"✅ Quiescence search validated! Significant tactical improvement.")</co
         <h3>Building a Test Suite for Your Engine</h3>
 
         <p>Create a comprehensive test file you can run after each change:</p>
+
+        <p><em>Note: <code>test/validate_engine.py</code> is a file for you to write. It is not in the repository.
+        The closest existing tools are <code>test/tactical_suite.py</code> and <code>test/tournament.py</code>.</em></p>
 
         <pre><code># test/validate_engine.py
 """
@@ -2416,16 +2476,23 @@ if __name__ == "__main__":
         <p>All the code from this tutorial is available in this repository:</p>
 
         <pre><code># Clone the repository
-git clone https://github.com/yourusername/Chess_RL.git
+git clone https://github.com/jules19/Chess_RL.git
 
 # Install dependencies
-pip install python-chess
+pip install -r requirements.txt
 
-# Run the engine
+# Run the minimax self-tests
 python search/minimax.py
 
-# Play against it
-python run_uci_engine.sh</code></pre>
+# Play against it in the terminal
+python cli/play.py human-minimax
+
+# Or start the UCI engine for a chess GUI
+python chess_rl_uci.py</code></pre>
+
+        <p><strong>How you know it worked:</strong> <code>python search/minimax.py</code> runs four self-tests and should end
+        with <code>✓ Suggests: e2e4</code> and <code>✅ All minimax tests complete!</code>. Every step in the
+        <a href="LEARN.md">learning path</a> has an expected output like this.</p>
 
         <div class="success">
             <strong>🏆 Challenge:</strong> Extend this engine with your own ideas! Try adding:

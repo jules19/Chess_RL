@@ -73,6 +73,10 @@ python3 uci/engine.py --pgn-log games.pgn
 python3 uci/engine.py --uci-log debug.log --pgn-log mygames.pgn
 ```
 
+Relative paths are written to the directory you start the engine from. `*.log` files and the
+default `games.pgn` are gitignored, so they won't be committed by accident. To keep them out of the
+repository root, pass paths under `data/` (also gitignored), e.g. `--pgn-log data/games.pgn`.
+
 ### Method 2: UCI Options (Recommended for GUIs)
 
 Configure logging through your chess GUI's engine settings:

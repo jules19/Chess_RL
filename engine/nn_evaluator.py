@@ -19,7 +19,7 @@ import os
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from net.model import create_model
+from net.model import load_model
 from net.encoding import board_to_tensor, legal_moves_mask, index_to_move
 
 
@@ -32,27 +32,23 @@ class NeuralNetworkEvaluator:
     specified device (CPU or GPU).
     """
 
-    def __init__(self, model_path, device='mps', num_res_blocks=2, num_channels=64):
+    def __init__(self, model_path, device='auto', verbose=True):
         """
         Initialize neural network evaluator.
 
         Args:
             model_path: Path to trained model checkpoint (.pt file)
-            device: Device to run on ('cpu', 'cuda', or 'mps')
-            num_res_blocks: Number of residual blocks in the model
-            num_channels: Number of channels in residual blocks
+            device: 'auto', 'cpu', 'cuda' or 'mps'
+            verbose: Print model details on load
+
+        The architecture (ResBlocks, channels) is read from the checkpoint.
         """
-        self.device = torch.device(device)
+        self.model, self.device = load_model(model_path, device)
 
-        # Load model
-        self.model = create_model(num_res_blocks=num_res_blocks, num_channels=num_channels)
-        self.model.load_state_dict(torch.load(model_path, map_location=self.device))
-        self.model.to(self.device)
-        self.model.eval()
-
-        print(f"Loaded NN evaluator from {model_path}")
-        print(f"  Device: {self.device}")
-        print(f"  Model: {num_res_blocks} ResBlocks, {num_channels} channels")
+        if verbose:
+            print(f"Loaded NN evaluator from {model_path}")
+            print(f"  Device: {self.device}")
+            print(f"  Model: {self.model.num_res_blocks} ResBlocks, {self.model.num_channels} channels")
 
     def evaluate(self, board: chess.Board) -> float:
         """
@@ -148,14 +144,14 @@ class NeuralNetworkEvaluator:
         return max(move_probs.items(), key=lambda x: x[1])[0]
 
 
-def create_nn_evaluator(model_path, device='mps', **kwargs):
+def create_nn_evaluator(model_path, device='auto', **kwargs):
     """
     Factory function to create a neural network evaluator.
 
     Args:
         model_path: Path to trained model checkpoint
-        device: Device to run on ('cpu', 'cuda', or 'mps')
-        **kwargs: Additional arguments for model architecture
+        device: 'auto', 'cpu', 'cuda' or 'mps'
+        **kwargs: Passed to NeuralNetworkEvaluator (e.g. verbose)
 
     Returns:
         NeuralNetworkEvaluator instance
@@ -180,7 +176,7 @@ if __name__ == "__main__":
     print("="*70)
 
     # Create evaluator
-    nn_eval = create_nn_evaluator(model_path, device='mps', num_res_blocks=2, num_channels=64)
+    nn_eval = create_nn_evaluator(model_path)
 
     # Test on starting position
     print("\n1. Starting position:")

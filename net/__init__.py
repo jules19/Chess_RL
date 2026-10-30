@@ -15,7 +15,7 @@ The network takes board positions as input and outputs:
 Start small (4-6 ResBlocks) and scale up after validation.
 """
 
-from .model import PolicyValueNetwork, ResidualBlock, create_model
+from .model import PolicyValueNetwork, ResidualBlock, create_model, load_model, resolve_device
 from .encoding import (
     board_to_tensor,
     tensor_to_board_debug,
@@ -30,6 +30,8 @@ __all__ = [
     'PolicyValueNetwork',
     'ResidualBlock',
     'create_model',
+    'load_model',
+    'resolve_device',
     'board_to_tensor',
     'tensor_to_board_debug',
     'move_to_index',

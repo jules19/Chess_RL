@@ -343,6 +343,50 @@ def create_model(num_res_blocks=4, num_channels=128):
     return model
 
 
+def resolve_device(device="auto"):
+    """
+    Pick a torch device. "auto" prefers MPS (Mac), then CUDA, then CPU,
+    so the same code runs on the Mac and inside a Linux container.
+    """
+    if device != "auto":
+        return torch.device(device)
+    if torch.backends.mps.is_available():
+        return torch.device("mps")
+    if torch.cuda.is_available():
+        return torch.device("cuda")
+    return torch.device("cpu")
+
+
+def load_model(model_path, device="auto"):
+    """
+    Load a trained network, inferring its size from the checkpoint.
+
+    Accepts both checkpoint formats written by training/train.py:
+    - best_model.pt: a raw state dict
+    - model_epoch_N.pt: a dict with 'model_state_dict' plus training metrics
+
+    Args:
+        model_path: Path to the .pt file
+        device: "auto", "cpu", "cuda" or "mps"
+
+    Returns:
+        (model in eval mode on the device, the torch.device)
+    """
+    device = resolve_device(device)
+    checkpoint = torch.load(model_path, map_location=device, weights_only=True)
+    state_dict = checkpoint.get("model_state_dict", checkpoint)
+
+    # Architecture is recoverable from the weights themselves
+    num_channels = state_dict["conv_input.weight"].shape[0]
+    block_ids = {key.split(".")[1] for key in state_dict if key.startswith("res_blocks.")}
+
+    model = create_model(num_res_blocks=len(block_ids), num_channels=num_channels)
+    model.load_state_dict(state_dict)
+    model.to(device)
+    model.eval()
+    return model, device
+
+
 if __name__ == "__main__":
     """Quick test of the network architecture."""
     print("Testing Policy-Value Network Architecture...")

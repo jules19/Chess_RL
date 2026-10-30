@@ -567,7 +567,7 @@
         <div class="sidebar-header">
             <h1>🏆 Chess RL Complete Tutorial</h1>
             <div class="progress-indicator">
-                Phase 3 Complete • 60% Progress
+                Phases 0–3 built • Phase 4 not started
             </div>
         </div>
 
@@ -616,6 +616,12 @@
 
     <!-- MAIN CONTENT -->
     <main class="content">
+
+        <div style="border-left: 4px solid #2563eb; background: #eff6ff; color: #1e3a8a; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
+            <strong>How to use this tutorial:</strong> it's long-form background reading. The step-by-step path, with
+            exercises and answers, is <a href="LEARN.md">LEARN.md</a>; this page goes with the whole path, as a roadmap, glossary and history. Phase 4 (self-play) described here has not been built yet.
+            Measured results (not estimates) are in <a href="STATUS.md">STATUS.md</a>.
+        </div>
         <div class="content-inner">
 
             <!-- HERO SECTION -->
@@ -731,7 +737,8 @@
                     <h3>Six Progressively Sophisticated Engines</h3>
                     <p>This tutorial guides you through building <strong>six chess engines</strong>, each playable and independently useful, culminating in an AlphaZero-style self-learning system.</p>
 
-                    <p><strong>The Complete Journey:</strong></p>
+                    <p><strong>The Complete Journey</strong> (Elo figures are the plan's <em>targets</em>, never measured;
+                    see <a href="STATUS.md">STATUS.md</a> for what was measured):</p>
                     <ul class="checklist">
                         <li><strong>Phase 0:</strong> Random Player (baseline, 1 hour)</li>
                         <li><strong>Phase 1:</strong> Minimax with hand-crafted evaluation (~1200-1400 Elo, 1 week)</li>
@@ -1381,7 +1388,7 @@ def minimax(board, depth, alpha, beta, maximizing):
                             <li>Develops pieces in opening (plays e4/d4/Nf3, not h4)</li>
                             <li>Beats random player 100% of the time</li>
                             <li>UCI interface works in a chess GUI</li>
-                            <li>Estimated strength: 1200-1400 Elo</li>
+                            <li>Target strength: 1200-1400 Elo (an estimate; never measured)</li>
                         </ul>
                     </div>
 
@@ -1448,7 +1455,7 @@ MCTS operates in a loop, repeating these 4 steps N times:
    ↓
 4. BACKPROPAGATION: Update statistics along path
 
-Repeat N times (e.g., 200-800 simulations)
+Repeat N times (in this project 200 is the default, but that's only ~10 visits per opening move: too few to separate moves reliably; see unit 5)
 Then pick the move with most visits</pre>
                     </div>
 
@@ -1668,7 +1675,7 @@ Then pick the move with most visits</pre>
                     </table>
 
                     <div class="key-insight">
-                        <strong>Why MCTS for Phase 3?</strong> MCTS is the foundation of AlphaZero! In Phase 3, we'll replace random/evaluation rollouts with a neural network that provides policy (which moves to explore) and value (position evaluation). MCTS + Neural Network = AlphaZero magic!
+                        <strong>Why MCTS for Phase 3?</strong> MCTS is the foundation of AlphaZero. Phase 3 (now built) plugged a neural network into the rollouts; it works but is slow (~465 network calls per simulation) and, with the current weakly trained network, not stronger. AlphaZero's real step is different: use the policy to choose which moves to explore and the value to judge leaves directly, with no rollouts. See <a href="docs/learn/09_nn_mcts.md">unit 9</a>.
                     </div>
 
                     <h3>Performance Tuning: Key Parameters</h3>
@@ -1689,7 +1696,7 @@ Then pick the move with most visits</pre>
                             <li>UCT properly balances exploration and exploitation</li>
                             <li>Engine doesn't hang (simulations complete in reasonable time)</li>
                             <li>Move selection is robust (high visit count moves)</li>
-                            <li>Estimated strength: 1400-1600 Elo</li>
+                            <li>Target strength: 1400-1600 Elo (an estimate; never measured)</li>
                         </ul>
                     </div>
 
@@ -1708,13 +1715,13 @@ Then pick the move with most visits</pre>
 
             <!-- PHASE 3: NEURAL NETWORKS (OVERVIEW + LINK) -->
             <details class="phase" id="phase3">
-                <summary>📍 Phase 3: Neural Networks (Current Phase)</summary>
+                <summary>📍 Phase 3: Neural Networks (built; network still weak)</summary>
                 <div class="phase-content">
                     <div class="breadcrumb">
                         <a href="#intro">Home</a> → Phase 3: Neural Networks
                     </div>
 
-                    <div class="day-marker current">🔄 Weeks 3-4 - Target: 1400-1600 Elo</div>
+                    <div class="day-marker current">Weeks 3-4 - Target: 1400-1600 Elo (built; the trained network is still weak, see STATUS.md)</div>
 
                     <div class="learning-objective">
                         <h3>Learning Objectives - Phase 3</h3>
@@ -1869,6 +1876,11 @@ def expand_with_policy(node):
                             <li>Inference is fast enough (~1-10ms per position)</li>
                             <li>No bugs in board encoding (visual inspection + tests)</li>
                         </ul>
+                        <p><strong>Measured status (2026-10):</strong> these are targets, and most are not met yet. The network
+                        trains, but it ranks the human move first only 13% of the time, its value head is barely better
+                        than a coin flip, and it won none of 40 test games. NN-MCTS runs but makes ~465 network calls
+                        per simulation. Promotions are also mis-encoded (see unit 6, exercise 2). Details:
+                        <a href="STATUS.md">STATUS.md</a> and <a href="docs/learn/08_measuring.md">unit 8</a>.</p>
                     </div>
 
                     <h3>What Comes Next: Phase 4 (Self-Play RL)</h3>

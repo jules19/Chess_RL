@@ -46,3 +46,13 @@ models/
 replay/
 runs/
 data/
+
+# macOS
+.DS_Store
+
+# UCI engine output (default file names, written to the working directory)
+/games.pgn
+/test_games.pgn
+
+# marimo session cache
+__marimo__/

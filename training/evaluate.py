@@ -30,7 +30,7 @@ import argparse
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from net.model import create_model
+from net.model import load_model
 from net.encoding import board_to_tensor, legal_moves_mask, index_to_move
 
 
@@ -51,17 +51,13 @@ class NeuralNetworkPlayer:
 
         Args:
             model_path: Path to saved model checkpoint
-            device: 'cpu' or 'cuda'
+            device: 'auto', 'cpu', 'cuda' or 'mps'
             temperature: Sampling temperature (0 = greedy, >0 = stochastic)
         """
-        self.device = torch.device(device)
         self.temperature = temperature
 
-        # Load model
-        self.model = create_model()
-        self.model.load_state_dict(torch.load(model_path, map_location=self.device))
-        self.model.to(self.device)
-        self.model.eval()
+        # Load model (architecture is inferred from the checkpoint)
+        self.model, self.device = load_model(model_path, device)
 
         print(f"Loaded NN player from: {model_path}")
 
@@ -137,7 +133,7 @@ def play_game(white_player, black_player, max_moves=150, verbose=False):
             player = "Black"
 
         if verbose:
-            print(f"{move_count+1:3d}. {move:6s} ({player}, eval: {value:+.2f})")
+            print(f"{move_count+1:3d}. {move.uci():6s} ({player}, eval: {value:+.2f})")
 
         board.push(move)
         move_count += 1
@@ -169,6 +165,16 @@ def play_game(white_player, black_player, max_moves=150, verbose=False):
         print(f"\nGame over: {result} ({outcome}) after {move_count} moves")
 
     return result, move_count
+
+
+class FunctionPlayer:
+    """Adapt a plain move function (board -> move) to the select_move interface."""
+
+    def __init__(self, move_fn):
+        self.move_fn = move_fn
+
+    def select_move(self, board):
+        return self.move_fn(board), 0.0
 
 
 def tournament(player1, player2, num_games=20, player1_name="Player 1", player2_name="Player 2"):
@@ -244,7 +250,7 @@ def main():
     parser = argparse.ArgumentParser(description="Evaluate neural network playing strength")
     parser.add_argument('model_path', type=str, help='Path to trained model checkpoint')
     parser.add_argument('--games', type=int, default=20, help='Number of games per opponent')
-    parser.add_argument('--device', type=str, default='cpu', help='Device (cpu/cuda)')
+    parser.add_argument('--device', type=str, default='auto', help='Device (auto/cpu/cuda/mps)')
     parser.add_argument('--verbose', action='store_true', help='Print game moves')
     args = parser.parse_args()
 
@@ -255,20 +261,11 @@ def main():
     # Load NN player
     nn_player = NeuralNetworkPlayer(args.model_path, device=args.device)
 
-    # Import baseline engines
-    try:
-        from search.minimax import MinimaxPlayer
-        minimax_available = True
-    except ImportError:
-        print("Warning: MinimaxPlayer not available")
-        minimax_available = False
-
-    try:
-        from search.mcts import MCTSPlayer
-        mcts_available = True
-    except ImportError:
-        print("Warning: MCTSPlayer not available")
-        mcts_available = False
+    # Baseline engines are plain functions; wrap them as players
+    from search.minimax import best_move_minimax
+    from search.mcts import best_move_mcts
+    minimax_available = True
+    mcts_available = True
 
     # Tournament vs Minimax
     if minimax_available:
@@ -277,8 +274,7 @@ def main():
         print("="*70)
 
         try:
-            from engine.evaluator import evaluate as evaluate_fn
-            minimax_player = MinimaxPlayer(depth=3, evaluator=evaluate_fn)
+            minimax_player = FunctionPlayer(lambda b: best_move_minimax(b, depth=3))
 
             wins, losses, draws = tournament(
                 nn_player, minimax_player,
@@ -299,8 +295,7 @@ def main():
         print("="*70)
 
         try:
-            from engine.evaluator import evaluate as evaluate_fn
-            mcts_player = MCTSPlayer(num_simulations=200, evaluator=evaluate_fn)
+            mcts_player = FunctionPlayer(lambda b: best_move_mcts(b, simulations=200))
 
             wins, losses, draws = tournament(
                 nn_player, mcts_player,

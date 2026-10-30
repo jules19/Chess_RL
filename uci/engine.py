@@ -34,7 +34,7 @@ from datetime import datetime
 from typing import Optional, TextIO
 
 # Import our engine modules
-sys.path.insert(0, '/home/user/Chess_RL')
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from engine.evaluator import evaluate, best_move_material
 from search.minimax import best_move_minimax
 from search.mcts import best_move_mcts

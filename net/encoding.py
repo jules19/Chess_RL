@@ -281,17 +281,20 @@ if __name__ == "__main__":
     print("TEST 2: Move encoding and decoding")
     print("-" * 70)
 
-    # Test some standard opening moves
-    test_moves = [
-        chess.Move.from_uci("e2e4"),
-        chess.Move.from_uci("d2d4"),
-        chess.Move.from_uci("g1f3"),
-        chess.Move.from_uci("e7e5"),
+    # Test some standard opening moves; decoding checks legality, so each
+    # move is tested in a position where it is legal (e7e5 needs Black to move)
+    after_e4 = chess.Board()
+    after_e4.push_uci("e2e4")
+    test_cases = [
+        (chess.Move.from_uci("e2e4"), board),
+        (chess.Move.from_uci("d2d4"), board),
+        (chess.Move.from_uci("g1f3"), board),
+        (chess.Move.from_uci("e7e5"), after_e4),
     ]
 
-    for move in test_moves:
+    for move, position in test_cases:
         index = move_to_index(move)
-        recovered = index_to_move(index, board)
+        recovered = index_to_move(index, position)
         print(f"  {move} → {index} → {recovered}")
         assert recovered == move, f"Round-trip failed for {move}"
 

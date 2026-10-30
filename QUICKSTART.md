@@ -1,6 +1,7 @@
-# Quick Start Guide - Baby Steps
+# Quick start
 
-This guide gets you playing chess against the computer in under 5 minutes.
+This gets you playing chess against the computer in under 5 minutes. To learn how it works,
+continue with [`LEARN.md`](LEARN.md) afterwards. Its unit 0 covers the same game loop in more depth.
 
 ## Setup (First Time)
 
@@ -48,48 +49,47 @@ Plays 10 random vs random games and shows statistics:
 ✅ **Legal move validation**: Prevents illegal moves
 ✅ **Draw detection**: 50-move rule, repetition, stalemate
 
-## Next Steps
+## Stronger opponents
 
-See `RISK_REDUCTION.md` for the complete roadmap. The immediate next steps are:
+The same script plays every engine in the project:
 
-1. **Material Evaluation** (Tomorrow): Make the computer count piece values
-2. **Minimax Search** (Day 3-4): Add look-ahead to find tactics
-3. **Position Evaluation** (Day 5-6): Add center control, development, king safety
-4. **UCI Interface** (Day 7): Play against the engine in a chess GUI
-
-After 1 week, you'll have a ~1200-1400 strength chess engine that plays sensible chess.
+```bash
+python cli/play.py human-minimax   # you vs minimax (units 2-3)
+python cli/play.py human-mcts      # you vs Monte Carlo Tree Search (unit 5)
+python cli/play.py minimax         # watch minimax play the random mover
+```
 
 ## Validation Checklist
 
-Run the test suite and verify:
-- [ ] All 10 games terminate (no hangs)
-- [ ] Mix of white wins, black wins, and draws
-- [ ] Games end with checkmate OR stalemate OR draw
-- [ ] Average game length is reasonable (50-200 moves)
+Run the test suite and check:
+- [ ] All 10 games finish (no hangs) and the summary `📊 Test Suite Results` is printed
+- [ ] Every game ends by checkmate, stalemate or a draw rule
+- [ ] Most games are **draws**, and they're **long**: an average of roughly 300–400 moves (plies) is
+      normal for random play. One sample run: 0 White wins, 1 Black win, 9 draws, average 380 moves.
 
-If any test fails, there's a bug in the move generation or game rules.
+If a game never ends or crashes, something is wrong with the setup.
 
 ## FAQ
 
 **Q: The games are taking too long!**
-A: Random play can lead to very long games. This is expected. Once we add evaluation (tomorrow), games will be much shorter.
+A: Random play leads to very long games. This is expected. Engines that evaluate positions (unit 1 onwards) finish games much faster.
 
 **Q: Can I make it faster?**
-A: Yes, edit `cli/play.py` and set `verbose=False` in the game loop.
+A: Use `python cli/play.py test`. It plays 10 games without drawing the board, printing a short result per game and a summary.
 
 **Q: The computer makes terrible moves!**
-A: Correct! It's playing randomly. Tomorrow we'll add material counting so it at least captures pieces.
+A: Correct: in `random` and `human` mode it plays randomly. Try `human-minimax` for a real opponent.
 
 **Q: How do I enter moves in UCI format?**
 A: Format is `[from][to]`, e.g., `e2e4` moves the pawn from e2 to e4. For pawn promotion, add the piece: `e7e8q` (promote to queen).
 
 ## Success Criteria
 
-You've completed Baby Step #1 if:
+You have finished the quick start if:
 1. You can run a complete random vs random game
 2. You can play a game against the random player
 3. The test suite passes (all games terminate)
 
 **Time to complete**: 30 minutes to 2 hours (including setup)
 
-**What's next**: Material evaluation - make the computer prefer to capture pieces and avoid losing pieces.
+**What's next**: [`LEARN.md`](LEARN.md), starting with unit 0.

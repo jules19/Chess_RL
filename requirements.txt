@@ -2,3 +2,10 @@ python-chess>=1.999
 numpy>=1.24.0
 torch>=2.0.0
 torchvision>=0.15.0
+# training (units 7-8)
+tqdm>=4.0
+tensorboard>=2.0
+# notebooks (unit 8)
+marimo>=0.9
+matplotlib>=3.7
+pandas>=2.0

@@ -71,6 +71,10 @@ Here are the best free chess GUIs for macOS:
    /usr/local/bin/python3 /Users/yourname/Chess_RL/chess_rl_uci.py
    ```
 
+   **Recommended if you use a virtualenv:** select `/path/to/Chess_RL/run_engine.sh` as the command
+   instead. It activates the project's `venv/` (if present) and starts the engine, so the GUI uses the
+   Python that has `chess` and `torch` installed.
+
 5. Click **OK**
 
 ### Step 3: Configure Engine Options

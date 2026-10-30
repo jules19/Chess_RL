@@ -308,6 +308,12 @@
 <body>
     <div class="container">
         <h1>🧠 Phase 3: Neural Networks for Chess</h1>
+
+        <div style="border-left: 4px solid #2563eb; background: #eff6ff; color: #1e3a8a; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
+            <strong>How to use this tutorial:</strong> it's long-form background reading. The step-by-step path, with
+            exercises and answers, is <a href="LEARN.md">LEARN.md</a>; this page goes with units 6–9 (network, training, measuring, NN + search). This page was written before training was implemented. Sections marked 'written before implementation' describe the plan; units 7–9 describe the code as it is.
+            Measured results (not estimates) are in <a href="STATUS.md">STATUS.md</a>.
+        </div>
         <p style="font-size: 1.2em; color: #666;">A comprehensive guide to building AlphaZero-style neural networks from scratch</p>
 
         <div class="progress-tracker">
@@ -342,8 +348,8 @@
         <ul>
             <li>✅ <strong>Random Player:</strong> Picks moves randomly (baseline)</li>
             <li>✅ <strong>Material Player:</strong> Counts piece values (greedy)</li>
-            <li>✅ <strong>Minimax (depth-3):</strong> Looks ahead with hand-crafted evaluation (~1200-1400 Elo)</li>
-            <li>✅ <strong>MCTS (200 sims):</strong> Monte Carlo Tree Search with smart rollouts (~1400-1600 Elo)</li>
+            <li>✅ <strong>Minimax (depth-3):</strong> Looks ahead with hand-crafted evaluation (estimated ~1200-1400 Elo, never measured)</li>
+            <li>✅ <strong>MCTS (200 sims):</strong> Monte Carlo Tree Search with smart rollouts (estimated ~1400-1600 Elo, never measured)</li>
         </ul>
 
         <p>All of these engines use <strong>hand-crafted evaluation</strong>: you wrote code that says "center control is worth 30 centipawns" or "knights near the center are good." This works well, but has limits:</p>
@@ -440,6 +446,12 @@ Neural Network:
         </div>
 
         <h2 id="day1-2">📅 Days 1-2: Neural Network Architecture</h2>
+        <div style="border:1px solid #cbd5e1; background:#f8fafc; color:#0f172a; padding:12px 16px; margin:12px 0 20px; border-radius:6px;">
+            <strong>In this section you'll learn to:</strong><ul style="margin:6px 0"><li>explain the 20×8×8 input and the 4,672 policy slots</li><li>say what the policy and value heads are each for</li></ul>
+            <strong>Check yourself</strong> (answer before opening):<details style="margin:6px 0"><summary>What index does this project give g1f3?</summary><p>6 × 64 + 21 = 405.</p></details><details style="margin:6px 0"><summary>Why can&#x27;t this encoding represent a queen promotion?</summary><p>The offset (piece − 2) × 4096 puts it beyond slot 4,672, so it's dropped. Knight promotions collide with ordinary moves.</p></details>
+            <p style="margin:8px 0 0">More practice, with commands and expected output: <a href="docs/learn/06_network.md">Unit 6</a>.</p>
+        </div>
+
 
         <div class="day-marker">✅ COMPLETE - Days 1-2</div>
 
@@ -890,7 +902,13 @@ policy_probs = F.softmax(masked_logits, dim=1)
             <p><strong>Next:</strong> Generate training data from MCTS self-play games!</p>
         </div>
 
-        <h2 id="day3-4">📅 Days 3-4: Dataset Creation (Coming Next)</h2>
+        <h2 id="day3-4">📅 Days 3-4: Dataset Creation (written before implementation; see unit 7)</h2>
+        <div style="border:1px solid #cbd5e1; background:#f8fafc; color:#0f172a; padding:12px 16px; margin:12px 0 20px; border-radius:6px;">
+            <strong>In this section you'll learn to:</strong><ul style="margin:6px 0"><li>describe the two training targets per position</li><li>explain why splitting by position leaks</li></ul>
+            <strong>Check yourself</strong> (answer before opening):<details style="margin:6px 0"><summary>What are the policy and value targets?</summary><p>The move actually played (cross-entropy), and the final result from the side to move's view (MSE).</p></details><details style="margin:6px 0"><summary>Why is a random split by position optimistic?</summary><p>Positions from the same game land in both train and validation, so validation partly measures memory.</p></details>
+            <p style="margin:8px 0 0">More practice, with commands and expected output: <a href="docs/learn/07_training.md">Unit 7</a>.</p>
+        </div>
+
 
         <div class="day-marker">📅 NEXT - Days 3-4</div>
 
@@ -939,7 +957,7 @@ Dataset = Collection of 5,000-10,000 such examples
 
         <p><em>(Full implementation guide coming in Days 3-4...)</em></p>
 
-        <h2 id="day8-10">📅 Days 8-10: Training Loop (Preview)</h2>
+        <h2 id="day8-10">📅 Days 8-10: Training Loop (written before implementation; see units 7–8)</h2>
 
         <h3>The Supervised Learning Process</h3>
 
@@ -987,6 +1005,12 @@ For each epoch:
         <pre><code class="language-python">l2_loss = lambda * sum(w^2 for all weights w)</code></pre>
 
         <h2 id="integration">🔗 Integration: From Neural Network to NN-MCTS</h2>
+        <div style="border:1px solid #cbd5e1; background:#f8fafc; color:#0f172a; padding:12px 16px; margin:12px 0 20px; border-radius:6px;">
+            <strong>In this section you'll learn to:</strong><ul style="margin:6px 0"><li>explain why network-guided rollouts are slow</li><li>name AlphaZero's two changes to MCTS</li></ul>
+            <strong>Check yourself</strong> (answer before opening):<details style="margin:6px 0"><summary>About how many network calls does this project&#x27;s NN-MCTS make per simulation?</summary><p>About 465, because rollouts call the net at every ply for ~10 candidate moves.</p></details><details style="margin:6px 0"><summary>What does AlphaZero do instead?</summary><p>One call per simulation: the value head judges the leaf (no rollout), and the policy weights exploration (PUCT).</p></details>
+            <p style="margin:8px 0 0">More practice, with commands and expected output: <a href="docs/learn/09_nn_mcts.md">Unit 9</a>.</p>
+        </div>
+
 
         <h3>The Ultimate Goal (Phase 3b)</h3>
 
@@ -1212,6 +1236,7 @@ MCTS Node → Network(position) → {policy, value}
 
         <div class="success">
             <h3>🎉 You've Completed Days 1-2!</h3>
+            <p><em>Written at the end of days 1–2. Training and NN-MCTS have since been built: continue with <a href="docs/learn/07_training.md">unit 7</a>, and see <a href="STATUS.md">STATUS.md</a> for how the trained network actually performs.</em></p>
             <p>You've built a complete neural network architecture from scratch. This is a significant achievement!</p>
             <p><strong>What you have:</strong></p>
             <ul>
@@ -1253,8 +1278,8 @@ MCTS Node → Network(position) → {policy, value}
             <a href="minimax_tutorial.html">← Previous: Minimax & Evaluation</a>
             <a href="#day3-4">Next: Dataset Creation →</a>
             <br><br>
-            <a href="NEXT_STEPS_PLAN.md">View Full Roadmap</a> |
-            <a href="DAY1-2_SUMMARY.md">Day 1-2 Summary</a> |
+            <a href="docs/journal/NEXT_STEPS_PLAN.md">View Full Roadmap</a> |
+            <a href="docs/journal/DAY1-2_SUMMARY.md">Day 1-2 Summary</a> |
             <a href="README.md">Project Home</a>
         </div>
 
