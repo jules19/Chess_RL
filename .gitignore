@@ -50,3 +50,7 @@ data/
 
 # Self-play outputs
 selfplay_checkpoints/
+
+# macOS / marimo caches
+.DS_Store
+__marimo__/

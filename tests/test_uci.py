@@ -139,3 +139,21 @@ def test_clock_time_management_from_wtime_btime():
     board.push_uci("e2e4")
     board.push_uci("e7e5")
     assert chess.Move.from_uci(move) in board.legal_moves
+
+
+def test_info_score_is_search_score_from_side_to_move():
+    """UCI's 'score cp' is from the engine's (side to move's) point of view.
+    Black to move and a queen up must report a large POSITIVE score. (This
+    line once printed a static evaluation from White's view, i.e. -900 here.)"""
+    lines = run_uci_session([
+        "uci",
+        "setoption name Engine Type value minimax",
+        "isready",
+        "position fen 3qk3/8/8/8/8/8/8/4K3 b - - 0 1",
+        "go depth 2",
+    ])
+    extract_bestmove(lines)
+    info = next(l for l in lines if l.startswith("info depth"))
+    parts = info.split()
+    assert parts[parts.index("depth") + 1] == "2"
+    assert int(parts[parts.index("cp") + 1]) > 500, info

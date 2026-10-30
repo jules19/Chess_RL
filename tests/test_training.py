@@ -70,3 +70,27 @@ def test_dataset_loads_pgn_and_yields_valid_examples(tmp_path):
     assert tuple(board_tensor.shape) == (20, 8, 8)
     assert 0 <= int(move_index) < 4672
     assert -1.0 <= float(value) <= 1.0
+
+
+def test_train_val_split_keeps_games_whole(tmp_path):
+    """Validation must hold out whole games. A random split by position puts
+    near-duplicate positions from the same game on both sides, so validation
+    accuracy measures memory instead of generalisation."""
+    from training.dataset import ChessDataset, split_by_game
+
+    games = "".join(
+        f'[Event "Test {i}"]\n[Result "1-0"]\n\n'
+        f'1. e4 e5 2. Qh5 Nc6 3. Bc4 Nf6 4. Nc3 a6 5. Qxf7# 1-0\n\n'
+        for i in range(10)
+    )
+    pgn = tmp_path / "games.pgn"
+    pgn.write_text(games)
+
+    dataset = ChessDataset(str(pgn))
+    train, val = split_by_game(dataset, train_split=0.8)
+
+    train_games = {dataset.examples[i]['game'] for i in train.indices}
+    val_games = {dataset.examples[i]['game'] for i in val.indices}
+    assert train_games and val_games
+    assert not train_games & val_games, "a game appears in both train and validation"
+    assert len(train) + len(val) == len(dataset)

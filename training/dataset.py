@@ -23,7 +23,7 @@ import chess
 import chess.pgn
 import numpy as np
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, Subset
 import sys
 import os
 
@@ -135,7 +135,8 @@ class ChessDataset(Dataset):
                     self.examples.append({
                         'board': board_tensor,
                         'policy': move_index,
-                        'value': game_value
+                        'value': game_value,
+                        'game': game_count,  # lets the train/val split keep games whole
                     })
 
                     board.push(move)
@@ -173,6 +174,30 @@ class ChessDataset(Dataset):
         )
 
 
+def split_by_game(dataset, train_split=0.9, seed=0):
+    """
+    Split a ChessDataset into train/validation subsets, keeping each game whole.
+
+    Splitting by *position* (a plain random_split) leaks: consecutive positions
+    from one game are near-duplicates, so the network gets validated on games it
+    trained on and validation accuracy measures memory, not generalisation.
+    Holding out whole games keeps every validation position unseen.
+
+    Returns:
+        (train_subset, val_subset) as torch.utils.data.Subset objects
+    """
+    game_ids = sorted({ex['game'] for ex in dataset.examples})
+    order = torch.randperm(len(game_ids), generator=torch.Generator().manual_seed(seed)).tolist()
+    n_train_games = max(1, int(round(train_split * len(game_ids))))
+    if len(game_ids) > 1:
+        n_train_games = min(n_train_games, len(game_ids) - 1)  # keep at least one validation game
+    train_games = {game_ids[i] for i in order[:n_train_games]}
+
+    train_idx = [i for i, ex in enumerate(dataset.examples) if ex['game'] in train_games]
+    val_idx = [i for i, ex in enumerate(dataset.examples) if ex['game'] not in train_games]
+    return Subset(dataset, train_idx), Subset(dataset, val_idx)
+
+
 def create_dataloaders(pgn_path, batch_size=256, train_split=0.9, max_games=None, num_workers=4):
     """
     Create train and validation dataloaders from a PGN file.
@@ -190,14 +215,7 @@ def create_dataloaders(pgn_path, batch_size=256, train_split=0.9, max_games=None
     """
     # Load full dataset
     dataset = ChessDataset(pgn_path, max_games=max_games)
-
-    # Split into train/val
-    train_size = int(train_split * len(dataset))
-    val_size = len(dataset) - train_size
-
-    train_dataset, val_dataset = torch.utils.data.random_split(
-        dataset, [train_size, val_size]
-    )
+    train_dataset, val_dataset = split_by_game(dataset, train_split)
 
     # Create dataloaders
     train_loader = DataLoader(
@@ -216,9 +234,10 @@ def create_dataloaders(pgn_path, batch_size=256, train_split=0.9, max_games=None
         pin_memory=True
     )
 
-    print(f"\nDataset split:")
-    print(f"  Train: {train_size:,} examples ({train_split:.0%})")
-    print(f"  Val: {val_size:,} examples ({1-train_split:.0%})")
+    n_games = lambda subset: len({dataset.examples[i]['game'] for i in subset.indices})
+    print(f"\nDataset split (by game, so validation positions come from unseen games):")
+    print(f"  Train: {len(train_dataset):,} examples from {n_games(train_dataset)} games")
+    print(f"  Val: {len(val_dataset):,} examples from {n_games(val_dataset)} games")
 
     return train_loader, val_loader
 

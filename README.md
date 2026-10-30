@@ -46,7 +46,8 @@ installed on the host: [docs/DOCKER_GUI.md](docs/DOCKER_GUI.md)
 trained checkpoint set by "Model File"). GUI time controls are honored via
 iterative deepening.
 
-Train the network on expert games (Phase 3a):
+Train the network on expert games (Phase 3a). You first need `data/filtered.pgn`, made by
+downloading a Lichess dump and filtering it (Module 4 shows how):
 ```bash
 python3 training/train.py --pgn data/filtered.pgn --max-games 10000 --epochs 10
 ```

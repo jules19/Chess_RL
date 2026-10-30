@@ -351,7 +351,8 @@ def minimax(board: chess.Board, depth: int, alpha: float, beta: float,
 
 
 def best_move_minimax(board: chess.Board, depth: int = 3, verbose: bool = False,
-                      tt: dict = None, first_move: chess.Move = None) -> chess.Move:
+                      tt: dict = None, first_move: chess.Move = None,
+                      return_score: bool = False):
     """
     Find the best move using minimax search with alpha-beta pruning.
 
@@ -369,18 +370,21 @@ def best_move_minimax(board: chess.Board, depth: int = 3, verbose: bool = False,
         tt: Optional transposition table dict, shared across calls
         first_move: Optional move to search first at the root (used by
                     iterative deepening to try the previous best move first)
+        return_score: If True, return (move, score) where score is the search
+                      result in centipawns from White's perspective (None when
+                      the move was forced and nothing was searched)
 
     Returns:
-        Best move found by search
+        Best move found by search (or (move, score) with return_score=True)
     """
     legal_moves = list(board.legal_moves)
 
     if not legal_moves:
-        return None
+        return (None, None) if return_score else None
 
     # Single legal move? Play it instantly
     if len(legal_moves) == 1:
-        return legal_moves[0]
+        return (legal_moves[0], None) if return_score else legal_moves[0]
 
     best_move = None
     best_score = float('-inf') if board.turn == chess.WHITE else float('inf')
@@ -423,12 +427,14 @@ def best_move_minimax(board: chess.Board, depth: int = 3, verbose: bool = False,
         print(f"\nBest move: {best_move} (score: {best_score/100:.2f} pawns)")
         print(f"Nodes searched: {nodes_searched[0]:,}")
 
+    if return_score:
+        return best_move, best_score
     return best_move
 
 
 def best_move_iterative(board: chess.Board, max_depth: int = 5,
                         time_limit: float = 5.0,
-                        verbose: bool = False) -> chess.Move:
+                        verbose: bool = False, return_score: bool = False):
     """
     Iterative deepening: search depth 1, then 2, then 3... until we run out
     of time or reach max_depth.
@@ -458,18 +464,22 @@ def best_move_iterative(board: chess.Board, max_depth: int = 5,
         max_depth: Deepest search to attempt
         time_limit: Soft time budget in seconds
         verbose: Print per-iteration statistics
+        return_score: If True, return (move, score, depth) from the deepest
+                      completed iteration (score as in best_move_minimax)
 
     Returns:
         Best move from the deepest completed iteration
     """
     legal_moves = list(board.legal_moves)
     if not legal_moves:
-        return None
+        return (None, None, 0) if return_score else None
     if len(legal_moves) == 1:
-        return legal_moves[0]
+        return (legal_moves[0], None, 0) if return_score else legal_moves[0]
 
     tt = {}  # Shared across iterations — this is what makes deepening cheap
     best_move = None
+    best_score = None
+    completed_depth = 0
     start_time = time.time()
     last_iteration_time = 0.0
 
@@ -491,15 +501,19 @@ def best_move_iterative(board: chess.Board, max_depth: int = 5,
             break
 
         iteration_start = time.time()
-        best_move = best_move_minimax(
-            board, depth=depth, verbose=False, tt=tt, first_move=best_move
+        best_move, best_score = best_move_minimax(
+            board, depth=depth, verbose=False, tt=tt, first_move=best_move,
+            return_score=True
         )
+        completed_depth = depth
         last_iteration_time = time.time() - iteration_start
 
         if verbose:
             print(f"  depth {depth}: best={best_move} "
                   f"({time.time() - start_time:.2f}s elapsed, TT entries: {len(tt):,})")
 
+    if return_score:
+        return best_move, best_score, completed_depth
     return best_move
 
 

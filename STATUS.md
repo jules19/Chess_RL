@@ -13,11 +13,34 @@
 | 3b | NN-guided search: `nn_mcts.py` + **true PUCT (`search/puct.py`)** | ✅ | ⚠️ PUCT search unit-tested with fake network; needs a trained model for strength claims |
 | 4 | Self-play RL: replay buffer, arena gate, training loop | ✅ | ⚠️ runs end-to-end at toy scale (verified); **no long training run yet** |
 
-**Test suite:** 65 pytest tests in `tests/` (plus 6 deliberately-skipped
+**Test suite:** 67 pytest tests in `tests/` (plus 6 deliberately-skipped
 course exercise tests in `tests/course/`), run by GitHub Actions CI on
 every push (`.github/workflows/ci.yml`). All green.
 
-## Recent changes (2026-07)
+## Recent changes (2026-10)
+
+- **UCI `info score` fixed:** it printed a static evaluation from White's view;
+  it now reports the minimax search score from the side to move, at the depth
+  actually searched. Regression test in `tests/test_uci.py`.
+- **Train/validation split by game:** `training/dataset.py` split by position, so
+  validation accuracy was inflated by near-duplicate positions. `split_by_game()`
+  now holds out whole games, with a regression test in `tests/test_training.py`.
+  Both are written up as Module 8 case studies 6–7.
+- **Documentation check and teaching evaluation** in `docs/pedagogy/`:
+  `check_docs.py` runs every command in the learner docs in a sandbox copy and
+  checks every file reference; `RUBRIC.md` and `OUTCOME_TEST.md` describe how
+  the course's teaching quality is scored. Fixed what the first run found: a
+  missing script and an unexplained exercise file in `docs/tutorials/minimax_tutorial.html`,
+  and README's training command not saying where its data comes from.
+- **An earlier local training run, for the record:** a 2×64 network trained for 5
+  epochs on 411 Lichess blitz games (~1500 rating) with the *old* move encoding
+  was measured before that encoding was fixed. It was weak: the human move ranked
+  first 13% of the time (random legal move: 6%), value sign right 54% of the time,
+  0 wins in 40 games against random, material-only and minimax (depth 1–2)
+  opponents. That checkpoint is incompatible with the fixed encoding; the
+  "not yet trained on real data" row above still stands for the current code.
+
+## Earlier changes (2026-07)
 
 - **Pedagogy review actioned** (external instructional-design review of the
   course): added `tests/course/` — skip-marked exercise tests that fail

@@ -205,6 +205,13 @@
     <div class="container">
         <h1>🏰 Building a Chess Engine: A Step-by-Step Tutorial</h1>
 
+        <div style="border-left: 4px solid #2563eb; background: #eff6ff; color: #1e3a8a; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
+            <strong>Older tutorial, kept for background reading.</strong> It was written while the project was being built,
+            so its progress markers, "coming next" sections and Elo figures are historical, not current. The maintained
+            material is the <a href="../../course/README.md">9-module course</a>; current status is in
+            <a href="../../STATUS.md">STATUS.md</a>. It covers the ground of Modules 1–2 in long form.
+        </div>
+
         <p><em>From zero to checkmate-finding AI: A practical, incremental approach to building your first chess engine</em></p>
 
         <div class="progress-bar">
@@ -2220,6 +2227,9 @@ print(f"✅ Quiescence search validated! Significant tactical improvement.")</co
 
         <p>Create a comprehensive test file you can run after each change:</p>
 
+        <p><em>Note: <code>test/validate_engine.py</code> is a file for you to write. It is not in the repository.
+        The closest existing tools are <code>test/tactical_suite.py</code> and the pytest suite in <code>tests/</code>.</em></p>
+
         <pre><code># test/validate_engine.py
 """
 Complete validation suite for Chess_RL engine.
@@ -2416,16 +2426,19 @@ if __name__ == "__main__":
         <p>All the code from this tutorial is available in this repository:</p>
 
         <pre><code># Clone the repository
-git clone https://github.com/yourusername/Chess_RL.git
+git clone https://github.com/jules19/Chess_RL.git
 
-# Install dependencies
-pip install python-chess
+# Install dependencies (see course/README.md for the full setup)
+pip install -e ".[dev]"
 
-# Run the engine
+# Run the minimax self-tests
 python search/minimax.py
 
-# Play against it
-python run_uci_engine.sh</code></pre>
+# Play against it in the terminal
+python cli/play.py human-minimax
+
+# Or start the UCI engine for a chess GUI
+./run_engine.sh</code></pre>
 
         <div class="success">
             <strong>🏆 Challenge:</strong> Extend this engine with your own ideas! Try adding:

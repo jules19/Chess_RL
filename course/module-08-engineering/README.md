@@ -34,6 +34,26 @@ long-running ML project accumulates the same kinds.
    `training/evaluate.py` (see the LESSON LEARNED docstring) and
    `tests/test_training.py`. Coverage isn't about percentages — it's about
    which tools you're trusting blind.
+6. **A number with the wrong meaning looks fine.** The UCI engine printed
+   `info ... score cp N` after every minimax move, and the protocol tests
+   passed, because they only checked that a legal `bestmove` arrived. But N
+   was `evaluate()` of the position *before* the search: a static score, from
+   White's point of view. Playing Black a queen up, the engine reported
+   about −900, and a GUI showed the engine "losing". Nothing crashed, so
+   nothing flagged it. The fix reports the search score from the side to
+   move (`best_move_minimax(..., return_score=True)`), and
+   `tests/test_uci.py::test_info_score_is_search_score_from_side_to_move`
+   pins the *meaning* of the number, not just its presence. Moral: test what
+   an output means, not only that it exists.
+7. **A validation set that wasn't held out.** `training/dataset.py` split
+   train and validation with `random_split` over individual *positions*.
+   Consecutive positions from one game are near-duplicates, so every game ended up
+   on both sides and validation accuracy partly measured memorisation. The
+   code ran, the numbers looked plausible, and no test could tell. Now
+   `split_by_game()` holds out whole games, and
+   `tests/test_training.py::test_train_val_split_keeps_games_whole` checks
+   that no game appears in both sets. Moral: in ML, the most dangerous bugs
+   are the ones that make your metrics look *better*.
 
 ## What's already in place (study it)
 
@@ -81,3 +101,5 @@ long-running ML project accumulates the same kinds.
   the ultimate Module 7 checkpoint
 - Read the AlphaZero paper (Silver et al. 2018) — after this course, every
   paragraph maps onto a file you've edited
+
+**Next:** [Module 9 — Capstone: The Experiment Report](../module-09-capstone/README.md)
