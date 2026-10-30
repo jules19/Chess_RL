@@ -178,8 +178,11 @@ quit                                  # Exit
 # ...options...
 # uciok
 # readyok
-# info depth 3 score cp 20
-# bestmove e2e4
+# info depth 3 score cp -2
+# bestmove g1f3
+#
+# The score is the search result in centipawns from the engine's (side to
+# move's) point of view: -2 means "about level".
 ```
 
 ## Troubleshooting
