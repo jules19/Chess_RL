@@ -94,3 +94,28 @@ def test_train_val_split_keeps_games_whole(tmp_path):
     assert train_games and val_games
     assert not train_games & val_games, "a game appears in both train and validation"
     assert len(train) + len(val) == len(dataset)
+
+
+def test_eval_supervised_matches_the_training_split_and_reports_baselines(tmp_path):
+    """eval_supervised.py re-parses the PGN itself (it needs the boards), so it
+    must see exactly the positions ChessDataset trains on, or its baselines
+    are computed on a different validation set from train.py's."""
+    from net.model import create_model
+    from training.dataset import ChessDataset
+    from training.eval_supervised import evaluate_checkpoint, load_positions
+
+    games = "".join(
+        f'[Event "Test {i}"]\n[Result "{"1-0" if i % 2 else "0-1"}"]\n\n'
+        f'1. e4 e5 2. Qh5 Nc6 3. Bc4 Nf6 4. Nc3 a6 5. Qxf7# 1-0\n\n'
+        for i in range(10)
+    )
+    pgn = tmp_path / "games.pgn"
+    pgn.write_text(games)
+    assert len(load_positions(str(pgn))) == len(ChessDataset(str(pgn)))
+
+    ckpt = tmp_path / "tiny.pt"
+    torch.save(create_model(num_res_blocks=1, num_channels=8).state_dict(), ckpt)
+    r = evaluate_checkpoint(str(ckpt), str(pgn))
+    assert r['val_games'] >= 1
+    assert 0 < r['random_legal'] < 1
+    assert 0 <= r['top1'] <= r['top5'] <= 1

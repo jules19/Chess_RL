@@ -1,9 +1,16 @@
 # Module 9 — Capstone: The Experiment Report
 
-**Goal:** produce the one artifact that proves you completed this course —
-a short experiment report that could convince a skeptical engineer. Modules
-0–8 each checked a piece; this is the summative assessment, and it cannot
-be completed by running commands.
+> **Where you are:** the end. Modules 0-8 each checked a piece; this checks that you can put them together and defend the result.
+> **Time:** 1-2 days, most of it waiting for 100-game matches.
+> **You'll be able to:**
+> - present a measured strength ladder where every number has an interval
+> - explain your own training run in reinforcement-learning terms
+> - design, run and report one experiment of your own
+> - say what you'd conclude, and what you can't conclude, from your evidence
+
+Produce the one artifact that proves you completed this course — a short
+experiment report that could convince a skeptical engineer. It is the
+summative assessment, and it cannot be completed by running commands.
 
 ## The deliverable
 
@@ -34,6 +41,14 @@ buffer size, arena scores per iteration, promotions. Plus the honest
 paragraph: what does the promotion pattern mean given arena noise (Module
 6, Q1)? Would you trust this champion? Why?
 
+Then explain the run **as reinforcement learning**, in your own words and
+pointing at your own numbers: what the agent, the reward and the experience
+were; which step evaluated the policy and which improved it; what kind of
+value target you used and what it cost you; where exploration came from; and
+why the replay buffer and the gate were set the way they were. Use your
+tic-tac-toe runs (Module 6 Part A) wherever chess at your scale was too
+noisy to show an effect.
+
 ### 3. One experiment you designed
 
 Pick a question the course never answers directly — examples: does the
@@ -60,6 +75,7 @@ Three short answers, in your own words:
 | Interpretation | Claims sized to evidence; noise acknowledged; at least one "we can't conclude X from this" |
 | Experiment design | One variable isolated; hypothesis stated *before* the run |
 | Honesty | Failures and surprises reported, not smoothed over |
+| RL understanding | The run is explained as policy evaluation + improvement, with the reward, value target and exploration named and tied to your own results |
 
 ## Why this can't be faked
 
@@ -71,3 +87,5 @@ follow a course — you did a small piece of real research engineering.
 **When you're done:** the ultimate external validation is a Lichess BOT
 account (Module 8's "where to go next") — a public rating is an error bar
 the whole world can audit.
+
+Previous: [Module 8 — Engineering Extras](../module-08-engineering/README.md)

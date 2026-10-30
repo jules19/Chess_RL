@@ -27,8 +27,12 @@ scope, except for criterion 9 (is that separation clear?).
 | 8 | **Coverage:** every phase that exists in the code is taught | Most phases untaught | Some gaps | Every implemented phase is taught |
 | 9 | **Signal-to-noise:** the learner isn't buried in duplicate, stale or process-log documents | Learning material lost among logs | Some clutter | Teaching material clearly separated from project history |
 | 10 | **Currency:** material reflects the current state (nothing built is described as "coming next"; no broken commands) | Largely stale | Some stale parts | Current |
+| 11 | **Orientation:** at every step the learner knows where they are in the whole system, why the step exists, roughly how long it takes and what result to expect | Often unclear what a step is for | Big picture given once, at the start | Every module opens with where-you-are, time and objectives; every Do step states its purpose and expected result |
+| 12 | **Unblocked path:** every Do step can be carried out as written with what the repo provides (commands exist and run, data is obtainable, the tool to use is named); heavy steps have a small version that finishes on a laptop | Many steps can't be done as written | Some steps leave the learner to build their own tooling or guess | Every step executable as written; verified by running it |
+| 13 | **RL understanding:** the core reinforcement-learning ideas (agent/environment/state/action/reward, policy and value functions, exploration, Monte Carlo vs bootstrapped targets, imitation vs RL, policy evaluation and improvement, credit assignment, on- vs off-policy data) are taught explicitly, tied to the code and checked, and the learner sees an RL loop actually learn | RL treated as plumbing; concepts unnamed | Some concepts, in one module | Concepts built up across modules, mapped to code, assessed, with a learning curve the learner produces |
 
-**Total: 40.** Graders must cite evidence (a file and what they saw) for every score.
+**Total: 52** (40 before criteria 11–13 were added on 2026-10-30). Graders must cite evidence (a
+file and what they saw) for every score.
 
 ## How to grade
 
@@ -50,12 +54,37 @@ complements criteria 4, 5, 6 and 10; it doesn't replace judgement.
 |---|---|---|---|
 | 2026-10-30 | 9-module course (main at 39b207e) | 32/40 | 2 / 1 |
 | 2026-10-30 | + tutorial reference fixes, README data note, UCI-score and split-by-game fixes, Module 8 case studies 6–7 | 34/40* | 0 / 0 |
+| 2026-10-30 | main at 4f7c1f2, regraded on the 13-criterion rubric | 35/52 | 0 / 0 |
+| 2026-10-30 | + orientation headers, RL lens per module, `RL_CONCEPTS.md`, tic-tac-toe lab, `cli/match.py`, `get_lichess.py`, `eval_supervised.py`, measured expected results | 44/52† | 0 / 0 |
 
 \* Graded on a copy without `docs/pedagogy/` (it holds the answer keys), so the grader marked
 STATUS.md's pointer to it as broken (currency 2/4). That folder exists in the repository. The
 Module 8 "Next" link and the `docs/tutorials/` banners were added after this grade.
 
-### What the graders said would raise the score next
+† Criterion changes 35 → 44: learning path 3→4, objectives 2→4, worked examples 3→4, active
+learning 3→4, orientation 2→3, unblocked path 2→3, RL understanding 1→3. Graded before the
+n-step exercise and a final consistency pass (STATUS, timings, Module 6 wording) were added.
+
+**Outcome test, same day** (`OUTCOME_TEST.md` method, the 11-question quiz in `rl_quiz.md` / `rl_quiz_key.md`, one sonnet and one
+haiku learner per arm, graded blind against a key): before 7.5 and 6.0 (mean 6.75/11), after
+11.0 and 10.5 (mean 10.75/11). Before, learners marked most RL ideas "not covered"; after, the
+only gap was porting the loop to another game. Caveat: the quiz author also wrote the new
+material, so it tests the ideas that author thought mattered.
+
+### What the graders said would raise the score next (after the 44/52 grade)
+
+1. **Let the learner build RL pieces, not just toggle flags.** (Started: Module 6 exercise 6,
+   n-step returns, with a contract test.) A small function-approximator version of the
+   tic-tac-toe lab would show generalisation lifting `coverage` and `vs_random`.
+2. **Expected results for the remaining Do steps:** Module 2 killer moves, Module 4 exercises
+   1-2, Module 5 c_puct sweep and batching, Module 6 chess sabotage runs, Module 8.
+3. **A laptop-sized calibrated rating for Module 7:** e.g. a `uci:` engine spec in
+   `cli/match.py` so Stockfish can be an opponent without cutechess.
+4. **Module 4 scaffolding for people new to neural networks:** logits → softmax → masking,
+   convolutions and residual blocks, one worked forward pass with tensor shapes.
+5. **Trim STATUS.md** to a one-screen summary and move its changelog to `docs/history/`.
+
+### Earlier grader suggestions (after the 34/40 grade)
 
 1. **Objectives as checkable lists.** Each module opens with a one-line *Goal*. Rewriting it as 3–4
    "you'll be able to…" outcomes would let learners tick off what they've learned (criterion 2).

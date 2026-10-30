@@ -46,6 +46,7 @@ def play_selfplay_game(policy_value_fn: Callable,
                        temperature_moves: int = 20,
                        max_moves: int = 200,
                        rng: Optional[random.Random] = None,
+                       add_root_noise: bool = True,
                        verbose: bool = False) -> Tuple[List, str]:
     """
     Play one self-play game and return its training examples.
@@ -58,6 +59,8 @@ def play_selfplay_game(policy_value_fn: Callable,
                      start of the game, for opening diversity
         max_moves: Safety cap; games hitting it are scored as draws
         rng: Optional random.Random for reproducibility
+        add_root_noise: Dirichlet noise at the search root (False only for
+                     the Module 6 sabotage experiment)
         verbose: Print moves as they're played
 
     Returns:
@@ -73,7 +76,7 @@ def play_selfplay_game(policy_value_fn: Callable,
         _, visit_counts = puct_search(
             board, policy_value_fn,
             simulations=simulations,
-            add_root_noise=True,  # exploration in SEARCH
+            add_root_noise=add_root_noise,  # exploration in SEARCH
             rng=rng,
         )
 
@@ -119,6 +122,7 @@ def generate_games(policy_value_fn: Callable,
                    temperature_moves: int = 20,
                    max_moves: int = 200,
                    rng: Optional[random.Random] = None,
+                   add_root_noise: bool = True,
                    verbose: bool = True) -> List:
     """
     Generate a batch of self-play games.
@@ -136,6 +140,7 @@ def generate_games(policy_value_fn: Callable,
             temperature_moves=temperature_moves,
             max_moves=max_moves,
             rng=rng,
+            add_root_noise=add_root_noise,
         )
         all_examples.extend(examples)
         results[result] += 1

@@ -1,7 +1,15 @@
 # Module 8 — Engineering Extras
 
-**Goal:** the software craft around the science. This module works through
-the engineering debt this project actually accumulated — because every
+> **Where you are:** a side road. The RL loop works; this module is about keeping a long-running ML project trustworthy.
+> **Time:** open-ended. Each exercise is 1-4 hours; the src-layout refactor is a weekend.
+> **You'll be able to:**
+> - recognise the bug patterns that let ML code run happily while measuring the wrong thing
+> - keep a test suite fast enough that it actually gets run
+> - refactor a whole codebase safely, with the tests as your rope
+> - profile before you optimise, and say where the time really goes
+
+The software craft around the science. This module works through the
+engineering debt this project actually accumulated — because every
 long-running ML project accumulates the same kinds.
 
 ## Case studies from this repo (read the scars)
@@ -54,11 +62,22 @@ long-running ML project accumulates the same kinds.
    `tests/test_training.py::test_train_val_split_keeps_games_whole` checks
    that no game appears in both sets. Moral: in ML, the most dangerous bugs
    are the ones that make your metrics look *better*.
+8. **A recipe nobody had run.** Module 4 used to tell learners to filter the
+   January 2013 Lichess file with `--min-elo 2000` and the default 10-minute
+   minimum. Run as written, that keeps **3 games out of 121,332**: hardly
+   anyone was rated 2000 in 2013. The same review found two "Check your
+   understanding" answers that the code contradicted (`evaluate()` on the
+   start position returns 20, not 0; training does *not* mask illegal
+   moves). Each read plausibly; none had been executed. The fix was to run
+   every step and quote measured output, and `training/get_lichess.py` now
+   encodes the recipe as code, which tests can run. Moral: instructions are
+   code too. If nobody has run them, assume they're wrong.
 
 ## What's already in place (study it)
 
 - `pyproject.toml` — packaging, extras (`train`, `dev`), pytest config
-- `tests/` — 53 fast tests; every course module has a checkpoint here
+- `tests/` — the fast suite (count them yourself: `pytest --collect-only -q`);
+  every course module has a checkpoint here
 - `.github/workflows/ci.yml` — CPU-torch CI on every push/PR
 
 ## Exercises
@@ -88,6 +107,39 @@ long-running ML project accumulates the same kinds.
    sequences from the start). One property test would have caught the
    promotion bug on day one.
 
+## Check your understanding
+
+<details>
+<summary><b>Q1.</b> Case studies 6, 7 and 8 have something in common that a crash never has. What is it, and what kind of test catches it?</summary>
+
+Nothing failed. The code ran, the output looked plausible, and the number
+meant something different from what everyone assumed: a score from the
+wrong side, a validation set that wasn't held out, a recipe that produced
+almost no data. A crash announces itself; these don't. The test that catches
+them checks the *meaning* of an output against a case where you know the
+answer (a position where the score must be negative, no game in both splits,
+a filter that must keep thousands of games).
+</details>
+
+<details>
+<summary><b>Q2.</b> Why is <code>if index &lt; 4672: ...</code> (case study 2) worse than no check at all?</summary>
+
+Without the check, a bad index crashes on the first promotion and someone
+fixes the encoder that day. With it, bad moves are silently skipped and
+training carries on with a dataset missing every queen promotion, which
+nobody notices for weeks. A guard that skips turns a loud bug into silent
+data corruption. Use `assert`.
+</details>
+
+<details>
+<summary><b>Q3.</b> Your suite takes 4 minutes, so you've started running only the tests for the file you're editing. Which of this repo's bugs would that habit have let through?</summary>
+
+The cross-file ones: case study 3 (architecture constants that disagreed
+across three files) and case study 5 (`evaluate.py` importing classes that
+didn't exist). A fast full suite, run every time, is what catches breakage
+somewhere you weren't looking. That's the point of exercise 1.
+</details>
+
 ## Checkpoint
 
 - [ ] Your fork's CI is green on a PR that changes real code
@@ -102,4 +154,4 @@ long-running ML project accumulates the same kinds.
 - Read the AlphaZero paper (Silver et al. 2018) — after this course, every
   paragraph maps onto a file you've edited
 
-**Next:** [Module 9 — Capstone: The Experiment Report](../module-09-capstone/README.md)
+Previous: [Module 7 — Measure & Scale](../module-07-measure-and-scale/README.md) · Next: [Module 9 — Capstone: The Experiment Report](../module-09-capstone/README.md)

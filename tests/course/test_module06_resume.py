@@ -1,10 +1,10 @@
-"""Module 6, exercise 5 — resumable training loops."""
+"""Module 6, exercise 11 — resumable training loops."""
 
 import numpy as np
 import pytest
 
 
-@pytest.mark.skip(reason="Course Module 6, exercise 5: implement "
+@pytest.mark.skip(reason="Course Module 6, exercise 11: implement "
                          "load_resume_state(checkpoint_dir) in "
                          "selfplay/train_loop.py and a --resume flag that "
                          "uses it, then delete this skip line")

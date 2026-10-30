@@ -9,15 +9,31 @@
 | 0 | Random engine | ✅ | ✅ games complete correctly |
 | 1 | Minimax: eval, alpha-beta, quiescence, UCI, **transposition table, iterative deepening** | ✅ | ✅ unit tests + tactical puzzles |
 | 2 | Rollout MCTS (UCT, guided rollouts, blunder filter) | ✅ | ✅ unit tests, beats minimax d3-4 |
-| 3a | Policy-value ResNet + supervised pipeline | ✅ | ⚠️ pipeline unit-tested; **not yet trained on real data** |
+| 3a | Policy-value ResNet + supervised pipeline | ✅ | ⚠️ measured on one month of Lichess games (4,794 games, 3 epochs): policy 27.7% vs a 9.3% baseline; the value head only just beats "always even" after epoch 1, then overfits. **Needs several months of data** |
 | 3b | NN-guided search: `nn_mcts.py` + **true PUCT (`search/puct.py`)** | ✅ | ⚠️ PUCT search unit-tested with fake network; needs a trained model for strength claims |
 | 4 | Self-play RL: replay buffer, arena gate, training loop | ✅ | ⚠️ runs end-to-end at toy scale (verified); **no long training run yet** |
 
-**Test suite:** 67 pytest tests in `tests/` (plus 6 deliberately-skipped
-course exercise tests in `tests/course/`), run by GitHub Actions CI on
-every push (`.github/workflows/ci.yml`). All green.
+**Test suite:** `pytest --collect-only -q` counts them (82 on 2026-10-30,
+6 of them the deliberately-skipped course exercises in `tests/course/`), run
+by GitHub Actions CI on every push (`.github/workflows/ci.yml`). All green.
 
 ## Recent changes (2026-10)
+
+- **Course pedagogy: teach RL as RL, and make every step runnable.**
+  Every module now opens with where you are, a time estimate and checkable
+  objectives, and has an "RL lens" section; `course/RL_CONCEPTS.md` maps
+  every RL idea onto the code. Module 6 starts with
+  `selfplay/tictactoe_lab.py`, the same loop (reusing `puct_search` and the
+  replay buffer) on tic-tac-toe, which learns in seconds and is scored
+  against perfect play, with sabotage, gate, buffer and Monte Carlo vs TD
+  experiments. New tools: `cli/match.py` (engine-vs-engine matches with a
+  95% interval), `training/get_lichess.py` (download + decompress + filter),
+  `training/eval_supervised.py` (network vs baselines). The self-play loop
+  gained `--no-root-noise` and a per-iteration `run_log.csv`. Expected
+  results quoted in the course are measured. Fixed along the way: Module 4's
+  data recipe (it kept 3 games), two wrong self-check answers, and dangling
+  references to Module 7. Rubric criteria 11-13 (orientation, unblocked
+  path, RL understanding) added in `docs/pedagogy/RUBRIC.md`.
 
 - **UCI `info score` fixed:** it printed a static evaluation from White's view;
   it now reports the minimax search score from the side to move, at the depth
@@ -40,8 +56,8 @@ every push (`.github/workflows/ci.yml`). All green.
   was measured before that encoding was fixed. It was weak: the human move ranked
   first 13% of the time (random legal move: 6%), value sign right 54% of the time,
   0 wins in 40 games against random, material-only and minimax (depth 1–2)
-  opponents. That checkpoint is incompatible with the fixed encoding; the
-  "not yet trained on real data" row above still stands for the current code.
+  opponents. That checkpoint is incompatible with the fixed encoding and was
+  superseded by the October runs in the table above.
 
 ## Earlier changes (2026-07)
 
@@ -81,7 +97,8 @@ every push (`.github/workflows/ci.yml`). All green.
   including a capstone experiment report); historical docs preserved in
   `docs/history/` and `docs/plans/`.
 - **Added:** `course-solutions` branch — reference implementations for all
-  six `tests/course/` exercises, skips removed, 71/71 passing. The answer
+  six `tests/course/` exercises, skips removed, all passing at the time (71
+  tests; main has more since). The answer
   key, deliberately unmerged (`git diff main course-solutions`).
 
 ## What's next (in priority order)
@@ -89,8 +106,10 @@ every push (`.github/workflows/ci.yml`). All green.
 These are experiments to *run*, not code to write — the course walks through
 each one:
 
-1. **Train on real data** (course Module 4): download + filter Lichess games,
-   train 10 epochs, hit the success criteria (val policy accuracy > 35%).
+1. **Train on more real data** (course Module 4): the quick run and a
+   one-month run are done (numbers in Module 4, exercise 6). Next is several
+   months of Lichess games, until the value head beats "always even" by a
+   clear margin (`training/eval_supervised.py`).
 2. **Validate PUCT with the trained network** (Module 5): PUCT+NN vs rollout
    MCTS at equal simulations.
 3. **Run a real self-play loop** (Module 6): warm-start from the supervised
@@ -101,7 +120,8 @@ each one:
 
 ## Environment
 
-- Development machine: Mac mini M4 (`auto_device()` picks MPS automatically);
-  everything also runs CPU-only.
+- Development machine: an M1 Mac. Experiments run CPU-only inside a Docker
+  container (no MPS there); `auto_device()` picks CUDA or MPS when it can.
+  The times quoted in the course are from that 8-core CPU.
 - Install: `pip install -e ".[train,dev]"`.
 - No cloud spend to date; nothing requires it until self-play scaling.

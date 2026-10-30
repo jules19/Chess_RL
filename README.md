@@ -17,10 +17,13 @@ Phase 0        Phase 1        Phase 2     Phase 3        Phase 4
 ## 🎓 The Course (start here)
 
 **[course/README.md](course/README.md)** — ten modules that use this
-codebase as the textbook. Each module: concepts → read the annotated source
-→ exercises on the real code → a pytest checkpoint as your autograder.
+codebase as the textbook. Each module: where you are and what you'll be able
+to do → concepts → the reinforcement-learning idea behind it → the annotated
+source → exercises with expected results → a checkpoint you can verify.
 Modules 0-3 (search engines) need no ML background; Modules 4-6 are the
-AlphaZero core; Modules 7-8 cover honest measurement and engineering craft.
+AlphaZero core, including a tic-tac-toe version of the full self-play loop
+that learns in seconds; Modules 7-8 cover honest measurement and engineering
+craft. The RL ideas, mapped onto this code: [course/RL_CONCEPTS.md](course/RL_CONCEPTS.md).
 
 ## Quick start
 
@@ -32,7 +35,9 @@ pytest -q                        # fast suite, all green (skips = course exercis
 python3 cli/play.py human-minimax   # play the Phase 1 engine (depth-3 alpha-beta)
 python3 cli/play.py human-mcts      # play the Phase 2 engine (MCTS)
 python3 cli/play.py mcts            # watch MCTS demolish the random engine
-python3 cli/play.py                 # interactive menu with all 17 modes
+python3 cli/play.py                 # interactive menu with every mode
+python3 cli/match.py minimax:depth=2 random --games 10   # engine vs engine, with a 95% interval
+python3 selfplay/tictactoe_lab.py   # the AlphaZero loop on tic-tac-toe: watch it learn (~7 s)
 ```
 
 Connect to a chess GUI (Arena, Cute Chess, PyChess) via UCI:
@@ -46,13 +51,15 @@ installed on the host: [docs/DOCKER_GUI.md](docs/DOCKER_GUI.md)
 trained checkpoint set by "Model File"). GUI time controls are honored via
 iterative deepening.
 
-Train the network on expert games (Phase 3a). You first need `data/filtered.pgn`, made by
-downloading a Lichess dump and filtering it (Module 4 shows how):
+Train the network on expert games (Phase 3a). Get the data (17 MB download), train a quick
+first network (~6 minutes on a laptop CPU), then compare it with baselines:
 ```bash
-python3 training/train.py --pgn data/filtered.pgn --max-games 10000 --epochs 10
+python3 training/get_lichess.py
+python3 training/train.py --pgn data/filtered.pgn --max-games 1000 --epochs 2
+python3 training/eval_supervised.py checkpoints/best_model.pt --pgn data/filtered.pgn --max-games 1000
 ```
 
-Run the self-play RL loop end-to-end at toy scale (Phase 4, ~1 min on CPU):
+Run the self-play RL loop end-to-end at toy scale (Phase 4, ~1.5 min on CPU):
 ```bash
 python3 selfplay/train_loop.py --iterations 2 --games-per-iter 2 \
     --simulations 16 --train-steps 20 --arena-games 2
@@ -66,9 +73,9 @@ python3 selfplay/train_loop.py --iterations 2 --games-per-iter 2 \
 | `engine/` | Evaluation: hand-crafted (`evaluator.py`) and NN wrapper (`nn_evaluator.py`) |
 | `search/` | `minimax.py` (alpha-beta + quiescence + transposition table + iterative deepening), `mcts.py` (rollout MCTS/UCT), `puct.py` (true AlphaZero search, no rollouts), `nn_mcts.py` (transitional Phase 3b) |
 | `net/` | `encoding.py` (board→tensor, move→index), `model.py` (ResNet policy-value network) |
-| `training/` | Supervised learning: PGN dataset, training loop, evaluation, game filtering |
-| `selfplay/` | Phase 4: self-play generation, replay buffer, arena promotion gate, RL training loop |
-| `cli/`, `uci/` | Terminal play and UCI protocol (works with chess GUIs) |
+| `training/` | Supervised learning: Lichess download (`get_lichess.py`), PGN dataset, training loop, evaluation against baselines (`eval_supervised.py`), game filtering |
+| `selfplay/` | Phase 4: self-play generation, replay buffer, arena promotion gate, RL training loop; `tictactoe_lab.py`, the same loop on tic-tac-toe |
+| `cli/`, `uci/` | Terminal play, engine-vs-engine matches with error bars (`match.py`), and UCI protocol (works with chess GUIs) |
 | `tests/` | pytest suite — the course checkpoints (run in CI) |
 | `test/` | Legacy experiment scripts: tournaments, tactical suites, profiling |
 | `docs/` | UCI guides; `history/` (day-by-day dev diary), `plans/` (original phase plans), `tutorials/` (standalone HTML tutorials) |

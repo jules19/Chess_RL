@@ -502,6 +502,7 @@ def mcts_search(board: chess.Board, simulations: int = 200,
 def best_move_mcts(board: chess.Board, simulations: int = 200,
                    use_evaluator: bool = True, sample_size: int = 10,
                    filter_blunders: bool = True,
+                   exploration_constant: float = 1.41,
                    verbose: bool = False) -> Optional[chess.Move]:
     """
     Wrapper function for MCTS search (matches interface of other engines).
@@ -512,13 +513,16 @@ def best_move_mcts(board: chess.Board, simulations: int = 200,
         use_evaluator: Use smart rollouts (True) or random (False)
         sample_size: Number of moves to evaluate in rollouts (default: 10)
         filter_blunders: If True, filter moves that hang pieces (default: True)
+        exploration_constant: UCT's C (higher = explore rarely-visited moves more)
         verbose: Print search statistics
 
     Returns:
         Best move found
     """
     return mcts_search(board, simulations=simulations,
-                      use_evaluator=use_evaluator, sample_size=sample_size,
+                      use_evaluator=use_evaluator,
+                      exploration_constant=exploration_constant,
+                      sample_size=sample_size,
                       filter_blunders=filter_blunders, verbose=verbose)
 
 

@@ -23,6 +23,7 @@ train = [
     "torch>=2.0",
     "tqdm>=4.60",
     "tensorboard>=2.10",
+    "zstandard>=0.21",  # decompress Lichess .pgn.zst downloads (Module 4)
 ]
 dev = [
     "pytest>=7.0",
