@@ -18,9 +18,8 @@ signature and behavior you're implementing. If you disagree with the
 contract, changing it is allowed — that's a design decision, and defending
 it is part of the exercise.
 
-Reference solutions live on the `course-solutions` branch for the
-exercises of Modules 1-6 that predate October 2026. The four newest have
-no published solution yet: `test_module02_killers.py`,
-`test_module04_first_network.py`, `test_module06_nstep.py` and
-`test_module06_network.py`. Each one's module text quotes measured results
-from a reference solution, so you can still check your numbers.
+Reference solutions for every exercise here live on the
+**`course-solutions`** branch: `git diff main course-solutions` shows them
+all as one readable diff, and on that branch every test passes with no
+skips. The module pages also quote measured results, so you can check your
+numbers without looking.
