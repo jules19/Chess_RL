@@ -29,8 +29,6 @@ def random_positions(n, seed):
     return boards
 
 
-@pytest.mark.skip(reason="Course Module 4, exercise 4: implement train_material_net in "
-                         "training/first_network.py, then delete this skip line")
 def test_first_network_learns_material_and_generalises():
     """Contract: training/first_network.py gains
 

@@ -4,9 +4,6 @@ import numpy as np
 import pytest
 
 
-@pytest.mark.skip(reason="Course Module 6, exercise 7: implement MLPPolicyValue in "
-                         "selfplay/tictactoe_lab.py and a --model mlp flag, "
-                         "then delete this skip line")
 def test_network_policy_value_learns_and_plugs_into_the_loop():
     """Contract: selfplay/tictactoe_lab.py gains a class
 

@@ -3,10 +3,6 @@
 import pytest
 
 
-@pytest.mark.skip(reason="Course Module 6, exercise 6: implement "
-                         "n_step_targets(results, values, n) in "
-                         "selfplay/tictactoe_lab.py, wire an n_step parameter "
-                         "through selfplay_game and run, then delete this skip line")
 def test_n_step_targets_span_td_to_monte_carlo():
     """Contract: selfplay/tictactoe_lab.py gains
 

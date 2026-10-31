@@ -214,11 +214,91 @@ class TablePolicyValue:
         return max(priors, key=priors.get)
 
 
+def _torch():
+    """torch, imported only when the network model is used (the table needs no torch)."""
+    import torch
+    return torch
+
+
+class MLPPolicyValue:
+    """
+    Module 6, exercise 7 (reference solution): a small network in place of the table.
+
+    27 one-hot inputs (mine / theirs / empty per square), two hidden layers of
+    64, a 9-way policy head and a tanh value head, trained with the same
+    soft-target cross-entropy + MSE loss as the chess loop. Outputs are cached
+    per position until the next train() call, because the search asks about
+    the same few thousand positions over and over.
+    """
+
+    def __init__(self, hidden=64, lr=3e-3):
+        torch = _torch()
+        nn = torch.nn
+        torch.set_num_threads(1)  # tiny network: threads cost more than they save
+        torch.manual_seed(0)
+        self.body = nn.Sequential(nn.Linear(27, hidden), nn.ReLU(), nn.Linear(hidden, hidden), nn.ReLU())
+        self.policy_head = nn.Linear(hidden, 9)
+        self.value_head = nn.Linear(hidden, 1)
+        params = (list(self.body.parameters()) + list(self.policy_head.parameters())
+                  + list(self.value_head.parameters()))
+        self.optimizer = torch.optim.Adam(params, lr=lr)
+        self.cache = {}
+
+    def _features(self, cells):
+        x = _torch().as_tensor(np.asarray(cells, dtype=np.float32))
+        return _torch().cat([(x == 1).float(), (x == -1).float(), (x == 0).float()], dim=-1)
+
+    def _forward(self, x):
+        h = self.body(x)
+        return self.policy_head(h), _torch().tanh(self.value_head(h)).squeeze(-1)
+
+    def _outputs(self, key):
+        if key not in self.cache:
+            with _torch().no_grad():
+                logits, value = self._forward(self._features(key))
+            self.cache[key] = (logits.numpy(), float(value))
+        return self.cache[key]
+
+    def __call__(self, board):
+        legal = board.legal_moves
+        logits, value = self._outputs(board.key())
+        z = logits[legal]
+        e = np.exp(z - z.max())
+        e /= e.sum()
+        return dict(zip(legal, e.tolist())), value
+
+    def value_of(self, key):
+        return self._outputs(key)[1]
+
+    def raw_move(self, board):
+        priors, _ = self(board)
+        return max(priors, key=priors.get)
+
+    def train(self, states, policies, values, lr):
+        F = _torch().nn.functional
+        x = self._features(states)
+        pi = _torch().as_tensor(policies)
+        z = _torch().as_tensor(values)
+        logits, v = self._forward(x)
+        logits = logits.masked_fill(x[:, 18:] != 1, -1e9)  # only empty squares are legal
+        loss = -(pi * F.log_softmax(logits, -1)).sum(-1).mean() + F.mse_loss(v, z)
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+        self.cache = {}
+
+
 # ---------------------------------------------------------------------------
 # Self-play, arena and evaluation
 # ---------------------------------------------------------------------------
 
-def selfplay_game(net, simulations, temperature_moves, root_noise, rng, td=False):
+def n_step_targets(results, values, n):
+    """Module 6, exercise 6 (reference solution): n-step value targets for one game."""
+    T = len(results)
+    return [results[t] if t + n >= T else (-1) ** n * values[t + n] for t in range(T)]
+
+
+def selfplay_game(net, simulations, temperature_moves, root_noise, rng, td=False, n_step=None):
     """
     One game of the agent against itself. Returns (state, pi, value target) examples.
 
@@ -241,6 +321,11 @@ def selfplay_game(net, simulations, temperature_moves, root_noise, rng, td=False
         temperature = 1.0 if len(history) <= temperature_moves else 0.0
         board.push(select_move(visits, temperature=temperature, rng=rng))
     winner = board.winner()  # the reward arrives only now, at the end
+    if n_step:
+        results = [float(winner * turn) for _, _, turn in history]
+        values = [net.value_of(tuple(int(x) for x in s)) for s, _, _ in history]
+        targets = n_step_targets(results, values, n_step)
+        return [(s, pi, z) for (s, pi, _), z in zip(history, targets)]
     if not td:
         return [(s, pi, float(winner * turn)) for s, pi, turn in history]
     examples = []
@@ -326,7 +411,7 @@ def evaluate(net, positions, rng, games=100) -> Dict[str, float]:
 
 def run(iterations=20, games_per_iter=100, simulations=25, temperature_moves=2,
         root_noise=True, buffer_capacity=4000, train_steps=20, batch_size=256,
-        lr=0.3, arena_games=20, promote_threshold=0.55, gate=False, td=False,
+        lr=0.3, arena_games=20, promote_threshold=0.55, gate=False, td=False, n_step=None,
         model=TablePolicyValue, seed=0, csv_path=None, verbose=True) -> List[Dict[str, float]]:
     """
     Run the loop; returns one metrics row per iteration (iteration 0 = untrained).
@@ -364,7 +449,7 @@ def run(iterations=20, games_per_iter=100, simulations=25, temperature_moves=2,
     for it in range(1, iterations + 1):
         for _ in range(games_per_iter):                       # 1. generate
             buffer.add_game(selfplay_game(champion, simulations, temperature_moves,
-                                          root_noise, rng, td=td))  # 2. store
+                                          root_noise, rng, td=td, n_step=n_step))  # 2. store
         candidate = copy.deepcopy(champion)                   # 3. train
         for _ in range(train_steps):
             candidate.train(*buffer.sample(batch_size, rng=rng), lr=lr)
@@ -407,6 +492,9 @@ def main():
                         help='promote only if the candidate beats the champion in an arena match')
     parser.add_argument('--td', action='store_true',
                         help='bootstrapped TD value targets instead of the game result')
+    parser.add_argument('--n-step', type=int, default=None,
+                        help='n-step value targets (1 = TD; omit for Monte Carlo)')
+    parser.add_argument('--model', choices=['table', 'mlp'], default='table')
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--csv', type=str, default=None, help='write the learning curve here')
     a = parser.parse_args()
@@ -414,7 +502,9 @@ def main():
         temperature_moves=a.temperature_moves, root_noise=not a.no_root_noise,
         buffer_capacity=a.buffer_capacity, train_steps=a.train_steps, lr=a.lr,
         arena_games=a.arena_games, promote_threshold=a.promote_threshold,
-        gate=a.gate, td=a.td, seed=a.seed, csv_path=a.csv)
+        gate=a.gate, td=a.td, n_step=a.n_step,
+        model=MLPPolicyValue if a.model == 'mlp' else TablePolicyValue,
+        seed=a.seed, csv_path=a.csv)
 
 
 if __name__ == '__main__':

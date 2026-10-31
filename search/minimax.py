@@ -219,7 +219,7 @@ def order_moves(board: chess.Board, moves: list) -> list:
 
 def minimax(board: chess.Board, depth: int, alpha: float, beta: float,
             maximizing: bool, nodes_searched: list = None,
-            tt: dict = None) -> float:
+            tt: dict = None, killers: dict = None) -> float:
     """
     Minimax search with alpha-beta pruning and optional transposition table.
 
@@ -288,6 +288,10 @@ def minimax(board: chess.Board, depth: int, alpha: float, beta: float,
     # previous, shallower search of this position) goes first — it's the
     # single most effective move-ordering heuristic in chess engines.
     ordered_moves = order_moves(board, legal_moves)
+    if killers is not None:
+        for k in reversed(killers.get(depth, [])):
+            if k in ordered_moves and not board.is_capture(k):
+                ordered_moves.remove(k); ordered_moves.insert(0, k)
     if hash_move is not None and hash_move in legal_moves:
         ordered_moves.remove(hash_move)
         ordered_moves.insert(0, hash_move)
@@ -299,7 +303,7 @@ def minimax(board: chess.Board, depth: int, alpha: float, beta: float,
         max_eval = float('-inf')
         for move in ordered_moves:
             board.push(move)
-            eval_score = minimax(board, depth - 1, alpha, beta, False, nodes_searched, tt)
+            eval_score = minimax(board, depth - 1, alpha, beta, False, nodes_searched, tt, killers)
             board.pop()
 
             if eval_score > max_eval:
@@ -309,6 +313,10 @@ def minimax(board: chess.Board, depth: int, alpha: float, beta: float,
 
             # Beta cutoff: Black won't allow this branch
             if beta <= alpha:
+                if killers is not None and not board.is_capture(move):
+                    ks = killers.setdefault(depth, [])
+                    if move not in ks:
+                        ks.insert(0, move); del ks[2:]
                 break  # Prune remaining moves
 
         value = max_eval
@@ -317,7 +325,7 @@ def minimax(board: chess.Board, depth: int, alpha: float, beta: float,
         min_eval = float('inf')
         for move in ordered_moves:
             board.push(move)
-            eval_score = minimax(board, depth - 1, alpha, beta, True, nodes_searched, tt)
+            eval_score = minimax(board, depth - 1, alpha, beta, True, nodes_searched, tt, killers)
             board.pop()
 
             if eval_score < min_eval:
@@ -327,6 +335,10 @@ def minimax(board: chess.Board, depth: int, alpha: float, beta: float,
 
             # Alpha cutoff: White won't allow this branch
             if beta <= alpha:
+                if killers is not None and not board.is_capture(move):
+                    ks = killers.setdefault(depth, [])
+                    if move not in ks:
+                        ks.insert(0, move); del ks[2:]
                 break  # Prune remaining moves
 
         value = min_eval

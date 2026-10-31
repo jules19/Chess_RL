@@ -4,8 +4,6 @@ import chess
 import pytest
 
 
-@pytest.mark.skip(reason="Course Module 2, exercise 3: add a killers argument to "
-                         "minimax() in search/minimax.py, then delete this skip line")
 def test_killer_moves_keep_the_score_and_cut_nodes_in_quiet_positions():
     """Contract: search/minimax.py's minimax() gains a keyword argument
 
