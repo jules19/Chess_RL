@@ -78,7 +78,7 @@ python3 selfplay/train_loop.py --iterations 2 --games-per-iter 2 \
 | `cli/`, `uci/` | Terminal play, engine-vs-engine matches with error bars (`match.py`), and UCI protocol (works with chess GUIs) |
 | `tests/` | pytest suite — the course checkpoints (run in CI) |
 | `test/` | Legacy experiment scripts: tournaments, tactical suites, profiling |
-| `docs/` | UCI guides; `history/` (day-by-day dev diary), `plans/` (original phase plans), `tutorials/` (standalone HTML tutorials) |
+| `docs/` | UCI and Docker guides; `history/` (day-by-day dev diary, changelog, the old HTML tutorials), `plans/` (original phase plans) |
 
 ## Project status
 

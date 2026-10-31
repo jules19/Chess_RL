@@ -67,7 +67,7 @@ def code_blocks(path, text):
 
 OUTPUT_FLAG = re.compile(r"(?:--?[\w-]*(?:log|output|out|dir)|-o|>)[\s=]*$")  # a flag or a shell redirect
 # Files the course asks the learner to create (not expected to exist in the repo)
-LEARNER_CREATED = {"REPORT.md"}
+LEARNER_CREATED = {"REPORT.md", "training/first_network.py"}
 
 
 def is_not_a_file_reference(text, match):

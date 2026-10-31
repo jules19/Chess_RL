@@ -136,5 +136,5 @@ they hid and what testing habit would have caught them.
 The original day-by-day development diary and phase plans are preserved in
 [`docs/history/`](../docs/history/) and [`docs/plans/`](../docs/plans/) —
 useful if you want to see how the project actually unfolded, including the
-dead ends. Self-contained HTML tutorials from earlier iterations live in
-[`docs/tutorials/`](../docs/tutorials/).
+dead ends. The HTML tutorials from earlier iterations, which this course
+replaces, are kept in [`docs/history/tutorials/`](../docs/history/tutorials/).

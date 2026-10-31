@@ -106,8 +106,10 @@ lines to plan (Module 3) are what the rest of the course adds.
    often cause cutoffs at sibling nodes. Keep two "killer" moves per depth
    and try them right after the hash move. Only *quiet* moves (not
    captures) count as killers: captures are already ordered first by
-   MVV-LVA. Measure with exercise 1's snippet, on its position *and* on the
-   starting position, at depth 4.
+   MVV-LVA. Add it as a `killers` argument to `minimax()`; the contract is
+   `tests/course/test_module02_killers.py` (un-skip it and make it pass).
+   Measure with exercise 1's snippet, on its position *and* on the starting
+   position, at depth 4.
    **Expected (measured with a reference solution):** the score must not
    change (it's still alpha-beta; if it does, you've broken something). Node
    counts: the starting position drops from 13,592 to about 8,100 (−40%),
@@ -179,7 +181,7 @@ same leaf-value question.
 
 ```bash
 pytest tests/test_minimax.py -q                 # regression suite still green
-pytest tests/course/test_module02_search.py -q  # un-skipped and passing
+pytest tests/course/test_module02_search.py tests/course/test_module02_killers.py -q  # un-skipped and passing
 ```
 
 - [ ] Both green

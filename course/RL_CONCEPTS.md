@@ -247,6 +247,32 @@ bootstrap the target from the network's value of the last position (a TD
 target, exactly where Monte Carlo has no result to give), or to add the
 remaining plies to the input so the state really says what it needs to.
 
+**Changing the reward changes the goal.** It's tempting to score games cut
+off at the move cap by material instead of calling them draws. That is
+*reward shaping*, and it changes what the agent is optimising: it may learn
+to grab material rather than to win, and turn down a sacrifice that wins. If
+you shape, keep it to clearly decided positions, or phase it out as real
+results start arriving.
+
+**The played move isn't the search's opinion.** The policy target is the
+visit distribution at temperature 1 even when the move actually played was
+chosen greedily or at random. Which move gets played is an *exploration*
+decision about what data to collect; it shouldn't change what the search
+believed about the position, so the target ignores it.
+
+**Self-play shares its blind spots.** In self-play the opponent is the same
+network, so a blunder it can't see is one it also won't punish. Such a
+"mistake" really does win in the data, game after game, and averaging won't
+remove it. Exploration and, eventually, games against other opponents are
+what expose it.
+
+**Alternatives to the gate.** The gate decides which network *generates
+data*. You can keep training one network continuously and gate only the
+data generator, or drop the gate and always generate with the latest network
+(AlphaZero). A slow-moving data source plays a role like the target network
+in deep Q-learning: it keeps the learner from chasing a target that moves
+with every update.
+
 ## Where AlphaZero sits among RL methods
 
 | Family | Learns | Example | Compared with AlphaZero |

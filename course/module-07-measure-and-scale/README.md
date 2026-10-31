@@ -134,7 +134,12 @@ python3 selfplay/train_loop.py --init-checkpoint checkpoints/best_model.pt --ite
 ```
 Time the first iteration of each: if one is much slower, the comparison
 isn't at fixed compute, so adjust `--games-per-iter` until they match. Each
-run is a few hours on a laptop CPU. Then play the two champions against each
+run is a few hours on a laptop CPU.
+**Laptop version (under half an hour in total):** the same pair with
+`--iterations 2 --games-per-iter 4` and `2`, `--train-steps 50`, then a
+10-game match. It exercises the whole procedure (fixed compute, two runs, a
+head-to-head with an interval), but the interval will contain 50%: say so
+in your conclusion. A real answer needs the full runs. Then play the two champions against each
 other:
 ```bash
 python3 cli/match.py puct:sims=64,net=run_a/champion.pt puct:sims=64,net=run_b/champion.pt --games 40

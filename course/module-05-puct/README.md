@@ -43,6 +43,16 @@ values. Search correctness and network quality are verified separately.
 makes *search* occasionally examine despised moves; temperature makes *move
 selection* stochastic early in the game. Neither is used in serious play.
 
+How the noise works (`add_dirichlet_noise` in `search/puct.py`): at the root
+only, each prior becomes `(1 − ε)·P + ε·noise`, with ε = 0.25. The `noise` is
+a random set of probabilities over the legal moves, drawn from a *Dirichlet*
+distribution, which is simply a way of drawing random probability vectors.
+Its parameter α sets their shape: a small α (0.3 here, as in AlphaZero's
+chess) puts most of the noise on a few random moves, so each search gives a
+couple of unfancied moves a real chance of being looked at, instead of
+sprinkling a little on everything. Keeping 75% of the network's prior means
+good moves still lead.
+
 ## RL lens: search improves the policy
 
 The policy head gives a probability for each move, π(a | s). Use it on its
@@ -108,7 +118,7 @@ moves: the network supplies V and π, and the search computes Q fresh.
    Then play it again with `mcts:sims=64,filter=0` and see whether the
    blunder filter still matters (Module 3, exercise 3, explains the filter).
    **Expected (measured, about 14 minutes, with the one-month network from
-   Module 4 exercise 6):** PUCT scored 4/6 (67%), with a 95% interval of 30%
+   Module 4 exercise 7):** PUCT scored 4/6 (67%), with a 95% interval of 30%
    to 90%. That leans PUCT's way, but six games can't settle it, and the
    network's value head is its weak part (Module 4). Write down your score
    and interval, and rerun with more games or a better network later. The claim to test is "a good value head makes rollouts
@@ -205,6 +215,18 @@ than itself and improves; repeat and it keeps improving. That's policy
 improvement. If search were no better than the raw network, the network
 would be trained to copy itself and nothing would change, however long the
 loop ran.
+</details>
+
+<details>
+<summary><b>Q5.</b> The network gives a move a prior of 0.001. With ε = 0.25 and 20 legal moves, roughly what prior can noise give it, and why use a small α rather than a large one?</summary>
+
+At least 0.75 × 0.001, and up to about 0.25 if the noise happens to land on
+it. With a large α the Dirichlet draw is close to uniform, about 1/20 = 0.05
+per move, so the move would get roughly 0.75 × 0.001 + 0.25 × 0.05 ≈ 0.013
+every time: a small, even nudge for everything. A small α concentrates the
+noise, so in a given search one or two moves get a big boost and the rest
+almost none. That's what gives a despised move a real chance of being
+searched deeply enough to discover it's good.
 </details>
 
 ## Checkpoint

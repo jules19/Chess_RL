@@ -11,9 +11,9 @@
 Requires torch: `pip install -e ".[train]"`.
 
 **Pace yourself — this is two sessions, not one.**
-**Part A** (representation: encoding + architecture, exercises 1-3) needs
-no training; only exercise 2 needs the data from Part B's step 4, a 2-3
-minute download. **Part B** (data + training, exercises 4-6) needs a
+**Part A** (representation: encoding, architecture and a first network, exercises 1-4) needs
+no training; only exercise 2 needs the data from Part B's step 5, a 2-3
+minute download. **Part B** (data + training, exercises 5-8) needs a
 17 MB download and background compute. Do Part A, take a break, then start
 Part B's quick run and read while it trains.
 
@@ -117,7 +117,7 @@ them yourself.
    probability becomes 0. That's `legal_moves_mask` in `net/encoding.py`.
 
 **Measured on the starting position** with the one-month network from
-exercise 6: without masking, the network already put 96.7% of its
+exercise 7: without masking, the network already put 96.7% of its
 probability on the 20 legal moves (it has learned legality); after masking
 its top three were Nf3 27%, e3 20%, e4 13%, and its value was +0.02, about
 even. Your own network will give different numbers.
@@ -193,13 +193,26 @@ Two more ideas you'll see in the results:
 2. **Exercise: find the bug's blast radius.** The old encoder gave every
    queen promotion an index ≥ 4672, and the old guard silently skipped
    those moves. How much training data did that throw away? Run Part B's
-   step 4 first (2-3 minutes) so you have `data/filtered.pgn`, then count:
+   step 5 first (2-3 minutes) so you have `data/filtered.pgn`, then count:
    - **With git history** (a full `git clone`): the fix is commit `9b6cb6c`.
      Save the encoder from before it with
      `git show 9b6cb6c^:net/encoding.py > old_encoding.py`, load its
      `move_to_index`, and count the moves whose index is ≥ 4672.
    - **Without history** (a downloaded zip): count the promotions instead,
      with `move.promotion` from python-chess. That's the set the bug hit.
+
+   A starting point for either route:
+   ```python
+   import chess.pgn
+   total = promotions = 0
+   with open("data/filtered.pgn") as f:
+       while (game := chess.pgn.read_game(f)) is not None:
+           for move in game.mainline_moves():
+               total += 1
+               promotions += move.promotion is not None
+               # with history: count old_move_to_index(move) >= 4672 instead
+   print(total, promotions, f"{promotions / total:.2%}")
+   ```
 
    **Expected (measured on `data/filtered.pgn`):** with history, 678 of
    349,814 moves were dropped, **0.19%**; without it you'll count 683
@@ -217,9 +230,27 @@ Two more ideas you'll see in the results:
    stretch goal is handling them; measure the effect on val accuracy after
    Part B.)
 
+4. **Exercise: your first network.** Before training the real ResNet, write
+   a tiny one and watch it learn something you can check: the material
+   balance, from the board tensor. Implement `train_material_net(boards,
+   steps=300)` in a new `training/first_network.py`: flatten the
+   `(20, 8, 8)` tensor to 1,280 numbers, one hidden layer of 64, one output,
+   mean squared error, Adam, and the three lines every training loop has:
+   `optimizer.zero_grad()`, `loss.backward()`, `optimizer.step()`. The
+   contract, with a position generator and the material target, is
+   `tests/course/test_module04_first_network.py`: un-skip it and make it pass
+   (about 10 seconds). Then train on 300 positions instead of 2,000 and
+   compare the error on positions the network never saw.
+   **Expected (measured with a reference solution):** on 2,000 positions
+   the held-out error is about 5, against about 49 for always guessing the
+   average: it learned material. On 300 positions the training error falls
+   almost to 0 but the held-out error is about 53, *worse* than guessing:
+   with 82,000 weights and 300 examples it memorised them. That's
+   overfitting, and the value head in exercise 6 does exactly the same.
+
 ## Do — Part B: data and training
 
-4. **Get the data** (2-3 minutes, 17 MB download):
+5. **Get the data** (2-3 minutes, 17 MB download):
    ```bash
    python3 training/get_lichess.py
    ```
@@ -231,7 +262,7 @@ Two more ideas you'll see in the results:
    because few players were rated that high in 2013. Recent months are many
    GB; the script refuses them unless you pass `--allow-large`.
 
-5. **Quick run first, then judge it properly** (about 6 minutes of training
+6. **Quick run first, then judge it properly** (about 6 minutes of training
    on an 8-core laptop CPU, faster with a GPU):
    ```bash
    python3 training/train.py --pgn data/filtered.pgn --max-games 1000 --epochs 2
@@ -271,7 +302,7 @@ Two more ideas you'll see in the results:
    because its accuracy lets the network "choose" illegal moves, and 36% of
    its top picks are illegal. The engine only ever picks legal moves.
 
-6. **The real run: more games, not more epochs.** The fix for the value
+7. **The real run: more games, not more epochs.** The fix for the value
    head is more independent results, so train on the whole month:
    ```bash
    python3 training/train.py --pgn data/filtered.pgn --epochs 3
@@ -329,7 +360,7 @@ Two more ideas you'll see in the results:
    held-out positions; `training/eval_supervised.py` documents each figure
    at the top of the file.
 
-7. **Smell-test against search.**
+8. **Smell-test against search.**
    `python3 training/evaluate.py checkpoints/best_model.pt --games 10` plays
    the raw policy (no search) against minimax depth 3 and rollout MCTS and
    prints the results.
@@ -393,14 +424,15 @@ the network wouldn't.
 Each game gives every one of its ~70 positions its own policy label, but
 only one value label (the result) shared by all of them, so 1,000 games are
 just 1,000 independent value examples and the value head memorises them.
-The fix is more games, not more epochs (exercise 6).
+The fix is more games, not more epochs (exercise 7).
 </details>
 
 ## Checkpoint
 
 ```bash
 pytest tests/test_encoding.py tests/test_model.py -q         # still green
-pytest tests/course/test_module04_augmentation.py -q         # un-skipped and passing
+pytest tests/course/test_module04_augmentation.py \
+       tests/course/test_module04_first_network.py -q         # un-skipped and passing
 ```
 
 - [ ] Both green

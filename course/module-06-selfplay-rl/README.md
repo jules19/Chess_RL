@@ -322,7 +322,14 @@ that changes.
    once with `--buffer-capacity 2000 --checkpoint-dir buf_small` and once
    with `--buffer-capacity 50000 --checkpoint-dir buf_large`; then compare
    the `promoted` columns of the two `run_log.csv` files. Each run takes a
-   few hours on a laptop CPU. Which promotes more often early? Later? How
+   few hours on a laptop CPU.
+   **Laptop version (about 10 minutes each):** step 8's toy settings with
+   `--iterations 4 --buffer-capacity 300` vs `--buffer-capacity 50000`. A
+   toy game is a few hundred positions, so a 300-position buffer forgets
+   almost everything each iteration. It shows the mechanics (watch
+   `positions_in_buffer` in `run_log.csv` stop growing), not which setting
+   learns better: that needs the full runs, several seeds, or the
+   tic-tac-toe version in step 4. Which promotes more often early? Later? How
    many seeds would you need to believe the answer (Part A, step 4)?
 12. **Exercise: resumable loops.** The loop already saves
    `champion.pt`/`replay_buffer.npz`; implement

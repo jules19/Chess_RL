@@ -28,7 +28,7 @@ These are experiments to *run*, not code to write — the course walks through
 each one:
 
 1. **Train on more real data** (course Module 4): the quick run and a
-   one-month run are done (numbers in Module 4, exercise 6). Next is several
+   one-month run are done (numbers in Module 4, exercise 7). Next is several
    months of Lichess games, until the value head beats "always even" by a
    clear margin (`training/eval_supervised.py`).
 2. **Validate PUCT with the trained network** (Module 5): PUCT+NN vs rollout

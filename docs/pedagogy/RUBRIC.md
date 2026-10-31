@@ -9,7 +9,7 @@ a game engine, a search algorithm or a neural network. They arrive at the reposi
 to work through the course.
 
 **Scope:** what a learner reads or runs: `README.md`, `QUICKSTART.md`, `STATUS.md`, `course/`,
-`tests/course/README.md`, `docs/*.md`, `docs/tutorials/`, and the docstrings of the modules the
+`tests/course/README.md`, `docs/*.md`, and the docstrings of the modules the
 course points to. `docs/history/` and `docs/plans/` are labelled project history and are out of
 scope, except for criterion 9 (is that separation clear?).
 
@@ -57,6 +57,7 @@ complements criteria 4, 5, 6 and 10; it doesn't replace judgement.
 | 2026-10-30 | main at 4f7c1f2, regraded on the 13-criterion rubric | 35/52 | 0 / 0 |
 | 2026-10-30 | + orientation headers, RL lens per module, `RL_CONCEPTS.md`, tic-tac-toe lab, `cli/match.py`, `get_lichess.py`, `eval_supervised.py`, measured expected results | 44/52† | 0 / 0 |
 | 2026-10-31 | + learner-built RL (n-step returns, network in the lab), `uci:` Stockfish route, measured results for Module 2 killers, Module 4 ex 1-2, Module 5 c_puct and batching | 46/52‡ | 0 / 0 |
+| 2026-10-31 | + "Going deeper" RL section, Module 4 forward-pass walkthrough, measured self-play timings, STATUS trimmed | 47/52 | 0 / 0 |
 
 \* Graded on a copy without `docs/pedagogy/` (it holds the answer keys), so the grader marked
 STATUS.md's pointer to it as broken (currency 2/4). That folder exists in the repository. The
@@ -89,6 +90,14 @@ mode, importance sampling, gate statistics and non-transitivity, truncation vs t
 state aliasing) were then added to `course/RL_CONCEPTS.md` ("Going deeper", R5-R8). This quiz
 should not be used to re-measure that addition: it has now shaped the material. A future
 check needs a fresh independent quiz.
+
+**Second independent outcome test, 2026-10-31.** A new writer, barred from the course, the docs
+and the first independent quiz, wrote `rl_quiz_independent_2.md` / `_key.md` (10 questions, 7 of
+them transfer). One haiku learner per arm, graded blind: **original course 4.5/10, current
+course 9/10.** The current learner's misses: reward shaping (scoring capped games by material),
+why the policy target ignores the move actually played, and the material-scoring trade-off.
+Those, and the points neither arm got (self-play's shared blind spots, gate alternatives), were
+then added to `RL_CONCEPTS.md`, so this quiz has now shaped the material too.
 
 ### What the graders said would raise the score next (after the 44/52 grade)
 
