@@ -113,10 +113,10 @@ prints one, and says so when the match can't tell the engines apart.
 
 Reference implementations for the `tests/course/` exercises live on the
 **`course-solutions`** branch (`git diff main course-solutions` shows every
-solution as a readable diff). Four recent exercises have no published
-solution yet; [tests/course/README.md](../tests/course/README.md) lists
-them, and their module pages quote a reference solution's measured results
-so you can still check yours. The norm: struggle for at least 30 minutes,
+solution as a readable diff). The four newest exercises' solutions are on
+the `course-solutions-new` branch for now;
+[tests/course/README.md](../tests/course/README.md) says which, and their
+module pages quote the measured results so you can check yours. The norm: struggle for at least 30 minutes,
 then peek at the *approach*, close it, and implement from memory. Solutions
 you've read teach a tenth of what solutions you've fought for do — but a
 permanently stuck learner learns nothing, so the rope is there.

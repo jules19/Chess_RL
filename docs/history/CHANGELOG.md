@@ -95,4 +95,5 @@ one-screen summary. Newest first.
   tests; main has more since). The answer
   key, deliberately unmerged (`git diff main course-solutions`).
   It predates Module 6 exercises 6-7 (n-step returns, the network): their
-  contract tests are on main, but no reference solution is published yet.
+  contract tests are on main; their solutions were later added on the
+  course-solutions-new branch (2026-10-31).
