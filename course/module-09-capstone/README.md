@@ -1,91 +1,109 @@
-# Module 9 — Capstone: The Experiment Report
+# Module 9: Capstone: The Experiment Report
 
 > **Where you are:** the end. Modules 0-8 each checked a piece; this checks that you can put them together and defend the result.
 > **Time:** 1-2 days, most of it waiting for 100-game matches.
 > **You'll be able to:**
-> - present a measured strength ladder where every number has an interval
+> - present a table of your engines' measured strengths, ranked, where every number has a 95% interval
 > - explain your own training run in reinforcement-learning terms
 > - design, run and report one experiment of your own
 > - say what you'd conclude, and what you can't conclude, from your evidence
 
-Produce the one artifact that proves you completed this course — a short
-experiment report that could convince a skeptical engineer. It is the
-summative assessment, and it cannot be completed by running commands.
+Write a short experiment report that could convince a sceptical engineer.
+It is the final assessment of the whole course, and you cannot complete it
+by running commands alone.
 
 ## The deliverable
 
-One document (markdown is fine, ~2 pages), committed to your fork as
-`REPORT.md`, containing four sections:
+One document (Markdown is fine, about 2 pages), committed to your fork as
+`REPORT.md`, with four sections.
 
-### 1. The measured ladder
+### 1. The measured strength table
 
-A table of *your* engines against a calibrated opponent (Module 7's rig —
-Stockfish at fixed strength via `cutechess-cli`, ≥100 games per row):
+A table of your engines against a calibrated opponent, from weakest to
+strongest. Use Module 7's setup: Stockfish at a fixed strength through
+`cutechess-cli`, with at least 100 games per row.
 
-| Engine | Opponent | Games | Score | Elo diff (±95%) |
+| Engine | Opponent | Games | Score | Elo difference (95% interval) |
 |---|---|---|---|---|
-| minimax d3 | SF-1400 | 100 | … | … |
-| MCTS 200 | SF-1400 | 100 | … | … |
-| PUCT + your net | SF-1400 | 100 | … | … |
+| minimax, depth 3 | Stockfish at 1400 | 100 | … | … |
+| MCTS, 200 simulations | Stockfish at 1400 | 100 | … | … |
+| PUCT with your network | Stockfish at 1400 | 100 | … | … |
 
-Every number measured by you, every Elo with an error bar, and one
-sentence comparing the result to the repo's historical self-estimates
-(~1200–1600). The gap between guess and measurement is a finding, not an
-embarrassment.
+Here MCTS is Monte Carlo tree search (Module 3) and PUCT is the
+network-guided search from Module 5. You measure every number yourself,
+and every Elo figure has a 95% interval. Add one sentence comparing the
+result with the repository's historical self-estimates (about 1200–1600).
+A gap between the guess and the measurement is a valid finding; report it
+as one.
 
 ### 2. The training story
 
-For your supervised net (Module 4) and your self-play run (Module 6):
-dataset size, wall-clock, final train/val losses, val accuracy, iterations,
-buffer size, arena scores per iteration, promotions. Plus the honest
-paragraph: what does the promotion pattern mean given arena noise (Module
-6, Q1)? Would you trust this champion? Why?
+For your supervised network (Module 4) and your self-play run (Module 6),
+report these numbers:
+- dataset size and running time
+- final training and validation losses, and validation accuracy
+- iterations and replay buffer size
+- arena scores per iteration, and promotions
 
-Then explain the run **as reinforcement learning**, in your own words and
-pointing at your own numbers: what the agent, the reward and the experience
-were; which step evaluated the policy and which improved it; what kind of
-value target you used and what it cost you; where exploration came from; and
-why the replay buffer and the gate were set the way they were. Use your
-tic-tac-toe runs (Module 6 Part A) wherever chess at your scale was too
-noisy to show an effect.
+Then write a paragraph that answers three questions. What does the
+promotion pattern mean, given arena noise (Module 6, Q1)? Would you trust
+this champion? Why?
+
+Then explain the run as reinforcement learning, in your own words, pointing
+at your own numbers. Cover:
+1. what the agent, the reward and the experience were
+2. which step evaluated the policy and which improved it
+3. what kind of value target you used, and what it cost you
+4. where exploration came from
+5. why the replay buffer and the gate were set the way they were
+
+Use your tic-tac-toe runs (Module 6 Part A) wherever chess at your scale was
+too noisy to show an effect.
 
 ### 3. One experiment you designed
 
-Pick a question the course never answers directly — examples: does the
-Module 1 rook bonus survive 200 games instead of 20? Does doubling
-simulations beat doubling games-per-iteration at fixed compute (Module 7's
-knob exercise)? Does mirror augmentation move val accuracy? State the
-hypothesis, the setup, the result *with uncertainty*, and the conclusion
-you'd defend. A clean negative result scores full marks.
+Pick a question the course never answers directly. Examples:
+- Does the Module 1 rook bonus survive 200 games instead of 20?
+- At fixed computing time, does doubling the simulations beat doubling the
+  games per iteration (Module 7's scaling exercise)?
+- Does mirror augmentation (training on left-right mirrored positions,
+  [Module 4](../module-04-neural-network/README.md) exercise 3) change
+  validation accuracy?
 
-### 4. The postmortem
+State the hypothesis, the setup, the result with uncertainty, and the
+conclusion you'd defend. A well-run experiment that finds no effect scores full marks.
+
+### 4. Looking back
 
 Three short answers, in your own words:
-- The bug you created (not the course's case studies — yours): what was it,
-  what caught it, what habit would have caught it sooner?
-- The concept that took longest to click, and the moment it did.
-- If you kept going: the next 20 hours, spent where, expecting what.
+- The bug you created (one of yours, not one of the course's case studies):
+  what was it, what caught it, what habit would have caught it sooner?
+- The concept that took you longest to understand, and the moment you
+  understood it.
+- If you had 20 more hours: what would you spend them on, and what result
+  would you expect?
 
-## Rubric (self-assess, honestly)
+## Rubric (assess yourself, and be strict)
 
 | Criterion | Pass looks like |
 |---|---|
-| Measurement | ≥100-game matches, error bars computed, no naked point estimates |
-| Reproducibility | Commands/configs included; a reader could rerun every row |
-| Interpretation | Claims sized to evidence; noise acknowledged; at least one "we can't conclude X from this" |
-| Experiment design | One variable isolated; hypothesis stated *before* the run |
-| Honesty | Failures and surprises reported, not smoothed over |
-| RL understanding | The run is explained as policy evaluation + improvement, with the reward, value target and exploration named and tied to your own results |
+| Measurement | Matches of at least 100 games, 95% intervals computed, no point estimate without an interval |
+| Reproducibility | Commands and settings included; a reader could rerun every row |
+| Interpretation | No claim goes further than the evidence; noise acknowledged; at least one "we can't conclude X from this" |
+| Experiment design | One variable isolated; hypothesis stated before the run |
+| Honesty | Failures and surprises reported in full |
+| RL understanding | The run is explained as policy evaluation and improvement, with the reward, value target and exploration named and tied to your own results |
 
-## Why this can't be faked
+## What this report checks
 
-Every earlier checkpoint verifies code. This one verifies *judgment*: the
-numbers must be yours, the error bars must be computed, and section 4 has
-no answer key. If you can write this report and defend it, you didn't just
-follow a course — you did a small piece of real research engineering.
+The earlier checkpoints test your code. This report also tests your
+judgement. The numbers must be ones you measured, the 95% intervals must be
+computed, and section 4 has no answer key. A report you can defend shows
+that you can design, run and report an experiment on your own.
 
-**When you're done:** the ultimate external validation is a Lichess BOT
-account (Module 8's "where to go next") — a public rating is an error bar
-the whole world can audit.
+**When you're done:** for an external check, create a Lichess BOT account.
+BOT is Lichess's name for an account played by an engine instead of a
+person; see Module 8's "Where to go next". Its public rating comes with an
+uncertainty that anyone can check.
 
-Previous: [Module 8 — Engineering Extras](../module-08-engineering/README.md)
+Previous: [Module 8: Engineering Extras](../module-08-engineering/README.md)

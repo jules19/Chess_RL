@@ -1,6 +1,7 @@
 # Quick Start
 
-Playing chess against this repo in under 5 minutes.
+This page gets you playing chess against the engines in this repository in
+under 5 minutes.
 
 ## Setup
 
@@ -10,6 +11,9 @@ pip install -e ".[dev]"        # engines only (no torch)
 # or: pip install -e ".[train,dev]"   # + neural network training
 pytest -q                      # verify: all green
 ```
+
+Expected: the test run reports all tests passed, plus some skipped tests (the
+skipped tests are the course exercises).
 
 ## Play
 
@@ -22,15 +26,18 @@ python3 cli/play.py mcts             # watch MCTS vs random
 python3 cli/play.py test             # 10 quick games + statistics (sanity check)
 ```
 
-Prefer a real chess GUI? The engine speaks UCI:
-`python3 chess_rl_uci.py` — see [docs/UCI_SETUP_MAC.md](docs/UCI_SETUP_MAC.md).
+To play in a chess program with a graphical board (a chess GUI), start the
+engine with `python3 chess_rl_uci.py`. It uses UCI (Universal Chess
+Interface), the standard protocol that chess GUIs use to talk to engines.
+Setup instructions are in [docs/UCI_SETUP_MAC.md](docs/UCI_SETUP_MAC.md).
 
 ## Learn
 
-This repo doubles as a hands-on course — from these engines all the way to
-an AlphaZero-style self-play loop:
+This repository is also a hands-on course. It goes from these engines to an
+AlphaZero-style loop, in which the engine improves by playing against itself
+(self-play reinforcement learning). Start here:
 
-**→ [course/README.md](course/README.md)**
+[course/README.md](course/README.md)
 
-The original development roadmap and daily diary live in
+The original development plans and the daily diary are in
 [docs/plans/](docs/plans/) and [docs/history/](docs/history/).
