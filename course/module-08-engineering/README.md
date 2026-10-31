@@ -94,7 +94,7 @@ long-running ML project accumulates the same kinds.
    they're redundant. Remove them, convert the scripts' `__main__` blocks to
    console entry points in `pyproject.toml` (e.g. `chess-rl-play`,
    `chess-rl-selfplay`), and update the docs.
-   **Check:** `grep -rln "sys.path.insert" --include=*.py . | grep -v ^./test/`
+   **Check:** `grep -rln "sys.path.insert" --include=*.py . | grep -v ^./experiments/`
    lists 28 files today and should list none when you're done; `pytest -q`
    stays green; and each new command (e.g. `chess-rl-play --help`) runs.
 3. **The src-layout refactor.** Top-level packages named `net`, `engine`,

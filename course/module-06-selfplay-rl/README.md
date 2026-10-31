@@ -109,6 +109,8 @@ that changes.
    | `coverage` | % of positions the agent has ever seen in self-play |
    | `vs_perfect` | the table alone (no search) vs a perfect player: % of games not lost. You can't beat a perfect player, so 100% means it always draws |
    | `vs_random` | the table alone vs a random mover: score % |
+   | `buffer` | positions in the replay buffer (it stops growing at its capacity, 4,000) |
+   | `arena`, `prom` | the arena score and whether the candidate was promoted (blank arena without `--gate`) |
 
    **Expected (measured, seed 0):**
    ```

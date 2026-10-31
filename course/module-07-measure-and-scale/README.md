@@ -49,8 +49,10 @@ deterministic engines replay the same game forever (which is why
 `training/evaluate.py` supports temperature).
 
 **The fix: calibrated opponents.** Stockfish can limit its own strength to
-a stated rating (`UCI_LimitStrength` and `UCI_Elo`, down to about 1320).
-Beat Stockfish-1320 55% of the time and you're roughly 1350, on a scale
+a stated rating (`UCI_LimitStrength` and `UCI_Elo`). The lowest rating
+depends on the version: 1350 in Stockfish 15 (Debian 12's package), 1320 in
+Stockfish 16 and later; ask yours with `uci` and look at `option name UCI_Elo`.
+Beat Stockfish-1350 55% of the time and you're roughly 1385, on a scale
 other people use. You need only one thing installed: Stockfish.
 
 **Getting Stockfish.** Pick one:
@@ -63,9 +65,9 @@ other people use. You need only one thing installed: Stockfish.
   application control (ThreatLocker and the like), use the container instead.
 
 If you're unsure, use the container: it's also where cutechess-cli lives.
-This course has no measured Stockfish result to compare yours with yet. The
-only numbers on record are the historical self-estimates (about 1200-1600
-for minimax and MCTS), and testing those is the point of this module.
+The historical self-estimates put minimax and MCTS at about 1200-1600. The
+measurement below is the first real number; yours will differ a little with
+hardware, Stockfish version and luck, which is what the interval is for.
 
 **Route A — `cli/match.py`, no extra tools (start here).** The `uci:` engine
 spec plays any UCI engine. Smoke test, 10 games, a few minutes:
@@ -73,17 +75,23 @@ spec plays any UCI engine. Smoke test, 10 games, a few minutes:
 # inside the container (Stockfish is at /usr/games/stockfish):
 docker exec -it chess_rl_gui sh -c "cd /app && /opt/venv/bin/python cli/match.py \
     minimax:depth=2 \
-    uci:cmd=/usr/games/stockfish,movetime=0.1,UCI_LimitStrength=true,UCI_Elo=1320 \
+    uci:cmd=/usr/games/stockfish,movetime=0.1,UCI_LimitStrength=true,UCI_Elo=1350 \
     --games 10"
 # or, with Stockfish installed locally:
 python3 cli/match.py minimax:depth=2 \
-    uci:cmd=stockfish,movetime=0.1,UCI_LimitStrength=true,UCI_Elo=1320 --games 10
+    uci:cmd=stockfish,movetime=0.1,UCI_LimitStrength=true,UCI_Elo=1350 --games 10
 ```
-**What to expect:** whatever the score, the interval will be about ±30
-points at 10 games: a smoke test that the rig works, not a rating. Then
-raise `--games` to 100 and leave it overnight. One caution: Stockfish's
-`UCI_Elo` is calibrated at longer time controls than 0.1 s a move, so treat
-short-time numbers as rough and say so in your report.
+**Expected (measured with Stockfish 15.1, 8-core laptop CPU):** at 10-20
+games the interval is about ±20-30 points: a smoke test that the rig works,
+not a rating (our 20-game run scored 8/20, interval 22% to 61%, in about 4
+minutes). Then raise `--games` to 100, about 20 minutes. Our 100-game
+reference run: minimax depth 2 scored **46.5/100** against Stockfish-1350
+(+37 =19 −44), a 95% interval of 37% to 56%, so −24 Elo (−92 to +43): about
+**1330, somewhere between 1260 and 1390**. That's inside the historical
+guess for depth 3, for a weaker setting, and still can't be told apart from
+1350 at 100 games. One caution: Stockfish's `UCI_Elo` is calibrated at
+longer time controls than 0.1 s a move, so treat short-time numbers as rough
+and say so in your report.
 
 **Route B — `cutechess-cli`, the standard tool** (installed in the
 container). It handles clocks and adjudication itself. Your engine already

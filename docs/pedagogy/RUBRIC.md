@@ -59,6 +59,7 @@ complements criteria 4, 5, 6 and 10; it doesn't replace judgement.
 | 2026-10-31 | + learner-built RL (n-step returns, network in the lab), `uci:` Stockfish route, measured results for Module 2 killers, Module 4 ex 1-2, Module 5 c_puct and batching | 46/52‡ | 0 / 0 |
 | 2026-10-31 | + "Going deeper" RL section, Module 4 forward-pass walkthrough, measured self-play timings, STATUS trimmed | 47/52 | 0 / 0 |
 | 2026-10-31 | + first-network exercise, killer-move test, Dirichlet intuition, laptop versions of long runs, tutorials moved to history | 48/52§ | 0 / 0 |
+| 2026-10-31 | + Module 5 fence fix, Module 2 worked tree, labelled Elo figures, `test/` → `experiments/` | 49/52 | 0 / 0 |
 
 \* Graded on a copy without `docs/pedagogy/` (it holds the answer keys), so the grader marked
 STATUS.md's pointer to it as broken (currency 2/4). That folder exists in the repository. The

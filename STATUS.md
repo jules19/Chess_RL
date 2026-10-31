@@ -7,7 +7,7 @@
 | Phase | Scope | Code | Validated |
 |-------|-------|------|-----------|
 | 0 | Random engine | ✅ | ✅ games complete correctly |
-| 1 | Minimax: eval, alpha-beta, quiescence, UCI, **transposition table, iterative deepening** | ✅ | ✅ unit tests + tactical puzzles |
+| 1 | Minimax: eval, alpha-beta, quiescence, UCI, **transposition table, iterative deepening** | ✅ | ✅ unit tests + tactical puzzles; **measured:** depth 2 scored 46.5/100 vs Stockfish 15.1 at UCI_Elo 1350 (0.1 s/move), about 1330 Elo (95%: 1260-1390) |
 | 2 | Rollout MCTS (UCT, guided rollouts, blunder filter) | ✅ | ✅ unit tests (strength vs minimax not yet measured with an interval; course Module 3 shows 6-game matches can't tell) |
 | 3a | Policy-value ResNet + supervised pipeline | ✅ | ⚠️ measured on one month of Lichess games (4,794 games, 3 epochs): policy 27.7% vs a 9.3% baseline; the value head only just beats "always even" after epoch 1, then overfits. **Needs several months of data** |
 | 3b | NN-guided search: `nn_mcts.py` + **true PUCT (`search/puct.py`)** | ✅ | ⚠️ unit-tested with a fake network; with the one-month network it scored 4/6 against rollout MCTS (interval 30-90%: not yet conclusive) |

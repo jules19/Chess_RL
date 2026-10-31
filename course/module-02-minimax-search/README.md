@@ -109,11 +109,13 @@ lines to plan (Module 3) are what the rest of the course adds.
    import chess
    import search.minimax as mm
    fen = "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3"
-   for label, order in [("ordered", mm.order_moves), ("unordered", lambda b, moves: list(moves))]:
+   original = mm.order_moves
+   for label, order in [("ordered", original), ("unordered", lambda b, moves: list(moves))]:
        mm.order_moves = order          # minimax looks order_moves up at call time
        nodes = [0]
        mm.minimax(chess.Board(fen), 4, -1e9, 1e9, True, nodes)
        print(label, nodes[0])
+   mm.order_moves = original           # put it back, or later exercises measure the wrong thing
    ```
    **Expected (measured):** about 23,000 nodes ordered vs 97,000 unordered
    (2.7 s vs 12 s), four times fewer. Now try the *starting* position: about

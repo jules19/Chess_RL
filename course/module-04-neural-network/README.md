@@ -404,7 +404,7 @@ mobility) are the same features useful for "what's the best move," so each
 head's gradient improves the other's inputs — shared trunks act as mutual
 regularization (and halve inference cost, which Module 5 cares about).
 Risk: the two losses can compete for capacity; if one loss dominates in
-scale, the trunk optimizes for it at the other's expense — which is why the
+scale, the trunk optimizes for it at the other's expense, which is the
 reason to watch *both* curves. `train.py` weights them equally (a plain
 sum); a common fix when one head misbehaves is to down-weight its loss.
 </details>
