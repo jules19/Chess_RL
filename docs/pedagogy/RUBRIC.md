@@ -79,6 +79,17 @@ scored 11/11; the same grader, regrading all five sets blind, gave 7.5 / 5.5 bef
 only gap was porting the loop to another game. Caveat: the quiz author also wrote the new
 material, so it tests the ideas that author thought mattered.
 
+**Independent outcome test, 2026-10-31.** To remove the author bias above, a separate agent that
+never read the course wrote a 10-question quiz and key from the source code alone
+(`rl_quiz_independent.md` / `rl_quiz_independent_key.md`; 4 transfer questions). One haiku
+learner per arm, graded blind: **original course 4.5/10, current course 6.5/10**. The gain is
+real but smaller than on the author's quiz, as expected. Points neither arm got (discount and
+episodic returns, the behaviour policy's value, generalised policy iteration and its failure
+mode, importance sampling, gate statistics and non-transitivity, truncation vs termination and
+state aliasing) were then added to `course/RL_CONCEPTS.md` ("Going deeper", R5-R8). This quiz
+should not be used to re-measure that addition: it has now shaped the material. A future
+check needs a fresh independent quiz.
+
 ### What the graders said would raise the score next (after the 44/52 grade)
 
 1. **Let the learner build RL pieces, not just toggle flags.** (Started: Module 6 exercise 6,

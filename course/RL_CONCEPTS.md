@@ -157,6 +157,96 @@ no candidate can clear 55% and a gated loop stops learning.
 flip with unknown bias. Every score needs an interval, and "beats its
 previous self" says little about absolute strength.
 
+## Going deeper: the questions a practitioner would ask
+
+These sharpen the ideas above. Read them after Module 6, once you've run the
+tic-tac-toe lab.
+
+**Episodes, and no discount.** A game always ends, so this is an *episodic*
+problem. Many RL methods shrink future rewards by a discount γ < 1 per step;
+here γ = 1, nothing is discounted, so the return from any position is simply
+the final result. (Discounting matters in problems that never end, or when
+sooner rewards really are worth more.)
+
+**Whose value, exactly?** The value head learns the expected result of the
+games *as they were actually played*: the champion's search **plus** its
+exploration noise and temperature, and, because the buffer mixes several
+champions, an average over recent ones. That *behaviour policy* is a bit
+weaker and more random than the greedy policy the arena tests. The opponent
+is also the agent, so the "environment" changes every time the agent does:
+self-play is *non-stationary*, unlike learning against a fixed opponent.
+
+**Generalised policy iteration, and its condition.** Search improves the
+policy; training on results evaluates it; both happen a little at a time.
+That pattern is called *generalised policy iteration*. Its catch: search
+only improves on the network if the values it backs up are roughly right.
+If the value head is badly wrong, search confidently follows the error and
+training then copies it, and the loop reinforces its own mistakes. The real
+corrections come from the rules: terminal positions that search reaches,
+and game results.
+
+**What each head contributes to search.** With random values, backed-up Q
+values are noise, so visits end up following the priors and more simulations
+add nothing. With good values and uniform priors, more simulations keep
+helping, because each one adds real information (Module 5, Q3). So the value
+head is what makes extra search worth paying for.
+
+**Why both kinds of exploration.** Dirichlet noise changes which moves the
+search *looks at*, but with temperature 0 the most-visited move is still
+played, so games stay nearly deterministic. Temperature changes which move is
+*played*, but without noise the search never examines moves the network
+dislikes. Each covers a gap the other leaves. The arena turns both off
+because it measures the greedy player you would actually deploy; noise would
+add variance and measure a weaker player.
+
+**Off-policy data, more precisely.** The *value* target from an old game is
+the result of an older, weaker behaviour policy: a biased label for today's.
+The *policy* target is different: it's advice from an older search,
+distilled into the network the way supervised learning copies a teacher,
+not an estimate weighted by returns. So it's stale rather than biased in the
+same way. Off-policy methods often correct with *importance sampling*
+(reweighting each example by how likely today's policy was to produce it).
+AlphaZero gets away without it because the window only holds recent
+champions, and the gate keeps each step of change small, so the data is
+nearly on-policy.
+
+**What keeps the loop stable.** Several pieces dampen the feedback between
+"the network makes its own data" and "the network trains on that data":
+- the champion is *frozen* while the candidate trains, so the data source
+  doesn't move under the learner (a role like the "target network" in deep
+  Q-learning)
+- the replay buffer mixes generations and decorrelates batches
+- `train_steps`, the learning rate and gradient clipping
+  (`clip_grad_norm_` in `train_candidate`) keep each update small
+- the gate, at the price you saw in the lab
+
+**Credit assignment gets worse with distance.** A label from the end of the
+game is nearly right for positions close to the end, and mostly noise for
+positions in the opening, where many later moves decided the result. Draws
+add a further problem: a draw labels every position 0 and says almost
+nothing about which moves were good.
+
+**How much a gate can tell you.** A candidate of exactly equal strength
+needs 4 wins out of 6 (with no draws) to beat 55%, which happens about 34%
+of the time. So a 6-game gate promotes a no-better network about one time in
+three. Arena games are also nearly deterministic, so six games may hold
+fewer than six independent samples. And strength isn't always transitive:
+B can beat A and C beat B while C still loses to A. A chain of "beats its
+predecessor" can circle without progress, which is why Module 7 measures
+against a fixed, calibrated opponent.
+
+**Truncation is not termination.** The self-play loop scores a game that
+hits `max_moves` as a draw, as if the game had ended. But it was *cut off*,
+not finished. The state the network sees has no move counter that would show
+the cap coming (`board_to_tensor` has a fifty-move counter, but nothing
+counts plies). So the same position gets labelled 0 near the cap and its
+real result elsewhere. Two positions that look identical to the network but
+need different answers is called *state aliasing*: the state isn't fully
+*Markov*. The principled fixes are to treat the cap as truncation and
+bootstrap the target from the network's value of the last position (a TD
+target, exactly where Monte Carlo has no result to give), or to add the
+remaining plies to the input so the state really says what it needs to.
+
 ## Where AlphaZero sits among RL methods
 
 | Family | Learns | Example | Compared with AlphaZero |
@@ -208,6 +298,49 @@ move (and the final result for the last position). You'd learn from your own
 estimates, so early on the network trains toward its own random guesses. That
 is bias, which can slow or derail learning. In exchange you get lower
 variance, because one lucky game no longer labels 40 positions.
+</details>
+
+<details>
+<summary><b>R5.</b> Someone sets <code>max_moves=40</code> to speed up self-play. What happens to the value targets, and why can't the network learn the right answer even with infinite data?</summary>
+
+Most games hit the cap and every position in them is labelled 0. Worse, the
+network can't see how close the cap is (the input has no ply counter), so
+the same position is labelled 0 in one game and ±1 in another: state
+aliasing. Infinite data would only average those labels, not resolve them.
+Fix it by bootstrapping from the network's value at the cut-off instead of
+calling it a draw, or by putting the remaining moves into the input.
+</details>
+
+<details>
+<summary><b>R6.</b> Candidates keep beating their predecessors in the arena, but you suspect the engine isn't improving. Give two reasons that can happen, and the evaluation that would settle it.</summary>
+
+A 6-game gate promotes an equal network about a third of the time, so some
+"wins" are luck; and strength can be non-transitive, so a chain of
+head-to-head wins can cycle. Settle it against a *fixed* yardstick: the
+initial checkpoint, or better a calibrated opponent such as Stockfish at a
+set rating, with enough games for a narrow interval (Module 7).
+</details>
+
+<details>
+<summary><b>R7.</b> Why does AlphaZero not reweight old replay-buffer examples with importance sampling, as many off-policy methods do?</summary>
+
+The buffer only holds games from recent champions, and a champion changes
+only when a candidate beats it, so the policies that produced the data are
+close to today's: the data is nearly on-policy. The policy targets are also
+distilled advice from search rather than return estimates, so the usual
+correction doesn't apply to them in the same way. A much larger buffer
+would erode that justification.
+</details>
+
+<details>
+<summary><b>R8.</b> The value head is badly miscalibrated early in training. Why can search make things worse rather than better, and what stops that going on forever?</summary>
+
+Search trusts the values it backs up. If they're wrong, it concentrates
+visits on moves that only look good to the broken value head, and training
+then copies those visit counts into the policy: the loop reinforces its own
+error. What breaks the cycle is information from outside the network:
+exact values at terminal positions the search reaches, and the real game
+results used as value targets.
 </details>
 
 Back to [the course](README.md)

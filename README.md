@@ -83,9 +83,11 @@ python3 selfplay/train_loop.py --iterations 2 --games-per-iter 2 \
 ## Project status
 
 See [STATUS.md](STATUS.md). Short version: all code through Phase 4 is
-implemented and unit-tested; the remaining work is *running* the big
-experiments (supervised training on real Lichess data, a long self-play run,
-honest Elo measurement) — which is exactly what the course walks you through.
+implemented and unit-tested; the network has been trained on one month of
+Lichess games (numbers in course Module 4), and the remaining work is
+*running* the bigger experiments (more data, a long self-play run, honest Elo
+measurement against Stockfish) — which is exactly what the course walks you
+through.
 
 ## Design principles
 

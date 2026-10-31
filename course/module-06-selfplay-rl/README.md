@@ -280,9 +280,15 @@ that changes.
    python3 selfplay/train_loop.py --init-checkpoint checkpoints/best_model.pt \
        --iterations 10 --games-per-iter 20 --simulations 64 --train-steps 300
    ```
-   Expect several hours on a laptop CPU (a rough estimate scaled from the
-   toy run; measure yours from the first iteration's timing and write it
-   down). The run is done when its 10 iterations finish; there is no early
+   **Expected (measured):** about 40 seconds per game at 64 simulations
+   with a 4×128 network on an 8-core CPU, so one iteration (20 self-play
+   games, training, a 6-game arena) is about 18 minutes and the whole run
+   about 3 hours. In our one-iteration trial with the one-month network both
+   self-play games were *drawn*, so every value target was 0 and the value
+   loss read 0.0000: the sparse-reward problem again, even with a
+   warm start. The candidate scored 25% and was rejected. Watch the value
+   loss column: until games start ending decisively, the value head has
+   nothing to learn from. The run is done when its 10 iterations finish; there is no early
    stop. `selfplay_checkpoints/run_log.csv` records, per iteration, the
    buffer size, the policy and value losses, the arena score and whether the
    candidate was promoted. A healthy run shows the policy loss falling
@@ -409,6 +415,8 @@ pytest tests/course/test_module06_nstep.py tests/course/test_module06_network.py
 - [ ] **Part A:** your predictions for steps 2-5 written down *before* you
       opened the answers, and one sentence each on what you saw; your n-step
       measurements from step 6 and your table-vs-network comparison from step 7
+- [ ] You can answer R5-R8 in the "Going deeper" section of
+      [RL_CONCEPTS.md](../RL_CONCEPTS.md) before opening the answers
 - [ ] **A run report, not just a run**: for your overnight loop (Do #9),
       using `run_log.csv` — iterations completed, positions in the buffer,
       the arena score *per iteration*, promotions, and the champion vs

@@ -81,6 +81,60 @@ once hardcoded a *different* architecture than the training code saved.
 `net/model.py::load_model()` now infers the architecture from the weight
 shapes themselves. Config that can drift *will* drift; derive it.
 
+## Inside the network, one position at a time
+
+If you've never looked inside a neural network, follow one position through
+this one. The shapes below are measured; run the snippet at the end to see
+them yourself.
+
+1. **Input: the board as 20 stacked 8×8 grids**, shape `(1, 20, 8, 8)`:
+   one grid per piece type and colour (12), castling rights (4), side to
+   move, two move counters, en passant. The leading 1 is the *batch*: how
+   many positions go through at once.
+2. **Convolution: look at 3×3 patches.** A convolution slides a small 3×3
+   window over every square and computes a weighted sum of what it sees
+   there (all 20 grids at once). Each set of weights is one *filter*, a
+   pattern detector, for example "my knight attacks this square". The first
+   layer has 128 filters, so the output is 128 grids: `(1, 128, 8, 8)`. The
+   same filter is used on every square, which is why convolutions suit
+   boards and images: a pattern means the same thing anywhere.
+3. **Residual blocks: refine, don't replace.** Each of the 4 blocks applies
+   two more convolutions and then *adds its input back* (`out + identity` in
+   `ResidualBlock.forward`). So each block only has to learn a correction to
+   what the previous one saw, which makes deep stacks much easier to train.
+   The shape stays `(1, 128, 8, 8)`. After a few blocks, each square's 128
+   numbers summarise a growing neighbourhood of the board.
+4. **Two heads read the same features.** The *policy head* squeezes the 128
+   grids into 2, flattens them to 128 numbers and maps those to **4,672
+   logits**, one raw score per possible move: `(1, 4672)`. The *value head*
+   squeezes them into 1 grid, then to one number, and `tanh` bends it into
+   [-1, 1]: `(1, 1)`.
+5. **Logits → probabilities.** *Softmax* turns raw scores into
+   probabilities: exponentiate each, divide by the total. A logit 1 higher
+   means about 2.7 times as likely.
+6. **Masking.** Only about 20-40 of the 4,672 moves are legal. Before the
+   softmax, set every illegal move's logit to a huge negative number, so its
+   probability becomes 0. That's `legal_moves_mask` in `net/encoding.py`.
+
+**Measured on the starting position** with the one-month network from
+exercise 6: without masking, the network already put 96.7% of its
+probability on the 20 legal moves (it has learned legality); after masking
+its top three were Nf3 27%, e3 20%, e4 13%, and its value was +0.02, about
+even. Your own network will give different numbers.
+
+```python
+import chess, torch
+from net.model import load_model
+from net.encoding import board_to_tensor, legal_moves_mask
+model, _ = load_model("checkpoints/best_model.pt"); model.eval()
+x = torch.from_numpy(board_to_tensor(chess.Board())).unsqueeze(0)
+with torch.no_grad():
+    logits, value = model(x)
+mask = torch.from_numpy(legal_moves_mask(chess.Board()))
+probs = torch.softmax(logits[0].masked_fill(mask == 0, -1e9), dim=0)
+print(x.shape, logits.shape, value.item(), probs.max().item())
+```
+
 ## RL lens: imitation is not reinforcement learning
 
 Training on human games is **supervised learning**: for each position the

@@ -107,10 +107,20 @@ long-running ML project accumulates the same kinds.
    PUCT search, then look at it with `snakeviz` or `pstats`. Where does the
    time actually go? Compare with what you *expected* (Module 2's TT story
    suggests you'll be wrong at least once).
+   **Check (measured, one-month network, start position, CPU):** about
+   3.5 s in total, of which the network's forward passes are 3.4 s (96%),
+   most of that in the four residual blocks' convolutions. Board encoding
+   and the legal-move mask together are about 1%, and the tree walk is
+   barely visible. So optimising the Python search code would gain almost
+   nothing; batching the network calls (Module 5, exercise 5) is the lever.
 5. **Property-based round-trips.** Rewrite the encoding round-trip test with
    `hypothesis` generating random legal positions (random legal move
    sequences from the start). One property test would have caught the
    promotion bug on day one.
+   **Check:** the property must fail when you point it at the pre-fix
+   encoder (Module 4, exercise 2 shows how to get it), on the first queen
+   promotion it generates. If it doesn't, it isn't testing the edge that
+   mattered.
 
 ## Check your understanding
 
