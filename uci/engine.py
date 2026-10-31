@@ -219,7 +219,7 @@ class UCIEngine:
     def handle_uci(self):
         """Handle 'uci' command - identify the engine."""
         self.uci_print("id name Chess_RL v0.1.0")
-        self.uci_print("id author Your Name")
+        self.uci_print("id author Chess_RL contributors")
         self.uci_print("")
 
         # Declare available options

@@ -10,6 +10,33 @@
 
 ## Concepts
 
+**A tiny worked example first.** White to move, two candidate moves, and
+Black has two replies to each. The numbers at the bottom are `evaluate()`
+scores from White's point of view, after Black's reply:
+
+```
+                 White to move (picks the MAX)
+                /                       \
+          move a                       move b
+     Black picks the MIN          Black picks the MIN
+        /        \                  /          \
+      +3          +5             +1           ???
+```
+
+*Minimax:* if White plays a, Black answers with the reply worth +3 (Black
+wants the smallest number), so a is worth +3. If White plays b, Black can
+reach +1 at least, so b is worth at most +1. White picks a: the position is
+worth +3. You don't trust a move's best case; you assume the opponent's best
+reply.
+
+*Alpha-beta:* after searching a, White knows it can get +3. In b, the first
+Black reply already gives +1. Whatever the `???` is, Black will never let b
+be worth more than +1, which is worse for White than a's +3. So `???` is
+never searched: that branch is *pruned*. Same answer, less work. In a real
+search the pruned part is a whole subtree, which is where the savings come
+from, and searching the best moves first (move ordering, below) makes these
+cutoffs happen sooner.
+
 Read these in `search/minimax.py` — each has a teaching docstring at the
 exact place it's implemented:
 

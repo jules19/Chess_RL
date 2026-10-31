@@ -59,7 +59,7 @@ selfplay/   Phase 4: self_play, replay_buffer, arena, train_loop, tictactoe_lab
 cli/        play.py (play engines in the terminal), match.py (engine vs engine)
 uci/        UCI protocol (connect to chess GUIs)
 tests/      pytest suite — the course checkpoints
-test/       legacy experiment scripts (tournaments, profiling, puzzles)
+experiments/  legacy experiment scripts (tournaments, profiling, puzzles); not tests
 course/     you are here
 ```
 

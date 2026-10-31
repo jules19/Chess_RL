@@ -37,7 +37,7 @@ dev = [
 packages = ["engine", "net", "search", "selfplay", "training", "cli", "uci"]
 
 [tool.pytest.ini_options]
-# Only collect from tests/ — the legacy test/ directory contains long-running
+# Only collect from tests/ — the legacy experiments/ directory contains long-running
 # interactive scripts (tournaments, profiling), not unit tests.
 testpaths = ["tests"]
 markers = [

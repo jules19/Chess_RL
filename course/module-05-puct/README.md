@@ -162,7 +162,8 @@ moves: the network supplies V and π, and the search computes Q fresh.
                model(batch)
            per_call = (time.time() - start) / 20
            print(b, f"{per_call * 1000 / b:.2f} ms per position")
-   ``` We measured, on an 8-core CPU, 21 ms
+   ```
+   We measured, on an 8-core CPU, 21 ms
    per position one at a time, 4.7 ms each in a batch of 8 and 1.7 ms each
    in a batch of 32. So batching 8 leaves can make the network part about
    4-5 times faster; the Python tree walk, which batching doesn't touch,

@@ -77,7 +77,10 @@ AlphaZero keeps this exactly, and learns V and the move priors instead.
 about 10 seconds with evaluator rollouts and 1.4 seconds with random
 rollouts (measured on an 8-core laptop CPU), so a 10-game match at 200 sims
 takes hours. The matches below use 50 simulations; start one, then read
-`search/mcts.py` while it runs.
+`search/mcts.py` while it runs. Before a long match, check your setup in
+about a minute with a tiny one, e.g.
+`python3 cli/match.py mcts:sims=10 mcts:sims=10,rollouts=random --games 2 --max-plies 20 --adjudicate 3`:
+it proves the command works, not who is stronger.
 
 At 50 simulations MCTS rarely finishes a game: it can win material but not
 convert it, so most games would hit the length cap as draws and tell you

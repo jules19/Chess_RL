@@ -174,9 +174,9 @@ def run_comparison(model_path, num_games=3, simulations_per_move=50):
 def main():
     """Main comparison script."""
     if len(sys.argv) < 2:
-        print("Usage: python3 test/compare_mcts_vs_nn_mcts.py <model_path> [num_games] [simulations]")
+        print("Usage: python3 experiments/compare_mcts_vs_nn_mcts.py <model_path> [num_games] [simulations]")
         print("\nExample:")
-        print("  python3 test/compare_mcts_vs_nn_mcts.py checkpoints/best_model.pt 3 50")
+        print("  python3 experiments/compare_mcts_vs_nn_mcts.py checkpoints/best_model.pt 3 50")
         print("\nThis will play 3 games with 50 simulations per move")
         sys.exit(1)
 

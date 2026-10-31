@@ -58,6 +58,7 @@ complements criteria 4, 5, 6 and 10; it doesn't replace judgement.
 | 2026-10-30 | + orientation headers, RL lens per module, `RL_CONCEPTS.md`, tic-tac-toe lab, `cli/match.py`, `get_lichess.py`, `eval_supervised.py`, measured expected results | 44/52† | 0 / 0 |
 | 2026-10-31 | + learner-built RL (n-step returns, network in the lab), `uci:` Stockfish route, measured results for Module 2 killers, Module 4 ex 1-2, Module 5 c_puct and batching | 46/52‡ | 0 / 0 |
 | 2026-10-31 | + "Going deeper" RL section, Module 4 forward-pass walkthrough, measured self-play timings, STATUS trimmed | 47/52 | 0 / 0 |
+| 2026-10-31 | + first-network exercise, killer-move test, Dirichlet intuition, laptop versions of long runs, tutorials moved to history | 48/52§ | 0 / 0 |
 
 \* Graded on a copy without `docs/pedagogy/` (it holds the answer keys), so the grader marked
 STATUS.md's pointer to it as broken (currency 2/4). That folder exists in the repository. The
@@ -71,6 +72,12 @@ n-step exercise and a final consistency pass (STATUS, timings, Module 6 wording)
 network, with contract tests). Still 3/4: scaffolding, feedback, signal-to-noise, currency,
 orientation, unblocked path. The fixes the grader listed for STATUS.md, Module 7's knob
 exercise, Module 8's checks and Module 2's terms were made after this grade.
+
+§ 4/4 on ten criteria; 3/4 on scaffolding, accuracy, signal-to-noise and unblocked path. Its
+findings were then fixed: a broken code fence in Module 5 that made GitHub render the rest of
+the page as code (`check_docs.py` now checks fences), a worked minimax/alpha-beta tree in
+Module 2, the solutions claim in `course/README.md`, unlabelled Elo figures, and the legacy
+`test/` folder renamed `experiments/`.
 
 **Outcome test, same day** (`OUTCOME_TEST.md` method, the 11-question quiz in `rl_quiz.md` / `rl_quiz_key.md`, one sonnet and one
 haiku learner per arm, graded blind against a key): before 7.5 and 6.0 (mean 6.75/11), after

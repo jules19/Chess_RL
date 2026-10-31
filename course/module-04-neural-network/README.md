@@ -298,7 +298,9 @@ Two more ideas you'll see in the results:
    the raw network missing a free queen and a mate in one; expect that,
    because search is what Module 5 adds.
 
-   Two more things the report shows: `train.py` reports 9.3%, not 13.8%,
+   Two more things the report shows: `train.py`'s accuracy (about 9.4% in
+   its log; `eval_supervised.py` recomputes the same measure as 9.3%, the
+   last digit differing with batching) is lower than 13.8%,
    because its accuracy lets the network "choose" illegal moves, and 36% of
    its top picks are illegal. The engine only ever picks legal moves.
 

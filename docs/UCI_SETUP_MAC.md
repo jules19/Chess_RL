@@ -147,7 +147,8 @@ Cute Chess will play all matches and show you:
 - Estimated Elo ratings
 - Performance comparison
 
-Example results you might see:
+Example results you might see (illustrative only: these Elo labels are
+historical self-estimates, never measured; course Module 7 measures them):
 ```
 1. Chess_RL Minimax (depth 3)  - 8/10 points  (~1400 Elo)
 2. Chess_RL Material           - 5/10 points  (~1100 Elo)
@@ -174,7 +175,7 @@ quit                                  # Exit
 
 # Expected output:
 # id name Chess_RL v0.1.0
-# id author Your Name
+# id author Chess_RL contributors
 # ...options...
 # uciok
 # readyok
@@ -252,7 +253,8 @@ You can even put your engine on Lichess.org as a bot:
 
 ## Comparing Engine Strengths
 
-Here's the approximate strength of each engine type:
+Here's the approximate strength of each engine type (historical
+self-estimates, see the footnote under the table):
 
 | Engine Type | Setting | Approx. Elo* | Playing Style |
 |-------------|--------------|-------------|---------------|

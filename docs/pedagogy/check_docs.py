@@ -178,6 +178,36 @@ def count_exercises(docs):
     return counts
 
 
+def check_fences(docs):
+    """Markdown code fences that won't render: text after a closing fence, or an unclosed fence.
+
+    A fence line must be only backticks plus an optional language tag. Anything
+    else on a closing fence line (e.g. "``` We measured...") leaves the block
+    open, and GitHub renders the rest of the page as code.
+    """
+    problems = []
+    for doc in docs:
+        if doc.suffix != ".md":
+            continue
+        open_fence = None
+        for n, line in enumerate(doc.read_text(errors="replace").splitlines(), 1):
+            stripped = line.strip()
+            if not stripped.startswith("```"):
+                continue
+            rest = stripped[3:]
+            if open_fence is None:
+                if " " in rest.strip():
+                    problems.append((doc.relative_to(ROOT).as_posix(), n, "text after an opening fence"))
+                open_fence = n
+            else:
+                if rest.strip():
+                    problems.append((doc.relative_to(ROOT).as_posix(), n, "text after a closing fence"))
+                open_fence = None
+        if open_fence is not None:
+            problems.append((doc.relative_to(ROOT).as_posix(), open_fence, "fence never closed"))
+    return problems
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--no-run", action="store_true", help="don't execute documented commands")
@@ -192,6 +222,11 @@ def main():
     print(f"## Broken file references: {len(broken_refs)}")
     for doc, ref in broken_refs:
         print(f"  {doc}: {ref}")
+
+    bad_fences = check_fences(docs)
+    print(f"\n## Malformed code fences: {len(bad_fences)}")
+    for doc, line, why in bad_fences:
+        print(f"  {doc}:{line}: {why}")
 
     commands = collect_commands(docs)
     broken_cmds = []
@@ -214,7 +249,7 @@ def main():
     print(f"\n## Project history ({', '.join(HISTORY_DIRS)}, {len(history)} files, not learner material): "
           f"{len(history_refs)} broken file references, {len(collect_commands(history))} commands (not run)")
 
-    print(f"\nSUMMARY broken_refs={len(broken_refs)} broken_commands={len(broken_cmds)} "
+    print(f"\nSUMMARY broken_refs={len(broken_refs)} bad_fences={len(bad_fences)} broken_commands={len(broken_cmds)} "
           f"exercises={sum(exercises.values())} history_broken_refs={len(history_refs)}")
 
 

@@ -10,7 +10,7 @@ before moving on:
 ```
 random  →  minimax (+eval)  →  MCTS  →  NN + PUCT  →  self-play RL
 Phase 0        Phase 1        Phase 2     Phase 3        Phase 4
-~600 Elo     ~1200-1600*    ~1400-1600*   (train it!)   (run the loop!)
+~600*        ~1200-1600*    ~1400-1600*   (train it!)   (run the loop!)
 ```
 <sub>*Historical self-estimates — measuring honestly is course Module 7.</sub>
 
@@ -77,7 +77,7 @@ python3 selfplay/train_loop.py --iterations 2 --games-per-iter 2 \
 | `selfplay/` | Phase 4: self-play generation, replay buffer, arena promotion gate, RL training loop; `tictactoe_lab.py`, the same loop on tic-tac-toe |
 | `cli/`, `uci/` | Terminal play, engine-vs-engine matches with error bars (`match.py`), and UCI protocol (works with chess GUIs) |
 | `tests/` | pytest suite — the course checkpoints (run in CI) |
-| `test/` | Legacy experiment scripts: tournaments, tactical suites, profiling |
+| `experiments/` | Legacy experiment scripts: tournaments, tactical suites, profiling (not tests; the tests are in `tests/`) |
 | `docs/` | UCI and Docker guides; `history/` (day-by-day dev diary, changelog, the old HTML tutorials), `plans/` (original phase plans) |
 
 ## Project status
