@@ -25,6 +25,32 @@ AlphaZero core, including a tic-tac-toe version of the full self-play loop
 that learns in seconds; Modules 7-8 cover honest measurement and engineering
 craft. The RL ideas, mapped onto this code: [course/RL_CONCEPTS.md](course/RL_CONCEPTS.md).
 
+### Setting up to take the course
+
+Work in your own fresh clone, on your own branch, so your exercise code never
+mixes with the course itself:
+
+```bash
+git clone https://github.com/jules19/Chess_RL.git Chess_RL_learner
+cd Chess_RL_learner
+git checkout -b my-run              # your exercise work lives here
+python3 -m venv .venv && source .venv/bin/activate   # Python 3.9+
+pip install -e ".[train,dev]"       # ".[dev]" alone skips torch until Module 4
+pytest -q                           # expect all passed, plus skips: the skips are your exercises
+```
+
+Then open [Module 0](course/module-00-orientation/README.md) and work down
+the page. Next time, `cd Chess_RL_learner && source .venv/bin/activate` and
+carry on where you left off.
+
+**Running inside a Docker container?** Clone into a folder that's mounted
+from the host. Anything outside a mounted folder disappears when the
+container is rebuilt, and that includes your code, your downloaded data and
+your trained networks. Build the `.venv` inside the container, since a
+virtual environment made on the host won't run there. If a rebuild changes
+the container's Python version, delete `.venv` and run the two setup lines
+again; your code, data and checkpoints are unaffected.
+
 ## Quick start
 
 ```bash

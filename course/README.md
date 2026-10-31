@@ -63,7 +63,7 @@ tests with a wrong mental model is how the next module's bug gets written.
 ## Setup
 
 ```bash
-git clone <this repo> && cd Chess_RL
+git clone https://github.com/jules19/Chess_RL.git && cd Chess_RL
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[train,dev]"   # or just ".[dev]" to skip torch until Module 4
 pytest -q                        # everything should pass before you start
