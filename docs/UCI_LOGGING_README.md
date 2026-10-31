@@ -1,21 +1,30 @@
-# UCI Transaction Logging and PGN Export
+# UCI transaction logging and PGN export
 
 ## Overview
 
-The Chess_RL UCI engine now supports comprehensive logging capabilities:
+The Chess_RL engine talks to chess GUIs (graphical user interfaces: programs
+that show the board) through the Universal Chess Interface (UCI), a protocol
+of text commands and responses. The engine can record two things:
 
-1. **UCI Transaction Logging**: Captures all UCI protocol commands and responses with timestamps
-2. **PGN Game Export**: Automatically exports completed games in standard PGN format
+1. **UCI transaction log.** Every UCI command and response, with a timestamp.
+2. **PGN game export.** Each completed game, saved in PGN (Portable Game
+   Notation), the standard text format for chess games.
+
+The engine and its logging are in `uci/engine.py`. The setup guides use
+[chess_rl_uci.py](../chess_rl_uci.py), a launcher that starts the same engine
+and accepts the same arguments.
 
 ## Features
 
-### UCI Transaction Logging
+### UCI transaction logging
 
-Records every UCI command received and every response sent by the engine, including:
-- Commands: `uci`, `isready`, `position`, `go`, `setoption`, etc.
-- Responses: `uciok`, `readyok`, `bestmove`, `info`, etc.
-- Timestamps with millisecond precision
-- Appends to log file (supports multiple sessions)
+The log records every command the engine receives and every response it
+sends:
+- Commands: `uci`, `isready`, `position`, `go`, `setoption`, and others.
+- Responses: `uciok`, `readyok`, `bestmove`, `info`, and others.
+- Each line has a timestamp with millisecond precision.
+- The file is opened in append mode (new entries go at the end), so earlier
+  sessions are kept.
 
 **Example log output:**
 ```
@@ -33,14 +42,19 @@ UCI Log started: 2025-11-14 10:23:45
 [2025-11-14 10:23:45.790] OUT: bestmove e7e5
 ```
 
-### PGN Game Export
+### PGN game export
 
-Automatically tracks and exports games in PGN (Portable Game Notation) format:
-- Standard PGN headers (Event, Site, Date, Round, Players, Result)
-- Full move history in Standard Algebraic Notation (SAN)
-- Proper handling of game outcomes (checkmate, stalemate, draws)
-- Support for custom starting positions (FEN)
-- Compatible with chess analysis tools (Lichess, Chess.com, ChessBase, etc.)
+Each game is saved in PGN format with:
+- Standard PGN headers (Event, Site, Date, Round, White, Black, Result).
+- The full list of moves in Standard Algebraic Notation (SAN), the usual
+  written form of chess moves, such as Nf3.
+- The game result (checkmate, stalemate or draw).
+- For a game from a custom starting position, the position in the headers,
+  in FEN (Forsyth-Edwards Notation, a one-line text description of a
+  position).
+
+Chess analysis tools (Lichess, Chess.com, ChessBase and others) can read the
+files.
 
 **Example PGN output:**
 ```pgn
@@ -58,9 +72,9 @@ Automatically tracks and exports games in PGN (Portable Game Notation) format:
 
 ## Usage
 
-### Method 1: Command-Line Arguments (Recommended for Testing)
+### Method 1: command-line arguments (recommended for testing)
 
-Enable logging when starting the engine:
+Turn on logging when you start the engine:
 
 ```bash
 # Enable UCI transaction logging
@@ -73,22 +87,22 @@ python3 uci/engine.py --pgn-log games.pgn
 python3 uci/engine.py --uci-log debug.log --pgn-log mygames.pgn
 ```
 
-### Method 2: UCI Options (Recommended for GUIs)
+### Method 2: UCI options (recommended for GUIs)
 
-Configure logging through your chess GUI's engine settings:
+Configure logging in your chess GUI's engine settings:
 
-1. Start the engine in your GUI (Arena, Cutechess, PyChess, etc.)
-2. Open the engine configuration dialog
-3. Configure these options:
+1. Add the engine to your GUI (Arena, Cute Chess, PyChess or another UCI GUI).
+2. Open the engine configuration dialog.
+3. Set these options:
 
-**Available UCI Options:**
+**Available UCI options:**
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `UCI Log` | checkbox | false | Enable/disable UCI transaction logging |
-| `UCI Log File` | string | `uci_transactions.log` | Path to UCI log file |
-| `PGN Export` | checkbox | false | Enable/disable PGN game export |
-| `PGN Export File` | string | `games.pgn` | Path to PGN export file |
+| `UCI Log` | checkbox | false | Turn UCI transaction logging on or off |
+| `UCI Log File` | string | `uci_transactions.log` | Path to the UCI log file |
+| `PGN Export` | checkbox | false | Turn PGN game export on or off |
+| `PGN Export File` | string | `games.pgn` | Path to the PGN export file |
 
 **Example UCI commands:**
 ```
@@ -98,65 +112,46 @@ setoption name PGN Export value true
 setoption name PGN Export File value /home/user/chess_logs/games.pgn
 ```
 
-## Use Cases
+## Use cases
 
-### Game Analysis
-Export games to PGN and analyze them in:
-- Lichess (upload and analyze)
+### Game analysis
+Open exported games in an analysis tool, such as:
+- Lichess (upload the file and run the analysis)
 - Chess.com (computer analysis)
-- ChessBase / Fritz
-- Stockfish analysis
-- Your own analysis tools
+- ChessBase or Fritz
+- Stockfish
+- your own analysis scripts
 
 ### Debugging
-- Diagnose UCI protocol issues
-- Verify command sequences
-- Track engine decision-making
-- Identify performance bottlenecks
-- Reproduce specific game states
+- Find problems in the UCI communication between the GUI and the engine.
+- Check the order of the commands the GUI sends.
+- Reproduce a game position from the position commands in the log.
 
-### Training Data Collection
-- Collect games for machine learning
-- Build opening repertoires
-- Analyze engine weaknesses
-- Compare different engine configurations
+## Implementation details
 
-### Development
-- Test UCI protocol compliance
-- Debug GUI integration issues
-- Verify move generation
-- Track search statistics
-
-## Implementation Details
-
-### UCI Transaction Logging
-- Logs written immediately (flushed after each write)
-- Timestamps include milliseconds
-- Input/output clearly labeled (IN/OUT)
-- Debug messages excluded from transaction log (to avoid duplication)
-- File opened in append mode (preserves previous sessions)
+### UCI transaction logging
+- Each line is written to the file at once (flushed after each write), so you
+  can read the log while the engine runs.
+- Each line is labelled IN (received by the engine) or OUT (sent by it).
+- Debug messages (produced when the Debug option is on) are sent to the GUI as
+  info string lines, but they are not written to the transaction log.
 
 ### PGN Export
-- Moves tracked in Standard Algebraic Notation (SAN)
-- Games saved when:
-  - New game starts (`ucinewgame`)
-  - Engine quits (`quit`)
-  - PGN export disabled
-- Automatic game result detection:
+- A game is saved when:
+  - a new game starts (`ucinewgame`)
+  - the engine quits (`quit`)
+  - you turn the PGN Export option off (the game in progress is saved first)
+  - a position the GUI sends is the end of the game (see the results below)
+- The game result is detected automatically:
   - Checkmate: `1-0` or `0-1`
   - Stalemate, insufficient material: `1/2-1/2`
   - Fifty-move rule, repetition: `1/2-1/2`
-  - In progress: `*`
-- Support for non-standard starting positions (FEN recorded in headers)
-- Proper PGN formatting (80-character line wrapping)
-
-## Files Modified
-
-- `uci/engine.py`: Main UCI engine with logging implementation
+  - Game still in progress: `*`
+- Move lines are wrapped at 80 characters.
 
 ## Dependencies
 
-No additional dependencies required beyond existing requirements:
+No dependencies beyond the existing requirements:
 - `python-chess` (already required)
 - Standard library: `argparse`, `datetime`, `os`
 
@@ -174,12 +169,15 @@ cat test.log
 cat test.pgn
 ```
 
-## Future Enhancements
+Expected: test.log contains the commands and responses with timestamps, and
+test.pgn contains one game with the engine's move.
 
-Potential improvements:
-- Configurable log levels (minimal, normal, verbose)
-- Rotation policy for large log files
-- JSON format option for UCI logs (easier parsing)
-- EPD export for position analysis
-- Statistics tracking (nodes, time, nps)
-- Opening book recording
+## Possible future improvements
+
+None of these is implemented yet:
+- Log detail levels (minimal, normal, verbose).
+- Rotation (starting a new file) for large log files.
+- A JSON format for UCI logs, easier for programs to read.
+- EPD export (Extended Position Description: a format for single positions).
+- Statistics: nodes (positions searched), time, nps (nodes per second).
+- Opening book recording (an opening book is a file of opening moves).

@@ -1,29 +1,36 @@
 # Chess_RL
 
-**Build a chess engine from a random mover to AlphaZero-style self-play
-reinforcement learning — incrementally, with evidence at every step.**
+Build a chess engine in stages, from a random mover to an engine in the
+style of AlphaZero (DeepMind's chess program that learned by playing against
+itself). Each stage is checked with evidence before the next one starts.
 
-This repository is both a working engine ladder and a hands-on course. Every
-phase produced a playable engine that was validated against the previous one
-before moving on:
+This repository is both a working engine ladder (a sequence of engines, each
+meant to beat the one before it) and a hands-on course. Every phase produced
+a playable engine that was tested against the previous one:
 
 ```
 random  →  minimax (+eval)  →  MCTS  →  NN + PUCT  →  self-play RL
 Phase 0        Phase 1        Phase 2     Phase 3        Phase 4
 ~600*        ~1200-1600*    ~1400-1600*   (train it!)   (run the loop!)
 ```
-<sub>*Historical self-estimates — measuring honestly is course Module 7.</sub>
+<sub>*Historical estimates of Elo (the chess rating scale), not measurements. Course Module 7 shows how to measure them.</sub>
 
-## 🎓 The Course (start here)
+Phase 3 has two parts: 3a trains the neural network, and 3b uses it in the
+search.
 
-**[course/README.md](course/README.md)** — ten modules that use this
-codebase as the textbook. Each module: where you are and what you'll be able
-to do → concepts → the reinforcement-learning idea behind it → the annotated
-source → exercises with expected results → a checkpoint you can verify.
-Modules 0-3 (search engines) need no ML background; Modules 4-6 are the
-AlphaZero core, including a tic-tac-toe version of the full self-play loop
-that learns in seconds; Modules 7-8 cover honest measurement and engineering
-craft. The RL ideas, mapped onto this code: [course/RL_CONCEPTS.md](course/RL_CONCEPTS.md).
+## The course (start here)
+
+[course/README.md](course/README.md) has ten modules that teach from this
+codebase. Each module gives the concepts, the reinforcement-learning (RL)
+idea behind them, the source files to read, exercises with expected results,
+and a checkpoint you can verify. RL means learning to act from rewards, here
+the result of each game. [course/RL_CONCEPTS.md](course/RL_CONCEPTS.md)
+explains the RL ideas in terms of this code.
+
+Modules 0-3 (search engines) need no machine-learning background. Modules
+4-6 build the AlphaZero parts, including a tic-tac-toe version of the full
+self-play loop that learns in seconds. Modules 7-8 cover reliable
+measurement and software engineering.
 
 ### Setting up to take the course
 
@@ -41,17 +48,19 @@ pytest -q                           # expect all passed, plus skips: the skips a
 
 Then open [Module 0](course/module-00-orientation/README.md) and work down
 the page. Next time, `cd Chess_RL_learner && source .venv/bin/activate` and
-carry on where you left off.
+continue where you stopped.
 
-**Running inside a Docker container?** Clone into a folder that's mounted
-from the host. Anything outside a mounted folder disappears when the
-container is rebuilt, and that includes your code, your downloaded data and
-your trained networks. Build the `.venv` inside the container, since a
-virtual environment made on the host won't run there. If a rebuild changes
-the container's Python version, delete `.venv` and run the two setup lines
-again; your code, data and checkpoints are unaffected.
+**Docker.** If you work inside a Docker container, clone into a folder that
+is mounted from the host. Anything outside a mounted folder, including your
+code, data and trained networks, is deleted when the container is rebuilt.
+Build the `.venv` inside the container, since a virtual environment made on
+the host won't run there. If a rebuild changes the container's Python
+version, delete `.venv` and run the two setup lines again; your code, data
+and saved models are unaffected.
 
 ## Quick start
+
+### Install and play in the terminal
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
@@ -66,26 +75,44 @@ python3 cli/match.py minimax:depth=2 random --games 10   # engine vs engine, wit
 python3 selfplay/tictactoe_lab.py   # the AlphaZero loop on tic-tac-toe: watch it learn (~7 s)
 ```
 
-Connect to a chess GUI (Arena, Cute Chess, PyChess) via UCI:
-`python3 chess_rl_uci.py` — setup guide in [docs/UCI_SETUP_MAC.md](docs/UCI_SETUP_MAC.md).
-**Can't install a GUI on your machine?** Run Cute Chess in Docker, rendered
-in your browser, with the engine and Stockfish pre-configured — nothing
-installed on the host: [docs/DOCKER_GUI.md](docs/DOCKER_GUI.md)
-(`cd docker && docker compose up --build`, then http://localhost:5800).
-**Every stage is playable from the GUI**: pick `random`, `material`,
-`minimax`, `mcts`, or `puct` via the "Engine Type" option (`puct` loads a
-trained checkpoint set by "Model File"). GUI time controls are honored via
-iterative deepening.
+Expected: the test run reports all tests passed, plus some skipped tests.
+The skipped tests are the course exercises. A match prints a 95% interval:
+the range the true score very likely lies in.
 
-Train the network on expert games (Phase 3a). Get the data (17 MB download), train a quick
-first network (~6 minutes on a laptop CPU), then compare it with baselines:
+### Play in a chess GUI
+
+To play in a chess GUI (a program with a graphical board) such as Arena,
+Cute Chess or PyChess, start the engine with `python3 chess_rl_uci.py`. It
+uses UCI (Universal Chess Interface), the standard protocol between GUIs and
+engines. See [docs/UCI_SETUP_MAC.md](docs/UCI_SETUP_MAC.md).
+
+If you can't install a GUI, run Cute Chess in Docker and use it in your
+browser. It comes with this engine and Stockfish (a strong open-source
+chess engine) already set up, and nothing is installed on the host:
+[docs/DOCKER_GUI.md](docs/DOCKER_GUI.md)
+(`cd docker && docker compose up --build`, then http://localhost:5800).
+
+Every stage can be played from the GUI. Choose `random`, `material`,
+`minimax`, `mcts` or `puct` with the "Engine Type" option (`puct` needs a
+trained model file, a checkpoint, chosen with "Model File"). The engine
+follows the GUI's time controls with iterative deepening (searching one
+move deeper at a time, taught in [Module 2](course/module-02-minimax-search/README.md)).
+
+### Train the network
+
+Train the network on games between strong players (Phase 3a). Get the data
+(17 MB download), train a quick first network (about 6 minutes on a laptop
+processor), then compare it with baselines that know nothing about chess:
 ```bash
 python3 training/get_lichess.py
 python3 training/train.py --pgn data/filtered.pgn --max-games 1000 --epochs 2
 python3 training/eval_supervised.py checkpoints/best_model.pt --pgn data/filtered.pgn --max-games 1000
 ```
 
-Run the self-play RL loop end-to-end at toy scale (Phase 4, ~1.5 min on CPU):
+### Run the self-play loop
+
+Run the self-play RL loop from start to finish at small scale (Phase 4,
+about 1.5 minutes on a laptop processor, with no GPU):
 ```bash
 python3 selfplay/train_loop.py --iterations 2 --games-per-iter 2 \
     --simulations 16 --train-steps 20 --arena-games 2
@@ -95,31 +122,45 @@ python3 selfplay/train_loop.py --iterations 2 --games-per-iter 2 \
 
 | Path | What it is |
 |------|------------|
-| `course/` | **The course** — 10 modules (0-9) with exercises, checkpoints, and a capstone |
-| `engine/` | Evaluation: hand-crafted (`evaluator.py`) and NN wrapper (`nn_evaluator.py`) |
-| `search/` | `minimax.py` (alpha-beta + quiescence + transposition table + iterative deepening), `mcts.py` (rollout MCTS/UCT), `puct.py` (true AlphaZero search, no rollouts), `nn_mcts.py` (transitional Phase 3b) |
-| `net/` | `encoding.py` (board→tensor, move→index), `model.py` (ResNet policy-value network) |
-| `training/` | Supervised learning: Lichess download (`get_lichess.py`), PGN dataset, training loop, evaluation against baselines (`eval_supervised.py`), game filtering |
-| `selfplay/` | Phase 4: self-play generation, replay buffer, arena promotion gate, RL training loop; `tictactoe_lab.py`, the same loop on tic-tac-toe |
-| `cli/`, `uci/` | Terminal play, engine-vs-engine matches with error bars (`match.py`), and UCI protocol (works with chess GUIs) |
-| `tests/` | pytest suite — the course checkpoints (run in CI) |
-| `experiments/` | Legacy experiment scripts: tournaments, tactical suites, profiling (not tests; the tests are in `tests/`) |
-| `docs/` | UCI and Docker guides; `history/` (day-by-day dev diary, changelog, the old HTML tutorials), `plans/` (original phase plans) |
+| `course/` | The course: 10 modules (0-9) with exercises, checkpoints and a final project |
+| `engine/` | Evaluation (scoring a position): hand-written (`evaluator.py`) and a neural network wrapper (`nn_evaluator.py`) |
+| `search/` | Move search: four engines, listed below the table |
+| `net/` | `encoding.py` (board to network input, move to a number), `model.py` (the network that suggests moves and scores positions); Module 4 |
+| `training/` | Learning from human games (Module 4): Lichess download (`get_lichess.py`), reading game files, training loop, evaluation against baselines (`eval_supervised.py`), game filtering |
+| `selfplay/` | Phase 4 (Module 6): self-play games, the training data store, the match that decides whether a new network replaces the old one, the RL training loop; `tictactoe_lab.py`, the same loop on tic-tac-toe |
+| `cli/`, `uci/` | Terminal play, engine-against-engine matches with 95% intervals (`match.py`), and the UCI interface for chess GUIs |
+| `tests/` | The pytest suite, including the course checkpoints. GitHub runs it automatically whenever new code is uploaded |
+| `experiments/` | Older experiment scripts: tournaments, tactical puzzle sets, profiling (not tests; the tests are in `tests/`) |
+| `docs/` | UCI and Docker guides; `history/` (day-by-day development diary, changelog, the old HTML tutorials), `plans/` (original phase plans) |
+
+The four search engines:
+
+- `minimax.py`: looks ahead through every line of play to a fixed depth,
+  using alpha-beta to skip lines that cannot change the result (Module 2).
+- `mcts.py`: Monte Carlo tree search, which plays many games out to the end
+  (rollouts) and favours the moves that did well (Module 3).
+- `puct.py`: AlphaZero's search, guided by the network instead of rollouts
+  (Module 5).
+- `nn_mcts.py`: the earlier Phase 3b design, Monte Carlo tree search with
+  the network scoring positions (Module 5).
 
 ## Project status
 
-See [STATUS.md](STATUS.md). Short version: all code through Phase 4 is
-implemented and unit-tested; the network has been trained on one month of
-Lichess games (numbers in course Module 4), and the remaining work is
-*running* the bigger experiments (more data, a long self-play run, honest Elo
-measurement against Stockfish) — which is exactly what the course walks you
-through.
+See [STATUS.md](STATUS.md). In short, all code through Phase 4 is written
+and has tests. The network has been trained on one month of Lichess games
+(results in course Module 4). The remaining work is to run the larger
+experiments (more data, a long self-play run, a reliable Elo measurement
+against Stockfish), and the course takes you through each one.
 
 ## Design principles
 
-1. **Every phase ships a playable engine.** No six-month dark tunnels.
-2. **Evidence over vibes.** Claims are backed by games between engines and
-   by tests; the course keeps that discipline.
-3. **Real bugs are teaching material.** The promotion-encoding bug, the
-   architecture drift, the self-test that could never pass — all preserved
-   as case studies in the course rather than scrubbed from history.
+1. **Every phase produces a playable engine.** No phase goes for months
+   without a working result.
+2. **Claims need evidence.** Every claim is backed by games between engines
+   or by tests, and the course keeps to that rule.
+3. **Real bugs are teaching material.** Three bugs from this project are
+   kept as case studies in the course instead of being removed from the
+   history. The move encoding made pawn promotion impossible for the network
+   to learn. The code that loads a saved network assumed a different network
+   shape from the one the training code saved. A self-test could never have
+   passed, and nothing ever ran it.
