@@ -14,8 +14,8 @@ Why a buffer at all? Two failure modes it prevents:
    RANDOM from a large buffer decorrelates batches.
 
 Why a WINDOW (deque with maxlen) and not "keep everything"? Old games were
-played by a much weaker network; their policy targets are stale. AlphaZero
-kept roughly the last 500,000 games for the same reason. Buffer size is a
+played by a much weaker network; their policy targets are stale. AlphaGo
+Zero kept the last 500,000 games for the same reason. Buffer size is a
 real hyperparameter: too small → overfit to recent play; too large → learn
 from obsolete data.
 

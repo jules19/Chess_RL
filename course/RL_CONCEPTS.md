@@ -86,7 +86,9 @@ entry per position works for tic-tac-toe (5,478 legal positions, 4,520 of
 them where the game isn't over yet). Chess has about
 10^44, so the agent must *generalise*: give sensible answers in positions it
 has never seen. The network is a function approximator. Its errors in unseen
-positions are the price, and the reason the arena gate exists.
+positions are the price, and the reason the arena gate exists. Module 6,
+exercise 7 has you swap the tic-tac-toe table for a small network and
+measure both sides of that trade.
 
 **Search as policy improvement (Module 5).** Run PUCT with the current network
 and the visit counts it produces are a *better policy than the network alone*:

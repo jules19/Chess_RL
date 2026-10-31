@@ -8,13 +8,13 @@
 |-------|-------|------|-----------|
 | 0 | Random engine | ✅ | ✅ games complete correctly |
 | 1 | Minimax: eval, alpha-beta, quiescence, UCI, **transposition table, iterative deepening** | ✅ | ✅ unit tests + tactical puzzles |
-| 2 | Rollout MCTS (UCT, guided rollouts, blunder filter) | ✅ | ✅ unit tests, beats minimax d3-4 |
+| 2 | Rollout MCTS (UCT, guided rollouts, blunder filter) | ✅ | ✅ unit tests (strength vs minimax not yet measured with an interval; course Module 3 shows 6-game matches can't tell) |
 | 3a | Policy-value ResNet + supervised pipeline | ✅ | ⚠️ measured on one month of Lichess games (4,794 games, 3 epochs): policy 27.7% vs a 9.3% baseline; the value head only just beats "always even" after epoch 1, then overfits. **Needs several months of data** |
 | 3b | NN-guided search: `nn_mcts.py` + **true PUCT (`search/puct.py`)** | ✅ | ⚠️ PUCT search unit-tested with fake network; needs a trained model for strength claims |
 | 4 | Self-play RL: replay buffer, arena gate, training loop | ✅ | ⚠️ runs end-to-end at toy scale (verified); **no long training run yet** |
 
-**Test suite:** `pytest --collect-only -q` counts them (82 on 2026-10-30,
-6 of them the deliberately-skipped course exercises in `tests/course/`), run
+**Test suite:** `pytest --collect-only -q` counts them (85 on 2026-10-31,
+8 of them the deliberately-skipped course exercises in `tests/course/`), run
 by GitHub Actions CI on every push (`.github/workflows/ci.yml`). All green.
 
 ## Recent changes (2026-10)
@@ -34,6 +34,13 @@ by GitHub Actions CI on every push (`.github/workflows/ci.yml`). All green.
   data recipe (it kept 3 games), two wrong self-check answers, and dangling
   references to Module 7. Rubric criteria 11-13 (orientation, unblocked
   path, RL understanding) added in `docs/pedagogy/RUBRIC.md`.
+  Second pass: learners now *build* RL pieces (Module 6 exercises 6-7:
+  n-step returns, and a neural network replacing the tic-tac-toe table,
+  each with a contract test in `tests/course/`); `cli/match.py` gained a
+  `uci:` spec so Stockfish can be a calibrated opponent without cutechess;
+  measured expected results added for Module 2 killer moves, Module 4
+  exercises 1-2 (no git history needed), and Module 5's c_puct sweep and
+  batching.
 
 - **UCI `info score` fixed:** it printed a static evaluation from White's view;
   it now reports the minimax search score from the side to move, at the depth
@@ -97,9 +104,12 @@ by GitHub Actions CI on every push (`.github/workflows/ci.yml`). All green.
   including a capstone experiment report); historical docs preserved in
   `docs/history/` and `docs/plans/`.
 - **Added:** `course-solutions` branch — reference implementations for all
-  six `tests/course/` exercises, skips removed, all passing at the time (71
+  six `tests/course/` exercises that existed then, skips removed, all
+  passing at the time (71
   tests; main has more since). The answer
   key, deliberately unmerged (`git diff main course-solutions`).
+  It predates Module 6 exercises 6-7 (n-step returns, the network): their
+  contract tests are on main, but no reference solution is published yet.
 
 ## What's next (in priority order)
 

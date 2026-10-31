@@ -65,7 +65,7 @@ def code_blocks(path, text):
     return [text]
 
 
-OUTPUT_FLAG = re.compile(r"(?:--?[\w-]*(?:log|output|out|dir)|-o)[\s=]+$")
+OUTPUT_FLAG = re.compile(r"(?:--?[\w-]*(?:log|output|out|dir)|-o|>)[\s=]*$")  # a flag or a shell redirect
 # Files the course asks the learner to create (not expected to exist in the repo)
 LEARNER_CREATED = {"REPORT.md"}
 

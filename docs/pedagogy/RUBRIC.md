@@ -56,6 +56,7 @@ complements criteria 4, 5, 6 and 10; it doesn't replace judgement.
 | 2026-10-30 | + tutorial reference fixes, README data note, UCI-score and split-by-game fixes, Module 8 case studies 6–7 | 34/40* | 0 / 0 |
 | 2026-10-30 | main at 4f7c1f2, regraded on the 13-criterion rubric | 35/52 | 0 / 0 |
 | 2026-10-30 | + orientation headers, RL lens per module, `RL_CONCEPTS.md`, tic-tac-toe lab, `cli/match.py`, `get_lichess.py`, `eval_supervised.py`, measured expected results | 44/52† | 0 / 0 |
+| 2026-10-31 | + learner-built RL (n-step returns, network in the lab), `uci:` Stockfish route, measured results for Module 2 killers, Module 4 ex 1-2, Module 5 c_puct and batching | 46/52‡ | 0 / 0 |
 
 \* Graded on a copy without `docs/pedagogy/` (it holds the answer keys), so the grader marked
 STATUS.md's pointer to it as broken (currency 2/4). That folder exists in the repository. The
@@ -65,9 +66,16 @@ Module 8 "Next" link and the `docs/tutorials/` banners were added after this gra
 learning 3→4, orientation 2→3, unblocked path 2→3, RL understanding 1→3. Graded before the
 n-step exercise and a final consistency pass (STATUS, timings, Module 6 wording) were added.
 
+‡ Changes 44 → 46: accuracy 3→4, RL understanding 3→4 (learners now build n-step targets and a
+network, with contract tests). Still 3/4: scaffolding, feedback, signal-to-noise, currency,
+orientation, unblocked path. The fixes the grader listed for STATUS.md, Module 7's knob
+exercise, Module 8's checks and Module 2's terms were made after this grade.
+
 **Outcome test, same day** (`OUTCOME_TEST.md` method, the 11-question quiz in `rl_quiz.md` / `rl_quiz_key.md`, one sonnet and one
 haiku learner per arm, graded blind against a key): before 7.5 and 6.0 (mean 6.75/11), after
-11.0 and 10.5 (mean 10.75/11). Before, learners marked most RL ideas "not covered"; after, the
+11.0 and 10.5 (mean 10.75/11). On 2026-10-31 a third learner (haiku) on the second-pass version
+scored 11/11; the same grader, regrading all five sets blind, gave 7.5 / 5.5 before and
+11 / 10.5 / 11 after. Before, learners marked most RL ideas "not covered"; after, the
 only gap was porting the loop to another game. Caveat: the quiz author also wrote the new
 material, so it tests the ideas that author thought mattered.
 

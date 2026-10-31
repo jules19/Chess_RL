@@ -81,8 +81,8 @@ moves: the network supplies V and π, and the search computes Q fresh.
    description.
 2. **Watch priors work.** Run PUCT on the starting position with no
    knowledge and with your Module 4 network, and compare where the 400
-   visits go (run from the repository root, after Module 4 Part B has made
-   `checkpoints/best_model.pt`):
+   visits go. Start `python3` in the repository root and paste the snippet
+   in; it needs `checkpoints/best_model.pt` from Module 4 Part B:
    ```python
    import chess
    from net.model import load_model
@@ -103,7 +103,8 @@ moves: the network supplies V and π, and the search computes Q fresh.
    python3 cli/match.py puct:sims=64,net=checkpoints/best_model.pt mcts:sims=64 \
        --games 6 --max-plies 120 --adjudicate 3
    ```
-   (Module 3 explains the adjudication flags.)
+   (Module 3 explains the adjudication flags; `python3 cli/match.py --help`
+   lists every engine spec and its options.)
    Then play it again with `mcts:sims=64,filter=0` and see whether the
    blunder filter still matters (Module 3, exercise 3, explains the filter).
    **Expected (measured, about 14 minutes, with the one-month network from
@@ -114,9 +115,16 @@ moves: the network supplies V and π, and the search computes Q fresh.
    and the crutch redundant", and you now have a way to test it.
 4. **Exercise: c_puct sweep with a real network.** Play
    `puct:sims=64,net=checkpoints/best_model.pt,c=0.5` against the same with
-   `c=3.0` (and each against the default 1.5), ten games each. With *good*
-   priors, lower exploration usually wins; confirm or refute with your own
-   data, intervals included.
+   `c=3.0` (and each against the default 1.5), with the same
+   `--max-plies 120 --adjudicate 3` flags. With *good* priors, lower
+   exploration usually wins; confirm or refute with your own data, intervals
+   included.
+   **Expected (measured, 6 games, about 45 minutes, one-month network):**
+   c = 0.5 scored 2.5/6 against c = 3.0, five draws and one loss: 42%, with
+   an interval of 14% to 76%. So no conclusion, and with this network's weak
+   value head, "low exploration wins" isn't even the leaning. That's a fair
+   finding to report: the textbook result assumes good priors *and* a good
+   value head.
 5. **Exercise: batch the network calls.** Profile `puct_search` — nearly all
    the time is single-position forward passes. Collect N leaf evaluations
    before calling the network once. The catch: if you run selection N times
@@ -128,6 +136,30 @@ moves: the network supplies V and π, and the search computes Q fresh.
    and back up the real one. This is *the* optimisation that makes real
    AlphaZero implementations fast; even a simple version is a big win on
    GPU.
+   **Expected:** first measure the ceiling. Time `model(x)` for a batch of
+   1, 8 and 32 copies of a position:
+   ```python
+   import time, chess, torch
+   from net.encoding import board_to_tensor
+   from net.model import load_model
+   model, _ = load_model("checkpoints/best_model.pt"); model.eval()
+   x = torch.from_numpy(board_to_tensor(chess.Board())).unsqueeze(0)
+   with torch.no_grad():
+       for b in (1, 8, 32):
+           batch = x.repeat(b, 1, 1, 1); model(batch)          # warm up
+           start = time.time()
+           for _ in range(20):
+               model(batch)
+           per_call = (time.time() - start) / 20
+           print(b, f"{per_call * 1000 / b:.2f} ms per position")
+   ``` We measured, on an 8-core CPU, 21 ms
+   per position one at a time, 4.7 ms each in a batch of 8 and 1.7 ms each
+   in a batch of 32. So batching 8 leaves can make the network part about
+   4-5 times faster; the Python tree walk, which batching doesn't touch,
+   caps the total. Two checks that your version is right: with a batch size
+   of 1 it must give *exactly* the same visit counts as `puct_search`, and
+   with any batch size the root visit counts must still add up to the
+   simulation budget.
 
 ## Check your understanding
 

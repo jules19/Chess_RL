@@ -87,11 +87,16 @@ long-running ML project accumulates the same kinds.
    `@pytest.mark.slow` and exclude them from the default run (one test is
    already marked — find it, and check `pytest -m "not slow"` actually
    deselects it). Fast suites get run; slow ones get skipped by humans.
+   **Check:** `pytest -m "not slow" -q` ends with `1 deselected` today; the
+   suite takes about 15-20 s on a laptop CPU.
 2. **Delete the sys.path hacks.** Every entry-point script does
    `sys.path.insert(0, ...)`. With the package installed (`pip install -e .`)
    they're redundant. Remove them, convert the scripts' `__main__` blocks to
    console entry points in `pyproject.toml` (e.g. `chess-rl-play`,
    `chess-rl-selfplay`), and update the docs.
+   **Check:** `grep -rln "sys.path.insert" --include=*.py . | grep -v ^./test/`
+   lists 28 files today and should list none when you're done; `pytest -q`
+   stays green; and each new command (e.g. `chess-rl-play --help`) runs.
 3. **The src-layout refactor.** Top-level packages named `net`, `engine`,
    `search` are collision bait in site-packages (the pyproject even warns
    about it). Restructure into `src/chess_rl/{engine,net,search,selfplay,...}`,

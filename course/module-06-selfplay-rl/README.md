@@ -1,11 +1,12 @@
 # Module 6 — Self-Play Reinforcement Learning
 
 > **Where you are:** the top rung. Remove the human games: the engine generates its own experience, and every piece from Modules 1-5 becomes one step of a reinforcement-learning loop.
-> **Time:** 5-8 hours, plus one overnight run. Part A (tic-tac-toe) takes about an hour and every run finishes in seconds. Part B (chess) is mostly waiting.
+> **Time:** 5-8 hours, plus one overnight run. Part A (tic-tac-toe) takes 2-3 hours, including two coding exercises; most runs finish in seconds. Part B (chess) is mostly waiting.
 > **You'll be able to:**
 > - explain the AlphaZero loop as RL: which part evaluates the policy, which improves it, and where the reward comes from
 > - watch an RL loop learn, read its learning curve, and break it on purpose in three different ways
-> - compare Monte Carlo and TD value targets from your own measurements
+> - compare Monte Carlo, TD and n-step value targets from your own measurements, and build the n-step version yourself
+> - replace a lookup table with a neural network and measure what generalisation buys and costs
 > - run the chess loop, and write a report that separates real learning from noise
 
 ## Concepts
@@ -93,7 +94,8 @@ and it's solved, so the lab can score the agent against perfect play.
 The "network" is a table with one entry per position; Q2 below asks what
 that changes.
 
-1. **Run it** (about 7 seconds):
+1. **Run it** (about 7 seconds; the default seed is 0, so your numbers
+   should match the table below exactly):
    ```bash
    python3 selfplay/tictactoe_lab.py
    ```
@@ -157,7 +159,8 @@ that changes.
    </details>
 
 4. **Off-policy data: a buffer that never forgets.** Predict first, then run
-   three seeds of each, because one run proves nothing:
+   three seeds of each, because one run proves nothing. `tail -1` keeps the
+   last row, iteration 20, in the same columns as step 1:
    ```bash
    for seed in 0 1 2; do
      python3 selfplay/tictactoe_lab.py --seed $seed | tail -1
@@ -215,9 +218,45 @@ that changes.
    practical RL systems tune n.
    </details>
 
+7. **Exercise: replace the table with a neural network.** The table can't
+   generalise: a position it never trained on keeps a uniform prior and a
+   value of 0. The chess engine uses a network precisely because it *can*.
+   See it for yourself on a game where you can measure it. Write
+   `MLPPolicyValue` in `selfplay/tictactoe_lab.py` (this step needs torch:
+   `pip install -e ".[train]"`): the same four methods as
+   `TablePolicyValue`, backed by a small torch network (27 one-hot inputs,
+   two hidden layers of 64, a 9-way policy head, a tanh value head, and the
+   soft-target loss from `selfplay/train_loop.py`). `run(model=...)` already
+   accepts it; add a `--model mlp` flag. The contract, including a hint
+   about caching outputs so the search stays fast, is
+   `tests/course/test_module06_network.py`: un-skip it and make it pass.
+   Then compare it with the table over three seeds (about a minute or two
+   per run). Predict first: on which columns will the network beat the
+   table, and on which will it lose?
+   <details><summary>What we measured (reference solution, seeds 0-2, iteration 20)</summary>
+
+   | | table | network |
+   |---|---|---|
+   | `best_move` (all 4,520 positions) | 70.2 / 70.0 / 72.0 | **76.9 / 75.5 / 75.1** |
+   | `vs_random` | 80 / 84 / 82 | 82 / 90 / 83 |
+   | `vs_perfect` | **89 / 84 / 83** | 19 / 72 / 68 |
+
+   The network wins where generalisation matters. It plays a perfect move in
+   more positions, including ones self-play never reached, and does at least
+   as well against a random opponent, who drags it into exactly those
+   positions. It loses on precision and stability. Every update shifts its
+   answers everywhere at once, so learning one line can unlearn another. Its
+   `vs_perfect` and `value_mse` jump up and down between iterations, and one
+   seed collapsed to 19%. That instability is the real case for the arena
+   gate. But turning `--gate` on with the network mostly froze learning
+   again, as in step 3. Generalisation and stability pulling against each
+   other is the central difficulty of RL with function approximation, and
+   the chess network lives with it at a far larger scale.
+   </details>
+
 ## Do — Part B: the chess loop
 
-7. **Run the toy loop** (about 1.5 minutes on an 8-core CPU; it proves
+8. **Run the toy loop** (about 1.5 minutes on an 8-core CPU; it proves
    plumbing, not strength):
    ```bash
    python3 selfplay/train_loop.py --iterations 2 --games-per-iter 2 \
@@ -234,7 +273,7 @@ that changes.
    game is scored a draw and every reward is 0. That is the **sparse reward
    problem** in action: the value head has nothing to learn from until games
    start ending. It's also why warm-starting from Module 4 helps so much.
-8. **Run a real (small) loop overnight.** Warm-start from your Module 4
+9. **Run a real (small) loop overnight.** Warm-start from your Module 4
    supervised checkpoint — this is what AlphaGo did before AlphaZero went
    tabula rasa:
    ```bash
@@ -243,7 +282,8 @@ that changes.
    ```
    Expect several hours on a laptop CPU (a rough estimate scaled from the
    toy run; measure yours from the first iteration's timing and write it
-   down). `selfplay_checkpoints/run_log.csv` records, per iteration, the
+   down). The run is done when its 10 iterations finish; there is no early
+   stop. `selfplay_checkpoints/run_log.csv` records, per iteration, the
    buffer size, the policy and value losses, the arena score and whether the
    candidate was promoted. A healthy run shows the policy loss falling
    between iterations; promotions may be rare (Q1). Then test whether the
@@ -254,21 +294,34 @@ that changes.
    ```
    Twenty games is a smoke test (±22 points, Module 7 Part 0): it can catch a
    big gain or a collapse. For a claim you'd defend, run 100 overnight.
-9. **Exercise: sabotage study, chess edition.** Three short runs:
+10. **Exercise: sabotage study, chess edition.** Three short runs:
    (a) `--no-root-noise`, (b) `--temperature-moves 0`,
-   (c) `--promote-threshold 0.30`. Use the toy settings from step 7 with
+   (c) `--promote-threshold 0.30`. Use the toy settings from step 8 with
    `--iterations 5`, e.g.
    `python3 selfplay/train_loop.py --iterations 5 --games-per-iter 2 --simulations 16 --train-steps 20 --arena-games 2 --no-root-noise --checkpoint-dir sabotage_a`.
    Predict each failure mode from what Part A showed you *before* running,
    then check `run_log.csv` (look at the promoted column and whether the
-   policy loss moves). Write three
-   sentences, including whether chess at this scale even shows the effect.
-10. **Exercise: buffer-size sweep.** `--buffer-capacity 2000` vs `50000` at
-   fixed games per iteration. Which promotes more often early? Later? How
+   policy loss moves). Write three sentences, including whether chess at
+   this scale even shows the effect.
+   <details><summary>A hint for (c), measured</summary>
+
+   With untrained networks every arena game is a draw, so every candidate
+   scores 50%, which clears a 30% bar: the `promoted` column is all 1s. A
+   gate below 50% promotes candidates that merely *tie*, and later ones
+   that lose, so it no longer protects anything. (a) and (b) are subtler at
+   this scale; that's what makes them worth predicting.
+   </details>
+11. **Exercise: buffer-size sweep.** `--buffer-capacity 2000` vs `50000` at
+   fixed games per iteration, e.g. step 9's command with `--iterations 5`,
+   once with `--buffer-capacity 2000 --checkpoint-dir buf_small` and once
+   with `--buffer-capacity 50000 --checkpoint-dir buf_large`; then compare
+   the `promoted` columns of the two `run_log.csv` files. Each run takes a
+   few hours on a laptop CPU. Which promotes more often early? Later? How
    many seeds would you need to believe the answer (Part A, step 4)?
-11. **Exercise: resumable loops.** The loop already saves
+12. **Exercise: resumable loops.** The loop already saves
    `champion.pt`/`replay_buffer.npz`; implement
-   `load_resume_state(checkpoint_dir)` and a `--resume` flag so a killed
+   `load_resume_state(checkpoint_dir)` in `selfplay/train_loop.py`, and a
+   `--resume` flag in its `main()`, so a killed
    run continues (load buffer + champion, keep iteration numbering). Long
    RL runs die; checkpointing discipline is part of the craft. Contract
    and checkpoint: `tests/course/test_module06_resume.py` — un-skip it.
@@ -348,14 +401,15 @@ measure, the gate stops the loop learning.
 
 ```bash
 pytest tests/test_selfplay.py tests/test_tictactoe_lab.py -q   # regression suite still green
-pytest tests/course/test_module06_nstep.py tests/course/test_module06_resume.py -q   # un-skipped and passing
+pytest tests/course/test_module06_nstep.py tests/course/test_module06_network.py \
+       tests/course/test_module06_resume.py -q                  # un-skipped and passing
 ```
 
 - [ ] Both green
 - [ ] **Part A:** your predictions for steps 2-5 written down *before* you
       opened the answers, and one sentence each on what you saw; your n-step
-      measurements from step 6
-- [ ] **A run report, not just a run**: for your overnight loop (Do #8),
+      measurements from step 6 and your table-vs-network comparison from step 7
+- [ ] **A run report, not just a run**: for your overnight loop (Do #9),
       using `run_log.csv` — iterations completed, positions in the buffer,
       the arena score *per iteration*, promotions, and the champion vs
       initial match with its interval. Then one paragraph interpreting it:

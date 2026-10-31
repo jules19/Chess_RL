@@ -12,7 +12,8 @@ Requires torch: `pip install -e ".[train]"`.
 
 **Pace yourself — this is two sessions, not one.**
 **Part A** (representation: encoding + architecture, exercises 1-3) needs
-no data and no training. **Part B** (data + training, exercises 4-6) needs a
+no training; only exercise 2 needs the data from Part B's step 4, a 2-3
+minute download. **Part B** (data + training, exercises 4-6) needs a
 17 MB download and background compute. Do Part A, take a break, then start
 Part B's quick run and read while it trains.
 
@@ -119,18 +120,40 @@ Two more ideas you'll see in the results:
 
 ## Do — Part A: the representation (no data needed)
 
-1. **Trace one example by hand.** Take 1.e4: write down which tensor plane
-   changes and which policy index is the target. Verify with three lines of
-   Python.
-2. **Exercise: find the bug's blast radius.** The fix is commit `9b6cb6c`
-   (`git log -- net/encoding.py`). Save the encoder from just before it with
-   `git show 9b6cb6c^:net/encoding.py > old_encoding.py`, import its
-   `move_to_index`, and count what fraction of moves in a PGN would have
-   produced an index ≥ 4672 (and so been silently dropped). You need a PGN:
-   run Part B's step 4 first (it takes 2-3 minutes) and use
-   `data/filtered.pgn`. You also need a full `git clone`, because a
-   downloaded zip has no history. Write the number down — that's the cost
-   of an untested encoder.
+1. **Trace one example by hand.** Take 1.e4: predict which tensor planes
+   change and which policy index is the target (the plane layout is
+   commented in `board_to_tensor`). Then check:
+   ```python
+   import chess, numpy as np
+   from net.encoding import board_to_tensor, move_to_index
+   before = board_to_tensor(chess.Board())
+   board = chess.Board(); board.push_san("e4")
+   print(sorted({int(p) for p in np.argwhere(before != board_to_tensor(board))[:, 0]}))
+   print(move_to_index(chess.Move.from_uci("e2e4")))
+   ```
+   **Expected:** planes `[0, 16, 19]` and index `796`. Plane 0 is White's
+   pawns (e2 empties, e4 fills); plane 16 is side to move (all ones become
+   all zeros: Black to move); plane 19 marks the en-passant square, e3.
+   If you predicted only plane 0, you've just found the two "bookkeeping"
+   planes the network needs to know whose turn it is and what's legal.
+2. **Exercise: find the bug's blast radius.** The old encoder gave every
+   queen promotion an index ≥ 4672, and the old guard silently skipped
+   those moves. How much training data did that throw away? Run Part B's
+   step 4 first (2-3 minutes) so you have `data/filtered.pgn`, then count:
+   - **With git history** (a full `git clone`): the fix is commit `9b6cb6c`.
+     Save the encoder from before it with
+     `git show 9b6cb6c^:net/encoding.py > old_encoding.py`, load its
+     `move_to_index`, and count the moves whose index is ≥ 4672.
+   - **Without history** (a downloaded zip): count the promotions instead,
+     with `move.promotion` from python-chess. That's the set the bug hit.
+
+   **Expected (measured on `data/filtered.pgn`):** with history, 678 of
+   349,814 moves were dropped, **0.19%**; without it you'll count 683
+   promotions (the old encoder lost all but 5 of them). That sounds harmless
+   until you notice it's every one of the 660 queen promotions plus most
+   under-promotions: the network could never have learned to promote at
+   all. A small fraction of the data can be all
+   of a skill. That's the cost of an untested encoder.
 3. **Exercise: augmentation.** Chess positions can be mirrored horizontally
    (a-file ↔ h-file), doubling your training data for free. Implement
    `mirror_board_tensor` and `mirror_move` in `net/encoding.py`; the
@@ -228,18 +251,38 @@ Two more ideas you'll see in the results:
    carry into Module 5.
 
    **What counts as success.** Compare against the baselines, not a target
-   number: the policy should clearly beat "most common move", and the value
-   head should beat "always even" with a clearly positive correlation with
-   material. The original project plan's targets (val accuracy > 35%, val
+   number. As a rule of thumb: the policy's best-legal-move figure at least
+   twice the "most common move" baseline, and the value head's error below
+   "always even" with a correlation with material above +0.3. The one-month
+   run above meets both at epoch 1 and the policy one at epoch 3. The original project plan's targets (val accuracy > 35%, val
    loss < 2.5) were never measured on this code; treat them as a stretch for
-   much more data (several months, `--month 2013-02` and on), not as the bar
-   for this module. Watch the train/val gap at every size: more data beats
-   more epochs.
+   much more data, not as the bar for this module. Watch the train/val gap
+   at every size: more data beats more epochs.
 
-7. **Smell-test against search.** `training/evaluate.py <ckpt>` plays the
-   raw policy against minimax depth 3 and MCTS. Expect the raw policy to
-   lose to minimax: it knows something about moves, but it can't look
-   ahead. That gap is exactly what Module 5 closes.
+   **More data, when you want it.** Each extra month is one command, and PGN
+   files can simply be concatenated:
+   ```bash
+   python3 training/get_lichess.py --month 2013-02 --output data/filtered_2013-02.pgn
+   cat data/filtered.pgn data/filtered_2013-02.pgn > data/filtered_2months.pgn
+   ```
+   Months grow quickly (2013-12 is several times January's size), so check
+   `--help` and your disk before going far.
+
+   **About the measured numbers.** Your figures will differ by a point or
+   two: the network starts from random weights and batches are shuffled. The
+   correlation with material is a plain (Pearson) correlation between the
+   value head's output and the side to move's material balance, over all
+   held-out positions; `training/eval_supervised.py` documents each figure
+   at the top of the file.
+
+7. **Smell-test against search.**
+   `python3 training/evaluate.py checkpoints/best_model.pt --games 10` plays
+   the raw policy (no search) against minimax depth 3 and rollout MCTS and
+   prints the results.
+   **Expected (measured with `--games 4`, about 30 minutes):** the
+   one-month network lost all 4 games to minimax and scored 0.5/4 against
+   MCTS. Expect the raw policy to lose: it knows something about moves, but
+   it can't look ahead. That gap is exactly what Module 5 closes.
 
 ## Check your understanding
 

@@ -14,7 +14,9 @@ something that demonstrated superiority.
 
 Why a threshold above 50%? Match results are noisy — over a handful of
 games a genuinely equal (or slightly worse) network wins half the time.
-AlphaZero required 55% over 400 games. With few games, be conservative:
+AlphaGo Zero required 55% over 400 games (AlphaZero, its successor,
+dropped the gate and always trained the latest network; course Module 6
+explains why). With few games, be conservative:
 promoting a weaker net is costlier than keeping the champion one more
 iteration.
 

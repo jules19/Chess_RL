@@ -192,6 +192,14 @@ class TablePolicyValue:
             priors = {m: p[m] / total for m in legal}
         return priors, self.value.get(board.key(), 0.0)
 
+    def value_of(self, key) -> float:
+        """Value of a position given by its key (side-to-move relative)."""
+        return self.value.get(key, 0.0)
+
+    def has_seen(self, key) -> bool:
+        """True if this position was ever trained on. Only a table can say."""
+        return key in self.value
+
     def train(self, states, policies, values, lr: float):
         for s, pi, z in zip(states, policies, values):
             key = tuple(int(x) for x in s)
@@ -239,7 +247,7 @@ def selfplay_game(net, simulations, temperature_moves, root_noise, rng, td=False
     for i, (s, pi, turn) in enumerate(history):
         if i + 1 < len(history):
             next_key = tuple(int(x) for x in history[i + 1][0])
-            target = -net.value.get(next_key, 0.0)
+            target = -net.value_of(next_key)
         else:
             target = float(winner * turn)
         examples.append((s, pi, target))
@@ -284,6 +292,7 @@ def evaluate(net, positions, rng, games=100) -> Dict[str, float]:
     best_move  : % of reachable positions where the prior's favourite move
                  is a perfect-play move (what the 'network' alone knows)
     coverage   : % of reachable positions the table has ever been trained on
+                 (blank for models that can't say, such as a network)
     vs_perfect : raw policy (no search) vs a perfect player, % of games NOT
                  lost (a perfect player can't be beaten; 100% = always draws)
     vs_random  : raw policy vs a random mover, score %
@@ -291,9 +300,9 @@ def evaluate(net, positions, rng, games=100) -> Dict[str, float]:
     se = hit = covered = 0
     for b in positions:
         k = b.key()
-        se += (net.value.get(k, 0.0) - solve(k)) ** 2
+        se += (net(b)[1] - solve(k)) ** 2
         hit += net.raw_move(b) in optimal_moves(b)
-        covered += k in net.value
+        covered += bool(getattr(net, 'has_seen', lambda key: False)(k))
 
     def perfect(b):
         return rng.choice(optimal_moves(b))
@@ -310,18 +319,26 @@ def evaluate(net, positions, rng, games=100) -> Dict[str, float]:
             w = play(perfect, net.raw_move); not_lost += w != 1
             w = play(randmove, net.raw_move); rand_score += {-1: 1, 0: 0.5, 1: 0}[w]
     n = len(positions)
-    return {'value_mse': se / n, 'best_move': 100 * hit / n, 'coverage': 100 * covered / n,
+    coverage = 100 * covered / n if hasattr(net, 'has_seen') else float('nan')
+    return {'value_mse': se / n, 'best_move': 100 * hit / n, 'coverage': coverage,
             'vs_perfect': 100 * not_lost / games, 'vs_random': 100 * rand_score / games}
 
 
 def run(iterations=20, games_per_iter=100, simulations=25, temperature_moves=2,
         root_noise=True, buffer_capacity=4000, train_steps=20, batch_size=256,
         lr=0.3, arena_games=20, promote_threshold=0.55, gate=False, td=False,
-        seed=0, csv_path=None, verbose=True) -> List[Dict[str, float]]:
-    """Run the loop; returns one metrics row per iteration (iteration 0 = untrained)."""
+        model=TablePolicyValue, seed=0, csv_path=None, verbose=True) -> List[Dict[str, float]]:
+    """
+    Run the loop; returns one metrics row per iteration (iteration 0 = untrained).
+
+    model: a class with the TablePolicyValue interface - __call__(board) ->
+    (priors, value), train(states, policies, values, lr), raw_move(board),
+    value_of(key) - built with no arguments. Module 6 exercise 7 has you
+    write a neural-network one.
+    """
     rng = random.Random(seed)
     positions = reachable_positions()
-    champion = TablePolicyValue()
+    champion = model()
     buffer = ReplayBuffer(capacity=buffer_capacity)
     rows = []
 

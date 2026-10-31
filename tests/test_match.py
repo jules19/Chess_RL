@@ -49,3 +49,17 @@ def test_adjudication_scores_a_capped_game_by_material():
     assert play_game(first_legal, first_legal, [], max_plies=0, fen=queen_up,
                      adjudicate=3)[0] == '1-0'
     assert play_game(first_legal, first_legal, [], max_plies=0, adjudicate=3)[0] == '1/2-1/2'
+
+
+def test_uci_spec_drives_an_external_engine_with_options():
+    """The uci: spec is how Module 7 plays Stockfish; test it on this repo's own UCI engine."""
+    import os
+    import sys
+    repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    engine = make_engine(f"uci:cmd={sys.executable} {repo}/chess_rl_uci.py,"
+                         f"movetime=0.05,Engine Type=random")
+    try:
+        board = chess.Board()
+        assert engine(board) in board.legal_moves
+    finally:
+        engine.close()

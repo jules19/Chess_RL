@@ -16,6 +16,10 @@ Engine specs (options after ':' separated by ','):
     puct:sims=100                       PUCT with uniform priors (no knowledge)
     puct:sims=100,net=checkpoints/best_model.pt,c=1.5
     puct:sims=100,net=material          PUCT with material_policy_value (Module 5 exercise)
+    uci:cmd=stockfish,movetime=0.1,UCI_LimitStrength=true,UCI_Elo=1350
+                                        any UCI engine, e.g. strength-limited Stockfish
+                                        (Module 7). cmd may contain spaces; other
+                                        options are passed to the engine as UCI options.
 
 Examples:
     python3 cli/match.py minimax:depth=2 random --games 10
@@ -30,6 +34,7 @@ import importlib
 import math
 import os
 import random
+import shlex
 import sys
 import time
 
@@ -100,6 +105,27 @@ def make_engine(spec):
             model.eval()
             fn = puct.network_policy_value(model)
         return lambda board: puct.best_move_puct(board, fn, simulations=sims, c_puct=c)
+
+    if name == 'uci':
+        import chess.engine
+        if 'cmd' not in o:
+            raise SystemExit("uci engines need cmd=..., e.g. uci:cmd=stockfish")
+        engine = chess.engine.SimpleEngine.popen_uci(shlex.split(o.pop('cmd')))
+        limit = chess.engine.Limit(time=float(o.pop('movetime', 0.1)),
+                                   depth=int(o.pop('depth')) if 'depth' in o else None)
+
+        def option(value):
+            if value.lower() in ('true', 'false'):
+                return value.lower() == 'true'
+            return int(value) if value.lstrip('-').isdigit() else value
+        engine.configure({k: option(v) for k, v in o.items()})
+
+        def move(board):
+            return engine.play(board, limit).move
+        # Close it explicitly when done: quitting an engine from an atexit
+        # hook can deadlock, because python-chess drives it from a thread.
+        move.close = engine.quit
+        return move
 
     raise SystemExit(f"Unknown engine spec '{spec}' (see python3 cli/match.py --help)")
 
@@ -187,6 +213,14 @@ def main():
     random.seed(args.seed)
     rng = random.Random(args.seed)
     a, b = make_engine(args.engine_a), make_engine(args.engine_b)
+    try:
+        run_match(args, a, b, rng)
+    finally:
+        for engine in (a, b):
+            getattr(engine, 'close', lambda: None)()
+
+
+def run_match(args, a, b, rng):
     pairs = (args.games + 1) // 2
     scores, wins, draws, losses = [], 0, 0, 0
     pgn_file = open(args.pgn, 'w') if args.pgn else None

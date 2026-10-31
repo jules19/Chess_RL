@@ -10,7 +10,8 @@ Evaluation Methods:
 4. Tactical puzzle solving
 
 This provides objective measurement of whether supervised learning improved
-the network's playing strength to match/exceed hand-crafted evaluation (~1400-1600 Elo).
+the network's playing strength to match/exceed hand-crafted evaluation (historically
+self-estimated at ~1400-1600 Elo, never measured; course Module 7 measures it).
 
 Usage:
     # Evaluate against minimax and MCTS
@@ -342,9 +343,10 @@ def main():
     print("✅ Evaluation Complete")
     print("="*70)
     print("\nInterpretation:")
-    print("  • 50%+ vs Minimax/MCTS → Competitive (~1400-1600 Elo)")
-    print("  • 40-50% → Reasonable, needs more training")
-    print("  • <40% → Weak, review training pipeline")
+    print("  • This is the RAW policy: no search. Losing to minimax and MCTS is")
+    print("    normal here; search is what Module 5 adds.")
+    print("  • A few games say little (python3 cli/match.py prints an interval).")
+    print("  • To check the training itself, use training/eval_supervised.py.")
 
 
 if __name__ == "__main__":

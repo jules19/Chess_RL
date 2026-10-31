@@ -19,12 +19,21 @@ exact place it's implemented:
    opponent would never allow it. Same answer as plain minimax, a fraction
    of the work. Effectiveness depends entirely on…
 3. **Move ordering** — searching good moves first makes cutoffs happen early.
-   See `order_moves()` (MVV-LVA for captures) and the *hash move* trick.
+   See `order_moves()`. *MVV-LVA* ("most valuable victim, least valuable
+   attacker") tries captures first, biggest prize first and cheapest
+   capturer first: pawn takes queen before queen takes pawn, because winning
+   captures are the moves most likely to cause a cutoff. The *hash move* is
+   the best move found for this same position by a previous, shallower
+   search; it's usually still best, so trying it first is the strongest
+   single ordering trick.
 4. **Quiescence search** — never evaluate in the middle of a capture
    sequence (the "horizon effect"). `quiescence_search()` extends the search
    with captures/checks/promotions until the position is quiet.
 5. **Transposition table** — different move orders reach the same position;
-   cache results by Zobrist hash. The subtle part is that alpha-beta often
+   cache results by Zobrist hash. A *Zobrist hash* gives every
+   (piece, square) pair a fixed random 64-bit number and XORs together the
+   numbers for the pieces on the board. Making a move only XORs a couple of
+   numbers in and out, so the position's key updates almost for free. The subtle part is that alpha-beta often
    proves only a *bound*, not an exact value — see the `TT_EXACT` /
    `TT_LOWER_BOUND` / `TT_UPPER_BOUND` discussion in the file.
 6. **Iterative deepening** — search depth 1, 2, 3… re-searching shallow
@@ -95,7 +104,16 @@ lines to plan (Module 3) are what the rest of the course adds.
    to watch the ~18-second failure, then un-skip and make it pass.
 3. **Exercise: killer moves.** Quiet moves that caused a cutoff at one node
    often cause cutoffs at sibling nodes. Keep two "killer" moves per depth
-   and try them right after the hash move. Measure the node reduction.
+   and try them right after the hash move. Only *quiet* moves (not
+   captures) count as killers: captures are already ordered first by
+   MVV-LVA. Measure with exercise 1's snippet, on its position *and* on the
+   starting position, at depth 4.
+   **Expected (measured with a reference solution):** the score must not
+   change (it's still alpha-beta; if it does, you've broken something). Node
+   counts: the starting position drops from 13,592 to about 8,100 (−40%),
+   exercise 1's position from 23,228 to about 21,700 (−7%). Notice where it
+   helps: quiet positions, exactly where MVV-LVA had nothing to reorder.
+   Your numbers will differ a little with how you store and try killers.
 4. **Does the TT change the move?** Predict first, then check. Pass
    `verbose=True` and read the `Nodes searched:` line it prints last:
    ```python

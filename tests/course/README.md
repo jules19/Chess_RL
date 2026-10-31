@@ -17,3 +17,10 @@ Each test's docstring is the exercise contract: the exact function
 signature and behavior you're implementing. If you disagree with the
 contract, changing it is allowed — that's a design decision, and defending
 it is part of the exercise.
+
+Reference solutions live on the `course-solutions` branch for the
+exercises of Modules 1-6 that predate October 2026. The two newest
+(Module 6 exercises 6 and 7: `test_module06_nstep.py` and
+`test_module06_network.py`) have no published solution yet; their
+module text quotes measured results from a reference solution, so you can
+still check your numbers.
