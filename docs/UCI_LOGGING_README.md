@@ -24,7 +24,7 @@ UCI Log started: 2025-11-14 10:23:45
 ============================================================
 [2025-11-14 10:23:45.123] IN : uci
 [2025-11-14 10:23:45.124] OUT: id name Chess_RL v0.1.0
-[2025-11-14 10:23:45.124] OUT: id author Your Name
+[2025-11-14 10:23:45.124] OUT: id author Chess_RL contributors
 [2025-11-14 10:23:45.125] OUT: option name Engine Type type combo default minimax...
 [2025-11-14 10:23:45.125] OUT: uciok
 [2025-11-14 10:23:45.456] IN : position startpos moves e2e4

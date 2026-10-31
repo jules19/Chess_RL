@@ -17,3 +17,9 @@ Each test's docstring is the exercise contract: the exact function
 signature and behavior you're implementing. If you disagree with the
 contract, changing it is allowed — that's a design decision, and defending
 it is part of the exercise.
+
+Reference solutions for every exercise here live on the
+**`course-solutions`** branch: `git diff main course-solutions` shows them
+all as one readable diff, and on that branch every test passes with no
+skips. The module pages also quote measured results, so you can check your
+numbers without looking.

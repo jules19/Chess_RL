@@ -9,3 +9,4 @@ numpy>=1.24
 torch>=2.0
 tqdm>=4.60
 tensorboard>=2.10
+zstandard>=0.21

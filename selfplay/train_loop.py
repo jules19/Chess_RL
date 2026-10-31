@@ -76,11 +76,14 @@ def train_candidate(model, buffer, device, train_steps=100, batch_size=64,
     Note: STEPS, not epochs. The buffer is a moving window, so "one pass
     over the data" isn't meaningful the way it is in supervised learning —
     we just take N gradient steps on freshly sampled batches.
+
+    Returns (mean policy loss, mean value loss) over the steps, for the run log.
     """
     model.train()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate,
                                  weight_decay=weight_decay)
 
+    policy_total = value_total = 0.0
     for step in range(1, train_steps + 1):
         states, policies, values = buffer.sample(batch_size, rng=rng)
         states = torch.from_numpy(states).to(device)
@@ -96,12 +99,15 @@ def train_candidate(model, buffer, device, train_steps=100, batch_size=64,
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
         optimizer.step()
+        policy_total += policy_loss.item()
+        value_total += value_loss.item()
 
         if verbose and (step % max(1, train_steps // 5) == 0 or step == 1):
             print(f"    step {step}/{train_steps}: loss {loss.item():.4f} "
                   f"(policy {policy_loss.item():.4f}, value {value_loss.item():.4f})")
 
     model.eval()
+    return policy_total / train_steps, value_total / train_steps
 
 
 def save_checkpoint(model, path, iteration):
@@ -125,6 +131,7 @@ def run_training_loop(iterations=5,
                       promote_threshold=0.55,
                       buffer_capacity=50_000,
                       temperature_moves=20,
+                      root_noise=True,
                       max_moves=200,
                       learning_rate=1e-3,
                       res_blocks=4,
@@ -160,6 +167,9 @@ def run_training_loop(iterations=5,
 
     buffer = ReplayBuffer(capacity=buffer_capacity)
     promotions = 0
+    log_path = os.path.join(checkpoint_dir, "run_log.csv")
+    with open(log_path, "w") as log:
+        log.write("iteration,positions_in_buffer,policy_loss,value_loss,arena_score,promoted\n")
 
     for iteration in range(1, iterations + 1):
         print(f"\n{'=' * 70}\nIteration {iteration}/{iterations}\n{'=' * 70}")
@@ -173,6 +183,7 @@ def run_training_loop(iterations=5,
             temperature_moves=temperature_moves,
             max_moves=max_moves,
             rng=rng,
+            add_root_noise=root_noise,
             verbose=verbose,
         )
 
@@ -183,7 +194,7 @@ def run_training_loop(iterations=5,
         # 3. TRAIN a candidate clone
         print(f"Training candidate: {train_steps} steps, batch {batch_size}")
         candidate = copy.deepcopy(champion)
-        train_candidate(candidate, buffer, device,
+        policy_loss, value_loss = train_candidate(candidate, buffer, device,
                         train_steps=train_steps, batch_size=batch_size,
                         learning_rate=learning_rate, rng=rng, verbose=verbose)
 
@@ -197,12 +208,16 @@ def run_training_loop(iterations=5,
                            verbose=verbose)
         print(f"Candidate score: {score:.0%}")
 
-        if score > promote_threshold:
+        promoted = score > promote_threshold
+        if promoted:
             champion = candidate
             promotions += 1
             print("✓ PROMOTED: candidate is the new champion")
         else:
             print("✗ Rejected: champion stays (candidate not clearly better)")
+        with open(log_path, "a") as log:
+            log.write(f"{iteration},{len(buffer)},{policy_loss:.4f},{value_loss:.4f},"
+                      f"{score:.3f},{int(promoted)}\n")
 
         save_checkpoint(champion, os.path.join(checkpoint_dir, "champion.pt"), iteration)
         save_checkpoint(candidate, os.path.join(checkpoint_dir, f"candidate_iter_{iteration}.pt"), iteration)
@@ -211,6 +226,7 @@ def run_training_loop(iterations=5,
     print(f"\n{'=' * 70}")
     print(f"✅ Loop complete: {iterations} iterations, {promotions} promotions")
     print(f"Champion saved to {os.path.join(checkpoint_dir, 'champion.pt')}")
+    print(f"Per-iteration log: {log_path}")
     print(f"{'=' * 70}")
     return champion
 
@@ -232,6 +248,8 @@ def main():
     parser.add_argument('--promote-threshold', type=float, default=0.55)
     parser.add_argument('--buffer-capacity', type=int, default=50_000)
     parser.add_argument('--temperature-moves', type=int, default=20)
+    parser.add_argument('--no-root-noise', action='store_true',
+                        help='turn off Dirichlet noise in self-play (sabotage experiment)')
     parser.add_argument('--max-moves', type=int, default=200)
     parser.add_argument('--lr', type=float, default=1e-3)
     parser.add_argument('--res-blocks', type=int, default=4)
@@ -254,6 +272,7 @@ def main():
         promote_threshold=args.promote_threshold,
         buffer_capacity=args.buffer_capacity,
         temperature_moves=args.temperature_moves,
+        root_noise=not args.no_root_noise,
         max_moves=args.max_moves,
         learning_rate=args.lr,
         res_blocks=args.res_blocks,

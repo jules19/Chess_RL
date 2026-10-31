@@ -1,0 +1,99 @@
+# Changelog
+
+Moved here from `STATUS.md` on 2026-10-31, so the status page stays a
+one-screen summary. Newest first.
+
+## 2026-10
+
+- **Course pedagogy: teach RL as RL, and make every step runnable.**
+  Every module now opens with where you are, a time estimate and checkable
+  objectives, and has an "RL lens" section; `course/RL_CONCEPTS.md` maps
+  every RL idea onto the code. Module 6 starts with
+  `selfplay/tictactoe_lab.py`, the same loop (reusing `puct_search` and the
+  replay buffer) on tic-tac-toe, which learns in seconds and is scored
+  against perfect play, with sabotage, gate, buffer and Monte Carlo vs TD
+  experiments. New tools: `cli/match.py` (engine-vs-engine matches with a
+  95% interval), `training/get_lichess.py` (download + decompress + filter),
+  `training/eval_supervised.py` (network vs baselines). The self-play loop
+  gained `--no-root-noise` and a per-iteration `run_log.csv`. Expected
+  results quoted in the course are measured. Fixed along the way: Module 4's
+  data recipe (it kept 3 games), two wrong self-check answers, and dangling
+  references to Module 7. Rubric criteria 11-13 (orientation, unblocked
+  path, RL understanding) added in `docs/pedagogy/RUBRIC.md`.
+  Second pass: learners now *build* RL pieces (Module 6 exercises 6-7:
+  n-step returns, and a neural network replacing the tic-tac-toe table,
+  each with a contract test in `tests/course/`); `cli/match.py` gained a
+  `uci:` spec so Stockfish can be a calibrated opponent without cutechess;
+  measured expected results added for Module 2 killer moves, Module 4
+  exercises 1-2 (no git history needed), and Module 5's c_puct sweep and
+  batching.
+
+- **UCI `info score` fixed:** it printed a static evaluation from White's view;
+  it now reports the minimax search score from the side to move, at the depth
+  actually searched. Regression test in `tests/test_uci.py`.
+- **Train/validation split by game:** `training/dataset.py` split by position, so
+  validation accuracy was inflated by near-duplicate positions. `split_by_game()`
+  now holds out whole games, with a regression test in `tests/test_training.py`.
+  Both are written up as Module 8 case studies 6–7.
+- **Course navigation:** Module 8 now links on to Module 9, and the older HTML
+  tutorials in `docs/tutorials/` carry a banner marking them as historical
+  background that the course supersedes.
+- **Documentation check and teaching evaluation** in `docs/pedagogy/`:
+  `check_docs.py` runs every command in the learner docs in a sandbox copy and
+  checks every file reference; `RUBRIC.md` and `OUTCOME_TEST.md` describe how
+  the course's teaching quality is scored. Fixed what the first run found: a
+  missing script and an unexplained exercise file in `docs/tutorials/minimax_tutorial.html`,
+  and README's training command not saying where its data comes from.
+- **An earlier local training run, for the record:** a 2×64 network trained for 5
+  epochs on 411 Lichess blitz games (~1500 rating) with the *old* move encoding
+  was measured before that encoding was fixed. It was weak: the human move ranked
+  first 13% of the time (random legal move: 6%), value sign right 54% of the time,
+  0 wins in 40 games against random, material-only and minimax (depth 1–2)
+  opponents. That checkpoint is incompatible with the fixed encoding and was
+  superseded by the October runs in the table above.
+
+## 2026-07
+
+- **Pedagogy review actioned** (external instructional-design review of the
+  course): added `tests/course/` — skip-marked exercise tests that fail
+  until the student does the work, making the "un-skip the test" checkpoint
+  mechanic real; added "Check your understanding" predict-then-peek Q&A to
+  every module; rewrote Module 6's checkpoint to grade interpretation of
+  arena evidence rather than a luck-dependent promotion; added Module 4
+  data logistics (small Lichess dump, zstd recipe, time estimates) and an
+  honest ML-prerequisites note; fixed factual drift (parameter count is
+  1.8M, not the long-claimed ~830K).
+- **Fixed: `training/evaluate.py` baseline matches were silently broken** —
+  it imported `MinimaxPlayer`/`MCTSPlayer` classes that never existed,
+  inside a try/except that skipped the matches with a warning. Real player
+  wrappers added; `training/` now has smoke tests (`tests/test_training.py`).
+
+- **Fixed: promotion move encoding.** Queen promotions overflowed the
+  4672-dim policy vector and were silently dropped; knight promotions
+  collided with ordinary moves. The network could never have learned to
+  promote. New scheme + regression tests (`tests/test_encoding.py`).
+- **Fixed: checkpoint architecture drift.** Different files hardcoded
+  different model sizes (2×64 vs 4×128). `net/model.py::load_model()` now
+  infers architecture from the checkpoint weights.
+- **Added:** transposition table + iterative deepening with predictive time
+  management (`search/minimax.py`).
+- **Added:** true AlphaZero PUCT search — no rollouts, Dirichlet noise,
+  temperature selection (`search/puct.py`).
+- **Added:** complete Phase 4 self-play skeleton (`selfplay/`), verified
+  end-to-end at toy scale on CPU.
+- **Added:** UCI now covers every engine stage — new `puct` engine type
+  loads a trained checkpoint ("Model File" option) with graceful fallback,
+  and `go movetime`/`wtime`/`btime` are honored via iterative deepening.
+  Protocol-level subprocess tests in `tests/test_uci.py`.
+- **Added:** packaging (`pyproject.toml`), pytest suite, CI.
+- **Restructured:** documentation into a course (`course/`, modules 0-9
+  including a capstone experiment report); historical docs preserved in
+  `docs/history/` and `docs/plans/`.
+- **Added:** `course-solutions` branch — reference implementations for all
+  six `tests/course/` exercises that existed then, skips removed, all
+  passing at the time (71
+  tests; main has more since). The answer
+  key, deliberately unmerged (`git diff main course-solutions`).
+  It predates Module 6 exercises 6-7 (n-step returns, the network): their
+  contract tests are on main. On 2026-10-31 the branch was rebuilt on top
+  of the new course with solutions for all ten exercises.
