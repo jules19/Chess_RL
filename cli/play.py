@@ -239,7 +239,7 @@ def play_human_vs_random(human_color=chess.WHITE):
         if board.turn == human_color:
             # Human's turn
             while True:
-                print(f"Legal moves: {', '.join([str(m) for m in board.legal_moves])}")
+                print(f"Legal moves: {', '.join(board.san(m) for m in board.legal_moves)}")
                 move_input = input("Your move (e.g. 'e4' or 'e2e4', 'd'=display, 'c'=colors, 'q'=quit): ").strip()
 
                 if move_input.lower() == 'q':
@@ -306,7 +306,7 @@ def play_human_vs_material(human_color=chess.WHITE):
         if board.turn == human_color:
             # Human's turn
             while True:
-                print(f"Legal moves: {', '.join([str(m) for m in board.legal_moves])}")
+                print(f"Legal moves: {', '.join(board.san(m) for m in board.legal_moves)}")
                 move_input = input("Your move (e.g. 'e4' or 'e2e4', 'd'=display, 'c'=colors, 'q'=quit): ").strip()
 
                 if move_input.lower() == 'q':
@@ -495,7 +495,7 @@ def play_human_vs_minimax(human_color=chess.WHITE, depth=3):
         if board.turn == human_color:
             # Human's turn
             while True:
-                print(f"Legal moves: {', '.join([str(m) for m in board.legal_moves])}")
+                print(f"Legal moves: {', '.join(board.san(m) for m in board.legal_moves)}")
                 move_input = input("Your move (e.g. 'e4' or 'e2e4', 'd'=display, 'c'=colors, 'q'=quit): ").strip()
 
                 if move_input.lower() == 'q':
@@ -861,7 +861,7 @@ def play_human_vs_mcts(human_color=chess.WHITE, simulations=200):
         if board.turn == human_color:
             # Human's turn
             while True:
-                print(f"Legal moves: {', '.join([str(m) for m in board.legal_moves])}")
+                print(f"Legal moves: {', '.join(board.san(m) for m in board.legal_moves)}")
                 move_input = input("Your move (e.g. 'e4' or 'e2e4', 'd'=display, 'c'=colors, 'q'=quit): ").strip()
 
                 if move_input.lower() == 'q':
