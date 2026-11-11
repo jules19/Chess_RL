@@ -285,6 +285,88 @@ rest almost none. That is what gives a low-rated move a real chance of being
 searched deeply enough to discover it's good.
 </details>
 
+## Bridge lab: watch the engine change its mind
+
+Allow 10–15 minutes for predictions and discussion; the script itself takes
+about 5 seconds on the CPU used to verify it (Python 3.11, PyTorch 2.6.0).
+You need the training dependencies, but no downloaded games or trained model.
+A small prepared checkpoint ships with the repository.
+
+```bash
+python3 selfplay/mind_change_lab.py --pause
+```
+
+Leave off `--pause` to print the whole experiment without waiting for input.
+
+**Predict.** White can take the pawn on a7. The network gives `Rxa7` almost
+all its probability. Would you take it? What can Black do after White's
+rook leaves the back rank?
+
+This learner was built to favour the capture, by teaching the
+network one capture on a different board where White has an escape square.
+It is not a model trained on human games. The [checkpoint recipe](../../selfplay/assets/mind_change/README.md)
+explains exactly where it came from and how to rebuild it.
+
+**Watch.** The script runs independent, noise-free searches at increasing
+budgets. They start from the same position and weights, so each larger run
+repeats the earlier work before continuing. It reads the most-visited line
+under the pawn capture directly from the search tree.
+
+**Expected:** measured with the shipped checkpoint:
+
+| Simulations | Preferred move | Visits to Rxa7 | Most-visited line under Rxa7 |
+|---|---|---|---|
+| 10 | Rxa7 | 9 | Rxa7 Kf8 |
+| 25 | Rxa7 | 24 | Rxa7 Re1# |
+| 50 | Rxa7 | 28 | Rxa7 Re1# |
+| 100 | f4 | 32 | Rxa7 Re1# |
+| 200 | f4 | 38 | Rxa7 Re1# |
+
+`#` means checkmate. Once search reaches that position, the rules give its
+exact result; the network's value estimate is unnecessary. Finding it
+within a small budget still depends on the network's move preferences.
+This pair has been checked; an arbitrary checkpoint need not behave the same.
+Search now favours `f4`, which gives the king an escape square on f2. This
+does not establish that `f4` is the best chess move overall.
+
+Notice that search sees mate before its preferred move changes. Visit
+counts retain earlier exploration, and PUCT uses averages, not a separate
+proof-of-mate system. At 200 simulations, the target still gives `Rxa7`
+38/200 = 19%. That number measures search effort, not its chance of winning.
+
+**Predict again.** Training will now fit this search distribution on just
+the original board. Will the network's first choice change? Will the change
+carry over if Black's king moves from g8 to h8? What about a board with a
+white pawn on g3, where the king can escape?
+
+**Watch training.** The script makes 60 updates to a copy of the network.
+It uses `visits_to_policy()` and the policy term of the real
+`soft_target_loss()`. There is no completed game, so there is no value target.
+The checkpoint on disk stays unchanged. BatchNorm statistics stay fixed for
+this single-position exercise; gradients still update network weights.
+
+**Expected:** the original board's raw `Rxa7` probability falls from 99.9%
+to about 17.2%, close to the search target of 19%. The network now chooses
+`f4` **without searching**. The distance between its legal-move distribution
+and the search target falls from 0.809 to 0.021 (zero means identical).
+Small numerical differences across systems are possible.
+
+The unseen king-on-h8 board also shifts, to about 17.5%. But the escape-square
+control shifts to about 17.4% too, even though `Rxa7 Re1+` is not mate there.
+The control appeared during checkpoint preparation; neither probe appears
+in these 60 updates. This is evidence of a broad change in move preference,
+not evidence that the network learned to distinguish the danger correctly.
+
+**Explain, before moving on:**
+
+1. Which step changed a decision without changing weights?
+2. Which step changed the next first instinct, and what supplied its target?
+3. Why doesn't a change on the unseen board alone prove useful generalisation?
+4. What would you measure before claiming this network plays stronger chess?
+
+You have watched one search lesson being written back into a network.
+Module 6 adds varied experience, final game results, and repeated evaluation.
+
 ## Checkpoint
 
 ```bash
@@ -293,6 +375,8 @@ pytest tests/course/test_module05_puct.py -q  # un-skipped and passing
 ```
 
 - [ ] Both commands pass
+- [ ] You ran the bridge lab and can distinguish search, fitting one example,
+      and evidence of useful generalisation
 - [ ] Your match result from Do, exercise 3, with its 95% interval, and one
       sentence on what it says about your network's value head
 

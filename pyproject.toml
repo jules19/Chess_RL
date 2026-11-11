@@ -43,3 +43,6 @@ testpaths = ["tests"]
 markers = [
     "slow: tests that take more than ~10 seconds (deselect with '-m \"not slow\"')",
 ]
+
+[tool.setuptools.package-data]
+selfplay = ["assets/mind_change/*.pt", "assets/mind_change/*.md"]
