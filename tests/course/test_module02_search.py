@@ -26,7 +26,7 @@ def test_time_budget_is_a_hard_promise():
     iteration's move.
 
     Without the abort this test takes ~18s and fails; with it, ~6s and
-    passes. (Run it before implementing to watch the failure mode — that's
+    passes. (Remove the whole skip decorator, then run before implementing — that's
     the point of the exercise.)
     """
     from search.minimax import best_move_iterative

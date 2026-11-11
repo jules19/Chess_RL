@@ -16,6 +16,12 @@ into playing strength.
 Elo points stronger than another is expected to score about 64%, and a
 400-point gap means an expected score of about 91%.
 
+## Choose your pace
+
+Core lesson: interpret uncertainty and plan a comparison before running it.
+Short matches check setup. Calibrated strength measurements and scaling runs
+are extended experiments needed for claims in the full capstone.
+
 ## Part 0: What a match result tells you
 
 As an analogy, a game between two engines is like a coin flip with an
@@ -244,6 +250,10 @@ it cannot measure a small improvement.
 </details>
 
 ## Checkpoint
+
+Bring the relevant prediction/interpretation entries from your `JOURNAL.md`
+(see the [template](../JOURNAL_TEMPLATE.md)). No entry is needed for routine
+commands or each self-check question. Note your next step before stopping.
 
 - [ ] A measured rating with a 95% interval, from at least 100 games against a
       calibrated opponent

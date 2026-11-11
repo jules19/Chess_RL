@@ -8,6 +8,12 @@
 > - measure whether a change made the engine stronger, and say how sure you are
 > - explain what a *value function* is, using `evaluate()` as the example
 
+## Choose your pace
+
+Core lesson: inspect controlled positions, add the bonus, and pass its test.
+The match in step 3 is an extended strength experiment; an inconclusive score
+does not undo what the controlled examples taught you.
+
 ## Concepts
 
 **The board library handles the rules.** `python-chess` generates legal
@@ -137,6 +143,10 @@ function from experience, that is, from the results of games. Modules 4 and
 </details>
 
 ## Checkpoint
+
+Bring the relevant prediction/interpretation entries from your `JOURNAL.md`
+(see the [template](../JOURNAL_TEMPLATE.md)). No entry is needed for routine
+commands or each self-check question. Note your next step before stopping.
 
 - [ ] `pytest -q` passes, including
       `tests/course/test_module01_evaluator.py` with its skip line removed

@@ -8,6 +8,13 @@
 > - estimate a position's value by Monte Carlo rollouts (games played out to the end), and say why that estimate is noisy
 > - name the two parts of `mcts.py` that Module 5 replaces with the network
 
+## Choose your pace
+
+Core lesson: compare visits in step 2 and make search reproducible in step 4.
+The tournaments in steps 1 and 3 (and the match part of step 2) are extended
+experiments. First observe the mechanism on a position; then ask whether it
+improves strength. The smoke match below checks setup, not learning.
+
 ## Concepts
 
 Minimax searches every move to a fixed depth. Monte Carlo tree search (MCTS)
@@ -213,6 +220,10 @@ value function.
 </details>
 
 ## Checkpoint
+
+Bring the relevant prediction/interpretation entries from your `JOURNAL.md`
+(see the [template](../JOURNAL_TEMPLATE.md)). No entry is needed for routine
+commands or each self-check question. Note your next step before stopping.
 
 ```bash
 pytest tests/test_mcts.py -q                  # regression suite still green

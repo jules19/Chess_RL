@@ -20,6 +20,10 @@ search.
 
 ## The course (start here)
 
+Start with the [short opening session](course/module-00-orientation/README.md#opening-session-see-the-destination-first):
+predict a move, watch search change its mind, then watch a small learning loop improve.
+The target is about 20 minutes after setup; no game download is needed.
+
 [course/README.md](course/README.md) has ten modules that teach from this
 codebase. Each module gives the concepts, the reinforcement-learning (RL)
 idea behind them, the source files to read, exercises with expected results,
@@ -70,7 +74,7 @@ pytest -q                        # fast suite, all green (skips = course exercis
 python3 cli/play.py human-minimax   # play the Phase 1 engine (depth-3 alpha-beta)
 python3 cli/play.py human-mcts      # play the Phase 2 engine (MCTS)
 python3 cli/play.py mcts            # watch MCTS demolish the random engine
-python3 cli/play.py                 # interactive menu with every mode
+python3 cli/play.py                 # Play / Watch it think / Watch it learn / Continue
 python3 cli/match.py minimax:depth=2 random --games 10   # engine vs engine, with a 95% interval
 python3 selfplay/tictactoe_lab.py   # the AlphaZero loop on tic-tac-toe: watch it learn (~7 s)
 ```
