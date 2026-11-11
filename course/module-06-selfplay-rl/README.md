@@ -318,7 +318,8 @@ below asks what that changes.
        --simulations 16 --train-steps 20 --arena-games 2 --checkpoint-dir runs/m6_smoke_01
    ```
    **Expected (measured):** 0 promotions, arena scores of 50%, a policy loss
-   around 7.7 and a value loss near 0. The policy loss is close to ln(4672) ≈
+   around 7.7 and a usually small value loss (about 0–0.3). These vary with
+   the games: decisive results can raise the value loss. The policy loss is close to ln(4672) ≈
    8.4. That is the loss of a network that spreads its probability evenly
    over all 4,672 outputs: an untrained network knows nothing yet. With
    `--arena-games 2` the arena can only score 0%, 25%, 50%, 75% or 100%, so
@@ -327,8 +328,8 @@ below asks what that changes.
 
    In this small reference run, every game reached the 200-ply limit
    (a ply is one move by one side), so every target was a draw with reward 0.
-   Other seeds can produce decisive games; this is an observation, not a rule. This is the *sparse reward
-   problem*: the value head has nothing to learn from until games start
+   Other seeds can produce decisive games; this is an observation, not a rule.
+   When every game is drawn, this illustrates the *sparse reward problem*: the value head has nothing to learn from until games start
    ending in a win or a loss. It is also why warm-starting from Module 4
    (starting from your trained network) helps so much.
 9. **Exercise: resume before the long run.** A run folder is now protected:

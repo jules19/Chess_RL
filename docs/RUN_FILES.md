@@ -58,8 +58,26 @@ new loader; keep those folders intact and use their original code to read them.
 
 ## Disk measurement
 
-The earlier local measurement supplied during review was about **7.3 MB for one
-4×128 model file**, or about **22 MB for three model files per iteration** in
-the previous design. That measurement did not establish the size of a realistic
-replay buffer. Buffer size depends on the positions and compression, and grows
-until capacity is reached; model size alone is not a disk budget.
+A complete **20-game, 64-simulation** iteration with the default
+4×128 network and 300 training steps measured:
+
+| Item | Bytes | Decimal MB |
+|---|---:|---:|
+| Champion model | 7,332,678 | 7.333 |
+| Compressed replay buffer | 370,548 | 0.371 |
+| Whole run, counting each hard-linked file once | 7,704,511 | 7.705 |
+
+The buffer contained **2,782 positions**, with capacity 50,000.
+This is one complete iteration at the long run's games/search/training settings
+(now Module 6 step 10), **starting from random weights** because no trained
+Module 4 checkpoint was available. It is not a measurement of the full
+10-iteration warm-start run or of a full buffer. Later saves grow with retained
+experience; compression and game lengths also depend on the network and seed.
+
+[Exact settings, byte counts and console output](run_storage_measurement.json)
+record the measurement. MB here means 1,000,000 bytes. Hard-linked top-level
+exports do not add another model or buffer on this filesystem; a copy fallback
+would. Default retention needs room for the old and new save during writing.
+With `--keep-history`, each iteration adds both champion and candidate model
+files **and its accumulated replay buffer**; the measured model size alone
+cannot predict a long run's total disk use.
