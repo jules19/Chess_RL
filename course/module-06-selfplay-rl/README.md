@@ -11,6 +11,11 @@
 
 ## Concepts
 
+The [Module 5 bridge lab](../module-05-puct/README.md#bridge-lab-watch-the-engine-change-its-mind)
+lets you watch search reject a pawn capture, then train the network toward
+that search result. It also shows why fitting one position is insufficient.
+Here you extend that one lesson into a loop with varied games and outcomes.
+
 The loop (see the diagram in `selfplay/__init__.py`):
 
 ```

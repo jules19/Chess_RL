@@ -56,8 +56,8 @@ explains Elo and the interval.
   the old one. It runs from start to finish at small scale (verified). No
   long training run has been done yet.
 
-**Test suite:** `pytest --collect-only -q` lists every test. On 2026-10-31
-there were 87, and 10 of them are the course exercises in `tests/course/`,
+**Test suite:** `pytest --collect-only -q` lists every test. On 2026-11-11
+there were 89, and 10 of them are the course exercises in `tests/course/`,
 which are skipped until you do them. GitHub runs the whole suite
 automatically each time new code is uploaded to the repository
 (`.github/workflows/ci.yml`). All tests pass.
