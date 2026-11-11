@@ -181,9 +181,9 @@ and halve the games, so the running time stays the same. Run both
 configurations for 5 iterations, with every other flag the same:
 ```bash
 python3 selfplay/train_loop.py --init-checkpoint checkpoints/best_model.pt --iterations 5 \
-    --simulations 32 --games-per-iter 20 --train-steps 300 --checkpoint-dir run_a
+    --simulations 32 --games-per-iter 20 --train-steps 300 --checkpoint-dir runs/m7_a_01
 python3 selfplay/train_loop.py --init-checkpoint checkpoints/best_model.pt --iterations 5 \
-    --simulations 64 --games-per-iter 10 --train-steps 300 --checkpoint-dir run_b
+    --simulations 64 --games-per-iter 10 --train-steps 300 --checkpoint-dir runs/m7_b_01
 ```
 Time the first iteration of each. If one is much slower, the comparison is
 not at fixed computing time, so adjust `--games-per-iter` until they match.
@@ -192,7 +192,7 @@ Each run takes a few hours on a laptop CPU.
 After the runs, play the two champions against each other in a 40-game
 match:
 ```bash
-python3 cli/match.py puct:sims=64,net=run_a/champion.pt puct:sims=64,net=run_b/champion.pt --games 40
+python3 cli/match.py puct:sims=64,net=runs/m7_a_01/champion.pt puct:sims=64,net=runs/m7_b_01/champion.pt --games 40
 ```
 Which use of the computing time won? Before you run the match, use Part 0
 to work out how big a difference 40 games can detect, and write it down.
@@ -208,7 +208,8 @@ match can show only a large difference.
 **Laptop version (under half an hour in total):** run the same pair with
 `--iterations 2 --games-per-iter 4` and `--train-steps 50` (use `2` games
 per iteration for run B). Then play a 10-game match instead of the 40-game
-one. This covers the whole procedure, but the interval will contain 50%, so
+one. Use `runs/m7_a_quick_01` and `runs/m7_b_quick_01` for these shorter
+runs and point the match command at those folders. This covers the whole procedure, but the interval will contain 50%, so
 say so in your conclusion. To answer the question, you need the full runs.
 
 ## Check your understanding

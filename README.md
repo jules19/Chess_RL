@@ -115,8 +115,12 @@ Run the self-play RL loop from start to finish at small scale (Phase 4,
 about 1.5 minutes on a laptop processor, with no GPU):
 ```bash
 python3 selfplay/train_loop.py --iterations 2 --games-per-iter 2 \
-    --simulations 16 --train-steps 20 --arena-games 2
+    --simulations 16 --train-steps 20 --arena-games 2 --checkpoint-dir runs/readme_smoke_01
 ```
+
+A run refuses an occupied output folder. For another attempt, use
+`runs/readme_smoke_02`; your previous results remain intact. Module 6 teaches
+resume before asking you to start a long run.
 
 ## Repository map
 

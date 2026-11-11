@@ -1,0 +1,134 @@
+--- a/selfplay/train_loop.py
++++ b/selfplay/train_loop.py
+@@ -46,7 +46,7 @@
+ from selfplay.replay_buffer import ReplayBuffer
+ from selfplay.self_play import generate_games
+ from selfplay.arena import play_match
+-from selfplay.run_files import RunFiles, save_checkpoint
++from selfplay.run_files import RunFiles, save_checkpoint, load_run
+ 
+ 
+ def soft_target_loss(policy_logits, target_policies, pred_values, target_values):
+@@ -131,39 +131,70 @@
+                       device=None,
+                       seed=None,
+                       verbose=True,
+-                      keep_history=False):
++                      keep_history=False,
++                      resume=False):
+     """
+     Run the full self-play RL loop. Returns the champion model.
+ 
+     See module docstring for the algorithm; every parameter is a knob worth
+     experimenting with (that's the course exercise for module 6).
+     """
+-    settings = locals().copy()
+-    # Check before any output is opened or existing artifacts can be touched.
+-    files = RunFiles.create(checkpoint_dir, keep_history=keep_history)
+-    device = torch.device(device) if device else auto_device()
+-    rng = random.Random(seed) if seed is not None else None
+-    if seed is not None:
+-        torch.manual_seed(seed)
+-        np.random.seed(seed)
+-
+-    # The CHAMPION generates data; a CANDIDATE clone trains and challenges
+-    if init_checkpoint:
+-        champion, _ = load_model(init_checkpoint, device)
+-        print(f"Initialized champion from {init_checkpoint}")
++    if resume:
++        if init_checkpoint is not None:
++            raise ValueError("resume cannot be combined with init_checkpoint")
++        saved = load_run(checkpoint_dir, device=device or auto_device())
++        saved.require_architecture(res_blocks, channels)
++        champion, buffer = saved.champion, saved.buffer
++        files, start_iteration = saved.files, saved.iteration
++        device = next(champion.parameters()).device
++        settings = saved.settings
++        games_per_iter = settings["games_per_iter"]
++        simulations = settings["simulations"]
++        train_steps = settings["train_steps"]
++        batch_size = settings["batch_size"]
++        arena_games = settings["arena_games"]
++        arena_simulations = settings["arena_simulations"]
++        promote_threshold = settings["promote_threshold"]
++        temperature_moves = settings["temperature_moves"]
++        root_noise = settings["root_noise"]
++        max_moves = settings["max_moves"]
++        learning_rate = settings["learning_rate"]
++        seed = settings["seed"]
++        print(f"Continuing after iteration {start_iteration}; saved settings restored")
++        rng = random.Random(seed) if seed is not None else None
++        if seed is not None:
++            torch.manual_seed(seed)
++            np.random.seed(seed)
++
+     else:
+-        champion = create_model(num_res_blocks=4 if res_blocks is None else res_blocks,
+-                                num_channels=128 if channels is None else channels)
+-        champion.to(device)
+-        champion.eval()
+-        print("Initialized champion with RANDOM weights (tabula rasa, like AlphaZero)")
+-
+-    files.write_config(settings, champion)
+-    buffer = ReplayBuffer(capacity=buffer_capacity)
++        settings = locals().copy()
++        # Check before any output is opened or existing artifacts can be touched.
++        files = RunFiles.create(checkpoint_dir, keep_history=keep_history)
++        device = torch.device(device) if device else auto_device()
++        rng = random.Random(seed) if seed is not None else None
++        if seed is not None:
++            torch.manual_seed(seed)
++            np.random.seed(seed)
++
++        # The CHAMPION generates data; a CANDIDATE clone trains and challenges
++        if init_checkpoint:
++            champion, _ = load_model(init_checkpoint, device)
++            print(f"Initialized champion from {init_checkpoint}")
++        else:
++            champion = create_model(num_res_blocks=4 if res_blocks is None else res_blocks,
++                                    num_channels=128 if channels is None else channels)
++            champion.to(device)
++            champion.eval()
++            print("Initialized champion with RANDOM weights (tabula rasa, like AlphaZero)")
++
++        files.write_config(settings, champion)
++        buffer = ReplayBuffer(capacity=buffer_capacity)
++
++        start_iteration = 0
++
+     promotions = 0
+-
+-    for iteration in range(1, iterations + 1):
+-        print(f"\n{'=' * 70}\nIteration {iteration}/{iterations}\n{'=' * 70}")
++    for iteration in range(start_iteration + 1, start_iteration + iterations + 1):
++        print(f"\n{'=' * 70}\nIteration {iteration}/{start_iteration + iterations}\n{'=' * 70}")
+ 
+         # 1. GENERATE - champion self-play with exploration noise
+         print(f"Self-play: {games_per_iter} games @ {simulations} sims/move")
+@@ -223,7 +254,8 @@
+         description="AlphaZero-style self-play training loop",
+         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+     )
+-    parser.add_argument('--iterations', type=int, default=5)
++    parser.add_argument('--resume', action='store_true', help='continue with saved settings')
++    parser.add_argument('--iterations', type=int, default=5, help='additional iterations when resuming')
+     parser.add_argument('--games-per-iter', type=int, default=10)
+     parser.add_argument('--simulations', type=int, default=50,
+                         help='PUCT simulations per move during self-play')
+@@ -253,6 +285,7 @@
+     try:
+         run_training_loop(
+             iterations=args.iterations,
++            resume=args.resume,
+             games_per_iter=args.games_per_iter,
+             simulations=args.simulations,
+             train_steps=args.train_steps,
+@@ -273,7 +306,7 @@
+             seed=args.seed,
+             keep_history=args.keep_history,
+         )
+-    except FileExistsError as error:
++    except (FileExistsError, FileNotFoundError, ValueError) as error:
+         parser.exit(2, f"{error}\n")
+ 
+ 

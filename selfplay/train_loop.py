@@ -21,7 +21,7 @@ which we compute manually with log_softmax. The value loss is MSE, as before.
 Start tiny. This runs end-to-end on a laptop CPU in a few minutes:
 
     python3 selfplay/train_loop.py --iterations 2 --games-per-iter 2 \
-        --simulations 16 --train-steps 20 --arena-games 2
+        --simulations 16 --train-steps 20 --arena-games 2 --checkpoint-dir runs/example_smoke_01
 
 It will NOT get strong at that scale — the point is to verify the plumbing.
 Real improvement needs orders of magnitude more games and simulations
@@ -46,6 +46,7 @@ from search.puct import network_policy_value
 from selfplay.replay_buffer import ReplayBuffer
 from selfplay.self_play import generate_games
 from selfplay.arena import play_match
+from selfplay.run_files import RunFiles, save_checkpoint
 
 
 def soft_target_loss(policy_logits, target_policies, pred_values, target_values):
@@ -110,17 +111,6 @@ def train_candidate(model, buffer, device, train_steps=100, batch_size=64,
     return policy_total / train_steps, value_total / train_steps
 
 
-def save_checkpoint(model, path, iteration):
-    """Save a self-describing checkpoint (see net.model.load_model)."""
-    torch.save({
-        'model_state_dict': model.state_dict(),
-        'input_channels': model.input_channels,
-        'num_res_blocks': model.num_res_blocks,
-        'num_channels': model.num_channels,
-        'selfplay_iteration': iteration,
-    }, path)
-
-
 def run_training_loop(iterations=5,
                       games_per_iter=10,
                       simulations=50,
@@ -134,42 +124,43 @@ def run_training_loop(iterations=5,
                       root_noise=True,
                       max_moves=200,
                       learning_rate=1e-3,
-                      res_blocks=4,
-                      channels=128,
+                      res_blocks=None,
+                      channels=None,
                       init_checkpoint=None,
                       checkpoint_dir="selfplay_checkpoints",
                       device=None,
                       seed=None,
-                      verbose=True):
+                      verbose=True,
+                      keep_history=False):
     """
     Run the full self-play RL loop. Returns the champion model.
 
     See module docstring for the algorithm; every parameter is a knob worth
     experimenting with (that's the course exercise for module 6).
     """
+    settings = locals().copy()
+    # Check before any output is opened or existing artifacts can be touched.
+    files = RunFiles.create(checkpoint_dir, keep_history=keep_history)
     device = torch.device(device) if device else auto_device()
     rng = random.Random(seed) if seed is not None else None
     if seed is not None:
         torch.manual_seed(seed)
         np.random.seed(seed)
 
-    os.makedirs(checkpoint_dir, exist_ok=True)
-
     # The CHAMPION generates data; a CANDIDATE clone trains and challenges
     if init_checkpoint:
         champion, _ = load_model(init_checkpoint, device)
         print(f"Initialized champion from {init_checkpoint}")
     else:
-        champion = create_model(num_res_blocks=res_blocks, num_channels=channels)
+        champion = create_model(num_res_blocks=4 if res_blocks is None else res_blocks,
+                                num_channels=128 if channels is None else channels)
         champion.to(device)
         champion.eval()
         print("Initialized champion with RANDOM weights (tabula rasa, like AlphaZero)")
 
+    files.write_config(settings, champion)
     buffer = ReplayBuffer(capacity=buffer_capacity)
     promotions = 0
-    log_path = os.path.join(checkpoint_dir, "run_log.csv")
-    with open(log_path, "w") as log:
-        log.write("iteration,positions_in_buffer,policy_loss,value_loss,arena_score,promoted\n")
 
     for iteration in range(1, iterations + 1):
         print(f"\n{'=' * 70}\nIteration {iteration}/{iterations}\n{'=' * 70}")
@@ -215,18 +206,14 @@ def run_training_loop(iterations=5,
             print("✓ PROMOTED: candidate is the new champion")
         else:
             print("✗ Rejected: champion stays (candidate not clearly better)")
-        with open(log_path, "a") as log:
-            log.write(f"{iteration},{len(buffer)},{policy_loss:.4f},{value_loss:.4f},"
-                      f"{score:.3f},{int(promoted)}\n")
-
-        save_checkpoint(champion, os.path.join(checkpoint_dir, "champion.pt"), iteration)
-        save_checkpoint(candidate, os.path.join(checkpoint_dir, f"candidate_iter_{iteration}.pt"), iteration)
-        buffer.save(os.path.join(checkpoint_dir, "replay_buffer.npz"))
+        row = (f"{iteration},{len(buffer)},{policy_loss:.4f},{value_loss:.4f},"
+               f"{score:.3f},{int(promoted)}\n")
+        files.save(champion, buffer, iteration, row, candidate=candidate)
 
     print(f"\n{'=' * 70}")
     print(f"✅ Loop complete: {iterations} iterations, {promotions} promotions")
     print(f"Champion saved to {os.path.join(checkpoint_dir, 'champion.pt')}")
-    print(f"Per-iteration log: {log_path}")
+    print(f"Per-iteration log: {files.directory / 'run_log.csv'}")
     print(f"{'=' * 70}")
     return champion
 
@@ -252,36 +239,42 @@ def main():
                         help='turn off Dirichlet noise in self-play (sabotage experiment)')
     parser.add_argument('--max-moves', type=int, default=200)
     parser.add_argument('--lr', type=float, default=1e-3)
-    parser.add_argument('--res-blocks', type=int, default=4)
-    parser.add_argument('--channels', type=int, default=128)
+    parser.add_argument('--res-blocks', type=int, default=None, help='new model: 4; loaded model: checkpoint architecture')
+    parser.add_argument('--channels', type=int, default=None, help='new model: 128; loaded model: checkpoint architecture')
     parser.add_argument('--init-checkpoint', type=str, default=None,
                         help='Warm-start from a supervised checkpoint (Phase 3a)')
     parser.add_argument('--checkpoint-dir', type=str, default='selfplay_checkpoints')
+    parser.add_argument('--keep-history', action='store_true',
+                        help='retain all complete saves and candidates (uses more disk space)')
     parser.add_argument('--device', type=str, default=None)
     parser.add_argument('--seed', type=int, default=None)
     args = parser.parse_args()
 
-    run_training_loop(
-        iterations=args.iterations,
-        games_per_iter=args.games_per_iter,
-        simulations=args.simulations,
-        train_steps=args.train_steps,
-        batch_size=args.batch_size,
-        arena_games=args.arena_games,
-        arena_simulations=args.arena_simulations,
-        promote_threshold=args.promote_threshold,
-        buffer_capacity=args.buffer_capacity,
-        temperature_moves=args.temperature_moves,
-        root_noise=not args.no_root_noise,
-        max_moves=args.max_moves,
-        learning_rate=args.lr,
-        res_blocks=args.res_blocks,
-        channels=args.channels,
-        init_checkpoint=args.init_checkpoint,
-        checkpoint_dir=args.checkpoint_dir,
-        device=args.device,
-        seed=args.seed,
-    )
+    try:
+        run_training_loop(
+            iterations=args.iterations,
+            games_per_iter=args.games_per_iter,
+            simulations=args.simulations,
+            train_steps=args.train_steps,
+            batch_size=args.batch_size,
+            arena_games=args.arena_games,
+            arena_simulations=args.arena_simulations,
+            promote_threshold=args.promote_threshold,
+            buffer_capacity=args.buffer_capacity,
+            temperature_moves=args.temperature_moves,
+            root_noise=not args.no_root_noise,
+            max_moves=args.max_moves,
+            learning_rate=args.lr,
+            res_blocks=args.res_blocks,
+            channels=args.channels,
+            init_checkpoint=args.init_checkpoint,
+            checkpoint_dir=args.checkpoint_dir,
+            device=args.device,
+            seed=args.seed,
+            keep_history=args.keep_history,
+        )
+    except FileExistsError as error:
+        parser.exit(2, f"{error}\n")
 
 
 if __name__ == "__main__":

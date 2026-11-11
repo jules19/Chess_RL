@@ -30,7 +30,7 @@ Modules:
 
 Run a tiny end-to-end loop (minutes on CPU, proves the plumbing):
     python3 selfplay/train_loop.py --iterations 2 --games-per-iter 2 \
-        --simulations 16 --train-steps 20 --arena-games 2
+        --simulations 16 --train-steps 20 --arena-games 2 --checkpoint-dir runs/package_smoke_01
 """
 
 from .replay_buffer import ReplayBuffer

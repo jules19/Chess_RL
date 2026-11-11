@@ -1,7 +1,7 @@
 # Module 6: Self-Play Reinforcement Learning
 
 > **Where you are:** the last step in building the engine. You remove the human games: the engine generates its own experience, and every piece from Modules 1-5 becomes one step of a reinforcement-learning loop.
-> **Time:** 5-8 hours, plus one overnight run. Part A (tic-tac-toe) takes 2-3 hours, including two coding exercises; most runs finish in seconds. Part B (chess) is mostly waiting.
+> **Time:** 5-8 hours, plus one long run (about 3 hours on the reference 8-core CPU). Part A (tic-tac-toe) takes 2-3 hours, including two coding exercises; most runs finish in seconds. Part B (chess) is mostly waiting.
 > **You'll be able to:**
 > - describe the AlphaZero loop in terms of reinforcement learning (RL), which is learning by trial and error from rewards. Say which part evaluates the policy, which part improves it, and where the reward comes from
 > - watch an RL loop learn, read its learning curve, and break it on purpose in three different ways
@@ -315,7 +315,7 @@ below asks what that changes.
    strength:
    ```bash
    python3 selfplay/train_loop.py --iterations 2 --games-per-iter 2 \
-       --simulations 16 --train-steps 20 --arena-games 2
+       --simulations 16 --train-steps 20 --arena-games 2 --checkpoint-dir runs/m6_smoke_01
    ```
    **Expected (measured):** 0 promotions, arena scores of 50%, a policy loss
    around 7.7 and a value loss near 0. The policy loss is close to ln(4672) ≈
@@ -323,56 +323,118 @@ below asks what that changes.
    over all 4,672 outputs: an untrained network knows nothing yet. With
    `--arena-games 2` the arena can only score 0%, 25%, 50%, 75% or 100%, so
    here it only checks that the code runs and is not a measurement. Each
-   iteration also appends a row to `selfplay_checkpoints/run_log.csv`.
+   iteration also appends a row to `runs/m6_smoke_01/run_log.csv`.
 
-   The value loss is near 0 because a random network never finishes a game
-   within the 200-ply limit (a ply is one move by one side), so every game
-   is scored as a draw with reward 0. This is the *sparse reward
+   In this small reference run, every game reached the 200-ply limit
+   (a ply is one move by one side), so every target was a draw with reward 0.
+   Other seeds can produce decisive games; this is an observation, not a rule. This is the *sparse reward
    problem*: the value head has nothing to learn from until games start
    ending in a win or a loss. It is also why warm-starting from Module 4
    (starting from your trained network) helps so much.
-9. **Run a real (small) loop overnight.** Warm-start from your Module 4
-   supervised checkpoint. AlphaGo, DeepMind's first Go program, did the
-   same; AlphaZero started from random weights.
-   ```bash
-   python3 selfplay/train_loop.py --init-checkpoint checkpoints/best_model.pt \
-       --iterations 10 --games-per-iter 20 --simulations 64 --train-steps 300
+9. **Exercise: resume before the long run.** A run folder is now protected:
+   the unmodified program refuses any occupied folder and tells you to choose
+   a new `--checkpoint-dir`. Rerun step 8 in `runs/m6_smoke_02`, never in the
+   folder containing your long experiment. There is no destructive override.
+
+   The file handling is supplied in `selfplay/run_files.py`. You do not need
+   to implement or study its file checks to complete this exercise. Call:
+   ```python
+   from selfplay.run_files import load_run
+   saved = load_run("runs/m6_smoke_01")
    ```
-   **Expected (measured):** about 40 seconds per game at 64 simulations,
-   with a 4×128 network (4 residual blocks of 128 channels, as in Module 4)
-   on an 8-core CPU. One iteration (20 self-play games, training and a
-   6-game arena) takes about 18 minutes, and the whole run about 3 hours.
-   The run ends after its 10 iterations; there is no early stop. In a
-   healthy run the policy loss falls between iterations. Promotions may be
-   rare (see Q1).
+   It returns `saved.champion`, `saved.buffer`, `saved.iteration`,
+   `saved.settings`, and `saved.files`. The last object is a writer that already
+   carries the old log. Damaged saves are rejected by the supplied loader.
 
-   In our one-iteration trial with the Module 4 network trained on one month
-   of games, both self-play games were drawn, so every value target
-   was 0 and the value loss read 0.0000. This is the sparse reward problem
-   again, even with a warm start. The candidate scored 25% and was rejected.
+   Add `run_training_loop(..., resume=True)` and a `--resume` flag. Reconnect
+   that saved learning state to the loop: use the saved champion and experience,
+   start at the next iteration, and reuse `saved.files` so old log rows survive.
+   Restore the saved scientific settings. `iterations` means additional
+   iterations; device and verbosity may change for this invocation.
 
-   While the run is going, watch the value loss column for the same reason.
-   `selfplay_checkpoints/run_log.csv` records, for each iteration, the
-   buffer size, the policy and value losses, the arena score and whether the
-   candidate was promoted.
-
-   When the run has finished, test whether the loop gained anything:
+   Use `saved.require_architecture(res_blocks, channels)` to check explicit size
+   requests; omitted sizes inherit the model. Reject `--resume` combined with
+   `--init-checkpoint`. Only explicit resume may continue in an occupied folder.
+   Remove the module-level `pytestmark` from the exercise test, observe its
+   initial failure, then make it pass:
    ```bash
-   python3 cli/match.py puct:sims=64,net=selfplay_checkpoints/champion.pt \
-       puct:sims=64,net=checkpoints/best_model.pt --games 20
+   pytest tests/course/test_module06_resume.py -q
    ```
-   Twenty games is a quick check: its 95% interval is about ±22
-   percentage points ([Module 7](../module-07-measure-and-scale/README.md),
-   Part 0), so it can detect a large gain or a collapse. For a claim you can
-   defend, run 100 games overnight.
-10. **Exercise: break the chess loop on purpose.** Do three short runs:
+   The tests check that the old champion and experience reach training, the
+   numbering continues, and previous log rows survive. File corruption tests
+   live in the main regression suite, not in your exercise.
+
+   **Explain:** which experience did the resumed learner retain? What work
+   must it repeat? It resumes from the last completed iteration, not halfway
+   through a game or gradient update. Adam is recreated each iteration here,
+   so its state need not cross that boundary. Random-number states are not
+   restored: the same seed does not reproduce an uninterrupted run exactly.
+
+   Hint: read the five loop steps first and identify what each needs to restart.
+   If stuck, inspect the [local reference patch](../solutions/module06_resume.patch)
+   through the [recovery guide](../../tests/course/README.md).
+
+   By default only the last complete save is kept; the log still includes every
+   completed iteration. Add `--keep-history` to a new run only when you want
+   every saved champion, candidate and buffer. See [run-file details and measured
+   disk use](../../docs/RUN_FILES.md) before enabling it for a long experiment.
+
+   After your exercise tests pass, test continuation on the **small** run:
+   ```bash
+   python3 selfplay/train_loop.py --resume --checkpoint-dir runs/m6_smoke_01 --iterations 1
+   ```
+   **Expected:** the saved settings are reused and iteration 3 is added; rows
+   1–2 remain. `--resume` is not available until you implement the exercise.
+   Only proceed to the long run once this works. To change scientific settings,
+   start a new named run; do not silently change an experiment while resuming.
+
+10. **Exercise: a long chess run.** Warm-start from your Module 4
+    supervised checkpoint. AlphaGo, DeepMind's first Go program, did the
+    same; AlphaZero started from random weights.
+    ```bash
+    python3 selfplay/train_loop.py --init-checkpoint checkpoints/best_model.pt \
+        --iterations 10 --games-per-iter 20 --simulations 64 --train-steps 300 \
+        --checkpoint-dir runs/m6_main_01
+    ```
+    **Expected (measured):** about 40 seconds per game at 64 simulations,
+    with a 4×128 network (4 residual blocks of 128 channels, as in Module 4)
+    on an 8-core CPU. One iteration (20 self-play games, training and a
+    6-game arena) takes about 18 minutes, and the whole run about 3 hours.
+    The run ends after its 10 iterations; there is no early stop. In a
+    healthy run the policy loss falls between iterations. Promotions may be
+    rare (see Q1).
+
+    In our one-iteration trial with the Module 4 network trained on one month
+    of games, both self-play games were drawn, so every value target
+    was 0 and the value loss read 0.0000. This is the sparse reward problem
+    again, even with a warm start. The candidate scored 25% and was rejected.
+
+    While the run is going, watch the value loss column for the same reason.
+    `runs/m6_main_01/run_log.csv` records, for each iteration, the
+    buffer size, the policy and value losses, the arena score and whether the
+    candidate was promoted.
+
+    When the run has finished, test whether the loop gained anything:
+    ```bash
+    python3 cli/match.py puct:sims=64,net=runs/m6_main_01/champion.pt \
+        puct:sims=64,net=checkpoints/best_model.pt --games 20
+    ```
+    Twenty games is a quick check: its 95% interval is about ±22
+    percentage points ([Module 7](../module-07-measure-and-scale/README.md),
+    Part 0), so it can detect a large gain or a collapse. For a claim you can
+    defend, run 100 games overnight.
+11. **Exercise: break the chess loop on purpose.** Do three short runs:
     (a) `--no-root-noise`, (b) `--temperature-moves 0`,
     (c) `--promote-threshold 0.30`. Use the small-scale settings from step 8
     with `--iterations 5`.
 
     1. Before running, predict each failure from what Part A showed you.
     2. Run each one. The command for (a) is:
-       `python3 selfplay/train_loop.py --iterations 5 --games-per-iter 2 --simulations 16 --train-steps 20 --arena-games 2 --no-root-noise --checkpoint-dir sabotage_a`
+       `python3 selfplay/train_loop.py --iterations 5 --games-per-iter 2 --simulations 16 --train-steps 20 --arena-games 2 --no-root-noise --checkpoint-dir runs/m6_sabotage_a_01`
+
+       For (b) and (c), use `runs/m6_sabotage_b_01` and `runs/m6_sabotage_c_01`.
+       On another attempt, use suffix `_02` rather than reusing an occupied folder.
+
     3. Check `run_log.csv`: look at the promoted column and at whether the
        policy loss changes.
     4. Write three sentences, including whether chess at this scale shows
@@ -385,17 +447,18 @@ below asks what that changes.
     that lose, so it no longer protects anything. (a) and (b) are harder to
     see at this scale, which makes them worth predicting.
     </details>
-11. **Exercise: buffer-size sweep.** Compare `--buffer-capacity 2000` with
+12. **Exercise: buffer-size sweep.** Compare `--buffer-capacity 2000` with
     `50000` at a fixed number of games per iteration. For example, run step
-    9's command with `--iterations 5`, once with
-    `--buffer-capacity 2000 --checkpoint-dir buf_small` and once with
-    `--buffer-capacity 50000 --checkpoint-dir buf_large`. Then compare the
+    10's command with `--iterations 5`, once with
+    `--buffer-capacity 2000 --checkpoint-dir runs/m6_buf_small_01` and once with
+    `--buffer-capacity 50000 --checkpoint-dir runs/m6_buf_large_01`. Then compare the
     `promoted` columns of the two `run_log.csv` files. Each run takes a few
     hours on a laptop CPU.
 
     **Laptop version (about 10 minutes each):** use step 8's small-scale
     settings with `--iterations 4 --buffer-capacity 300`, and again with
-    `--buffer-capacity 50000`. A game at these settings is a few hundred
+    `--buffer-capacity 50000`; use `runs/m6_buf_small_quick_01` and
+    `runs/m6_buf_large_quick_01` for these shorter runs. A game at these settings is a few hundred
     positions long, so a 300-position buffer drops almost everything each
     iteration. This version shows the mechanics: watch
     `positions_in_buffer` in `run_log.csv` stop growing. It does not show
@@ -404,15 +467,6 @@ below asks what that changes.
 
     Which setting promotes more often early in the run, and which later? How
     many seeds would you need to believe the answer (Part A, step 4)?
-12. **Exercise: resumable loops.** The loop already saves
-    `champion.pt`/`replay_buffer.npz`. Implement
-    `load_resume_state(checkpoint_dir)` in `selfplay/train_loop.py`. Add a
-    `--resume` flag in its `main()` that uses it. A stopped run should then
-    continue: it loads the buffer and the champion and keeps the iteration
-    numbering. Long
-    RL runs are often interrupted, so resuming matters.
-    `tests/course/test_module06_resume.py` sets out what the code must do
-    and is part of this module's checkpoint; remove its pytest skip marker.
 
 ## Check your understanding
 
@@ -441,7 +495,7 @@ search's judgment (everything it learned about the moves it did not pick).
 </details>
 
 <details>
-<summary><b>Q3.</b> You remove Dirichlet noise but keep temperature (step 10, run (a)). What failure do you predict, mechanically?</summary>
+<summary><b>Q3.</b> You remove Dirichlet noise but keep temperature (step 11, run (a)). What failure do you predict, mechanically?</summary>
 
 Temperature still varies which move is played at the root (the current position). But within each
 search, the priors alone decide what gets explored. Moves that the current
@@ -504,7 +558,7 @@ pytest tests/course/test_module06_nstep.py tests/course/test_module06_network.py
       comparison from step 7
 - [ ] You can answer R5-R8 in the "Going deeper" section of
       [RL_CONCEPTS.md](../RL_CONCEPTS.md) before opening the answers
-- [ ] **Run report** for your overnight loop (step 9):
+- [ ] **Run report** for your long loop (step 10):
       1. From `run_log.csv`, report the iterations completed, positions in
          the buffer, the arena score for each iteration and the promotions.
       2. Report the match between the champion and the initial network,
