@@ -39,5 +39,12 @@ scored 14/14 against 12.5/14 on recall, and 20/20 against 18/20 on transfer, wit
 The differences were concentrated on understanding why MCTS behaves as it does and on knowing the
 project's real state.
 
-**Not yet run on this course.** Its quizzes need to be written and keyed against the course's
-code (PUCT, self-play, the fixed encoding). That is the next step for this evaluation.
+**Current-course comparison, 2026-11-11.** A new recall-and-transfer quiz was
+frozen before the learner-experience changes and run with two fresh AI learners
+per version. An independent grader scored all four responses 12/12: a ceiling
+result, not evidence of improvement. This comparison preceded the subsequent
+run-files simplification; it does not evaluate that final revision. Questions,
+keys, snapshot hashes, verbatim
+answers, blind grades and limitations are recorded in
+[assessment_v1/RESULTS.md](assessment_v1/RESULTS.md). Human usability and enjoyment
+remain unmeasured; see [the protocol](course_assessment_protocol.md).

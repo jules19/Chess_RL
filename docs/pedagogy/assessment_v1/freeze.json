@@ -1,0 +1,11 @@
+{
+  "head": "a765fe66d30f13ecd583e87b8220feeb13e5189e",
+  "quiz_sha256": "542715547d7a90bcad3d616c14d1defa57c6edda0bad9829dbe7f8628c4805c4",
+  "key_sha256": "d99df61df50937f82bf77dc1f962fee4799b9593098e5863e11d7f735b9235ed",
+  "snapshot_exclusions": [
+    "docs/pedagogy",
+    "docs/history",
+    "docs/plans"
+  ],
+  "learner_calls": 12
+}
