@@ -1,5 +1,7 @@
 # Course experience changes: assessment and verification
 
+`revised_snapshot.patch` is the reconstruction of the uncommitted assessed version, not current course text; it is retained because that study snapshot was not committed at assessment time.
+
 Date: 2026-11-11.
 
 ## Frozen comprehension comparison
@@ -160,3 +162,21 @@ git apply /path/to/current/course/docs/pedagogy/assessment_v1/revised_snapshot.p
 Consult `freeze.json` and the protocol for exclusions. Do not expose assessment
 keys, this evidence directory or reference solutions to learners. The revised
 manifest describes the assessed version, not the final PR stack.
+
+
+## Next evaluation: observe human beginners
+
+The version-neutral key accepts correct descriptions of either course, including
+opposite overwrite behaviours and different journal filenames. Seven questions
+(2, 3, 5, 6, 10, 11 and 12) concern behaviours or instructions touched by the
+redesign. Combined with strong AI readers who could reconstruct procedures from
+source, this comparison had little ability to distinguish the versions. In
+particular, baseline learners could infer the correct skipped-test procedure
+despite the faulty prose. The ceiling does not establish that the learner
+experience is equivalent.
+
+The next evaluation will be observation of 2–3 Python-capable chess beginners
+doing the opening session, using the protocol's human checklist. Record where
+they get stuck, requests for help, their explanations and whether they want to
+continue. Do not run another AI quiz as a substitute. These sessions have not
+yet taken place.
