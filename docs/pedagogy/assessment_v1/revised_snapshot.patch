@@ -1,0 +1,1789 @@
+diff --git a/QUICKSTART.md b/QUICKSTART.md
+index 0926889..2b74d04 100644
+--- a/QUICKSTART.md
++++ b/QUICKSTART.md
+@@ -1,7 +1,7 @@
+ # Quick Start
+ 
+-This page gets you playing chess against the engines in this repository in
+-under 5 minutes.
++This page gets you playing chess against the engines in this repository.
++Allow a few minutes for setup; dependency downloads vary by machine and network.
+ 
+ ## Setup
+ 
+@@ -18,8 +18,8 @@ skipped tests are the course exercises).
+ ## Play
+ 
+ ```bash
+-python3 cli/play.py                  # interactive menu with all modes
+-python3 cli/play.py human            # you vs random mover (UCI moves: e2e4, g1f3, e7e8q)
++python3 cli/play.py                  # Play / Watch it think / Watch it learn / Continue
++python3 cli/play.py human            # you vs random mover (moves: e4 or e2e4, Nf3, e7e8q)
+ python3 cli/play.py human-minimax    # you vs the alpha-beta engine (Phase 1)
+ python3 cli/play.py human-mcts       # you vs the Monte Carlo engine (Phase 2)
+ python3 cli/play.py mcts             # watch MCTS vs random
+@@ -33,6 +33,10 @@ Setup instructions are in [docs/UCI_SETUP_MAC.md](docs/UCI_SETUP_MAC.md).
+ 
+ ## Learn
+ 
++Try the [opening session](course/module-00-orientation/README.md#opening-session-see-the-destination-first)
++first: predict, watch, and explain. It targets about 20 minutes after setup.
++Tic-tac-toe needs only the core install; the prepared chess lab needs torch.
++
+ This repository is also a hands-on course. It goes from these engines to an
+ AlphaZero-style loop, in which the engine improves by playing against itself
+ (self-play reinforcement learning). Start here:
+diff --git a/README.md b/README.md
+index b6d96e7..08c2abe 100644
+--- a/README.md
++++ b/README.md
+@@ -20,6 +20,10 @@ search.
+ 
+ ## The course (start here)
+ 
++Start with the [short opening session](course/module-00-orientation/README.md#opening-session-see-the-destination-first):
++predict a move, watch search change its mind, then watch a small learning loop improve.
++The target is about 20 minutes after setup; no game download is needed.
++
+ [course/README.md](course/README.md) has ten modules that teach from this
+ codebase. Each module gives the concepts, the reinforcement-learning (RL)
+ idea behind them, the source files to read, exercises with expected results,
+@@ -70,7 +74,7 @@ pytest -q                        # fast suite, all green (skips = course exercis
+ python3 cli/play.py human-minimax   # play the Phase 1 engine (depth-3 alpha-beta)
+ python3 cli/play.py human-mcts      # play the Phase 2 engine (MCTS)
+ python3 cli/play.py mcts            # watch MCTS demolish the random engine
+-python3 cli/play.py                 # interactive menu with every mode
++python3 cli/play.py                 # Play / Watch it think / Watch it learn / Continue
+ python3 cli/match.py minimax:depth=2 random --games 10   # engine vs engine, with a 95% interval
+ python3 selfplay/tictactoe_lab.py   # the AlphaZero loop on tic-tac-toe: watch it learn (~7 s)
+ ```
+@@ -115,9 +119,13 @@ Run the self-play RL loop from start to finish at small scale (Phase 4,
+ about 1.5 minutes on a laptop processor, with no GPU):
+ ```bash
+ python3 selfplay/train_loop.py --iterations 2 --games-per-iter 2 \
+-    --simulations 16 --train-steps 20 --arena-games 2
++    --simulations 16 --train-steps 20 --arena-games 2 --checkpoint-dir runs/readme_smoke_01
+ ```
+ 
++A run refuses an occupied output folder. For another attempt, use
++`runs/readme_smoke_02`; your previous results remain intact. Module 6 teaches
++resume before asking you to start a long run.
++
+ ## Repository map
+ 
+ | Path | What it is |
+diff --git a/STATUS.md b/STATUS.md
+index cdce570..dda839c 100644
+--- a/STATUS.md
++++ b/STATUS.md
+@@ -80,7 +80,7 @@ course takes you through each one:
+    network against Monte Carlo tree search with rollouts, with the same
+    number of simulations (search steps) per move for each.
+ 3. **Run a real self-play loop** (Module 6). Start from the network trained
+-   on human games, run it overnight, and record how often a new network
++   on human games, run a long experiment (about 3 hours on the reference 8-core CPU), and record how often a new network
+    replaces the old one.
+ 4. **Measure strength reliably** (Module 7). Use cutechess-cli (a
+    command-line program that plays matches between engines) to play at
+diff --git a/cli/play.py b/cli/play.py
+index 34a9bd7..4f6ee82 100644
+--- a/cli/play.py
++++ b/cli/play.py
+@@ -46,6 +46,64 @@ def toggle_board_size():
+ BOARD_SIZE = get_board_size()
+ 
+ 
++def parse_human_move(board, text):
++    """Accept standard chess notation (e4, Nf3, O-O) and UCI (e2e4).
++
++    Neither parser changes the board. Null moves and illegal moves are refused.
++    """
++    try:
++        move = board.parse_uci(text.strip())
++    except ValueError:
++        move = board.parse_san(text.strip())
++    if move not in board.legal_moves:
++        raise ValueError("That move is not legal in this position")
++    return move
++
++
++def choose_mode():
++    """A short learner-facing menu; advanced legacy modes remain available."""
++    while True:
++        print("\nChess RL — play, predict, discover")
++        print("1. Play chess")
++        print("2. Watch an engine think (the change-of-mind lab; needs torch)")
++        print("3. Watch it learn (tic-tac-toe; no torch needed)")
++        print("4. Continue the course")
++        print("a. Advanced engines and display settings")
++        print("q. Quit")
++        choice = input("Choose 1–4, a or q: ").strip().lower()
++        if choice == 'q':
++            return None
++        if choice == '1':
++            print("1. Random   2. Material   3. Minimax   4. MCTS   b. Back")
++            opponent = input("Opponent [1]: ").strip().lower() or '1'
++            modes = {'1': 'human', '2': 'human-material',
++                     '3': 'human-minimax', '4': 'human-mcts'}
++            if opponent in modes:
++                return modes[opponent]
++            if opponent != 'b':
++                print("Choose an opponent from 1–4, or b to go back.")
++        elif choice in ('2', '3', '4'):
++            return {'2': 'think', '3': 'learn', '4': 'course'}[choice]
++        elif choice == 'a':
++            print("Watch: random, material, minimax, minimax-material, mcts")
++            print("Checks: test, test-material, test-minimax, test-minimax-material,")
++            print("        test-mcts, test-mcts-minimax")
++            print("Display: d = size, c = colours; b = back")
++            mode = input("Mode: ").strip().lower()
++            if mode == 'd':
++                toggle_board_size()
++            elif mode == 'c':
++                cycle_color_scheme()
++            elif mode in {'random', 'material', 'minimax', 'minimax-material', 'mcts',
++                           'test', 'test-material', 'test-minimax', 'test-minimax-material',
++                           'test-mcts', 'test-mcts-minimax'}:
++                return mode
++            elif mode != 'b':
++                print("Unknown mode. Choose one of the names shown above.")
++        else:
++            print("Choose 1–4, a or q.")
++
++
+ def random_move(board):
+     """Select a random legal move."""
+     legal_moves = list(board.legal_moves)
+@@ -182,7 +240,7 @@ def play_human_vs_random(human_color=chess.WHITE):
+             # Human's turn
+             while True:
+                 print(f"Legal moves: {', '.join([str(m) for m in board.legal_moves])}")
+-                move_input = input("Your move (e.g. 'e2e4', 'd'=display, 'c'=colors, 'q'=quit): ").strip()
++                move_input = input("Your move (e.g. 'e4' or 'e2e4', 'd'=display, 'c'=colors, 'q'=quit): ").strip()
+ 
+                 if move_input.lower() == 'q':
+                     print("Game abandoned.")
+@@ -197,7 +255,7 @@ def play_human_vs_random(human_color=chess.WHITE):
+                     continue
+ 
+                 try:
+-                    move = chess.Move.from_uci(move_input)
++                    move = parse_human_move(board, move_input)
+                     if move in board.legal_moves:
+                         board.push(move)
+                         move_count += 1
+@@ -205,7 +263,7 @@ def play_human_vs_random(human_color=chess.WHITE):
+                     else:
+                         print(f"Illegal move! Try again.")
+                 except ValueError:
+-                    print(f"Invalid format! Use format like 'e2e4'")
++                    print("Move not recognised or not legal. Try e4, Nf3, O-O or e2e4; q quits.")
+         else:
+             # Computer's turn
+             move = random_move(board)
+@@ -249,7 +307,7 @@ def play_human_vs_material(human_color=chess.WHITE):
+             # Human's turn
+             while True:
+                 print(f"Legal moves: {', '.join([str(m) for m in board.legal_moves])}")
+-                move_input = input("Your move (e.g. 'e2e4', 'd'=display, 'c'=colors, 'q'=quit): ").strip()
++                move_input = input("Your move (e.g. 'e4' or 'e2e4', 'd'=display, 'c'=colors, 'q'=quit): ").strip()
+ 
+                 if move_input.lower() == 'q':
+                     print("Game abandoned.")
+@@ -264,7 +322,7 @@ def play_human_vs_material(human_color=chess.WHITE):
+                     continue
+ 
+                 try:
+-                    move = chess.Move.from_uci(move_input)
++                    move = parse_human_move(board, move_input)
+                     if move in board.legal_moves:
+                         board.push(move)
+                         move_count += 1
+@@ -272,7 +330,7 @@ def play_human_vs_material(human_color=chess.WHITE):
+                     else:
+                         print(f"Illegal move! Try again.")
+                 except ValueError:
+-                    print(f"Invalid format! Use format like 'e2e4'")
++                    print("Move not recognised or not legal. Try e4, Nf3, O-O or e2e4; q quits.")
+         else:
+             # Material engine's turn
+             print("\n💎 Material engine thinking...")
+@@ -438,7 +496,7 @@ def play_human_vs_minimax(human_color=chess.WHITE, depth=3):
+             # Human's turn
+             while True:
+                 print(f"Legal moves: {', '.join([str(m) for m in board.legal_moves])}")
+-                move_input = input("Your move (e.g. 'e2e4', 'd'=display, 'c'=colors, 'q'=quit): ").strip()
++                move_input = input("Your move (e.g. 'e4' or 'e2e4', 'd'=display, 'c'=colors, 'q'=quit): ").strip()
+ 
+                 if move_input.lower() == 'q':
+                     print("Game abandoned.")
+@@ -453,7 +511,7 @@ def play_human_vs_minimax(human_color=chess.WHITE, depth=3):
+                     continue
+ 
+                 try:
+-                    move = chess.Move.from_uci(move_input)
++                    move = parse_human_move(board, move_input)
+                     if move in board.legal_moves:
+                         board.push(move)
+                         move_count += 1
+@@ -461,7 +519,7 @@ def play_human_vs_minimax(human_color=chess.WHITE, depth=3):
+                     else:
+                         print(f"Illegal move! Try again.")
+                 except ValueError:
+-                    print(f"Invalid format! Use format like 'e2e4'")
++                    print("Move not recognised or not legal. Try e4, Nf3, O-O or e2e4; q quits.")
+         else:
+             # Minimax engine's turn
+             print(f"\n🧠 Minimax engine (depth {depth}) thinking...")
+@@ -804,7 +862,7 @@ def play_human_vs_mcts(human_color=chess.WHITE, simulations=200):
+             # Human's turn
+             while True:
+                 print(f"Legal moves: {', '.join([str(m) for m in board.legal_moves])}")
+-                move_input = input("Your move (e.g. 'e2e4', 'd'=display, 'c'=colors, 'q'=quit): ").strip()
++                move_input = input("Your move (e.g. 'e4' or 'e2e4', 'd'=display, 'c'=colors, 'q'=quit): ").strip()
+ 
+                 if move_input.lower() == 'q':
+                     print("Game abandoned.")
+@@ -819,7 +877,7 @@ def play_human_vs_mcts(human_color=chess.WHITE, simulations=200):
+                     continue
+ 
+                 try:
+-                    move = chess.Move.from_uci(move_input)
++                    move = parse_human_move(board, move_input)
+                     if move in board.legal_moves:
+                         board.push(move)
+                         move_count += 1
+@@ -827,7 +885,7 @@ def play_human_vs_mcts(human_color=chess.WHITE, simulations=200):
+                     else:
+                         print(f"Illegal move! Try again.")
+                 except ValueError:
+-                    print(f"Invalid format! Use format like 'e2e4'")
++                    print("Move not recognised or not legal. Try e4, Nf3, O-O or e2e4; q quits.")
+         else:
+             # MCTS engine's turn
+             print(f"\n🌳 MCTS thinking ({simulations} simulations)...")
+@@ -946,79 +1004,41 @@ def main():
+     if len(sys.argv) > 1:
+         mode = sys.argv[1]
+     else:
+-        current_scheme_name = COLOR_SCHEMES[get_color_scheme()]['name']
+-        print("\nChess RL - Phase 2: MCTS Engine (Week 2)")
+-        print("="*50)
+-        print(f"Display: {get_board_size().upper()} | Colors: {current_scheme_name}")
+-        print("(Press 'd' or 'c' during watch mode, or use options 12/13)")
+-        print("="*50)
+-        print("BASIC MODES:")
+-        print("1. Random vs Random (watch)")
+-        print("2. Human vs Random (play)")
+-        print("3. Human vs Material Engine (play) 💎")
+-        print("4. Human vs Minimax Engine (play) 🧠")
+-        print("5. Test suite (10 random games)")
+-        print("\nPHASE 1 ENGINES (Minimax):")
+-        print("6. Material vs Random (watch) 💎")
+-        print("7. Minimax vs Random (watch) 🧠")
+-        print("8. Minimax vs Material (watch) 🧠💎")
+-        print("9. Test Material player (20 games)")
+-        print("10. Test Minimax vs Random (20 games)")
+-        print("11. Test Minimax vs Material (20 games)")
+-        print("\nPHASE 2 ENGINES (MCTS) 🌳 NEW!")
+-        print("14. Human vs MCTS (play) 🌳")
+-        print("15. MCTS vs Random (watch) 🌳")
+-        print("16. Test MCTS vs Random (20 games) 🌳")
+-        print("17. Test MCTS vs Minimax (20 games) 🌳 VALIDATION")
+-        print("\nOPTIONS:")
+-        print("12. Toggle display size (compact ⇄ large) 🎨")
+-        print("13. Change color scheme (cycle) 🎨")
+-        print("="*50)
+-        choice = input("Choose mode (1-17): ").strip()
+-
+-        if choice == "1":
+-            mode = "random"
+-        elif choice == "2":
+-            mode = "human"
+-        elif choice == "3":
+-            mode = "human-material"
+-        elif choice == "4":
+-            mode = "human-minimax"
+-        elif choice == "5":
+-            mode = "test"
+-        elif choice == "6":
+-            mode = "material"
+-        elif choice == "7":
+-            mode = "minimax"
+-        elif choice == "8":
+-            mode = "minimax-material"
+-        elif choice == "9":
+-            mode = "test-material"
+-        elif choice == "10":
+-            mode = "test-minimax"
+-        elif choice == "11":
+-            mode = "test-minimax-material"
+-        elif choice == "12":
+-            toggle_board_size()
+-            print("Press Enter to continue...")
+-            input()
+-            return main()  # Show menu again
+-        elif choice == "13":
+-            cycle_color_scheme()
+-            print("Press Enter to continue...")
+-            input()
+-            return main()  # Show menu again
+-        elif choice == "14":
+-            mode = "human-mcts"
+-        elif choice == "15":
+-            mode = "mcts"
+-        elif choice == "16":
+-            mode = "test-mcts"
+-        elif choice == "17":
+-            mode = "test-mcts-minimax"
+-        else:
+-            print("Invalid choice!")
++        mode = choose_mode()
++
++    if mode is None or mode == 'q':
++        return
++    if mode == 'course':
++        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
++        print(f"Open {root}/course/README.md")
++        print("New here? Follow the opening session in course/module-00-orientation/README.md.")
++        print("Returning? Open your JOURNAL.md and continue from its last checkpoint.")
++        return
++    if mode == 'think':
++        try:
++            from selfplay.mind_change_lab import run_lab
++            import torch
++        except ModuleNotFoundError as error:
++            if error.name != 'torch':
++                raise
++            print('This lab needs PyTorch. Install with: pip install -e ".[train,dev]"')
++            print('Or choose "Watch it learn" for the no-torch tic-tac-toe lab.')
+             return
++        previous_threads = torch.get_num_threads()
++        try:
++            torch.set_num_threads(1)
++            run_lab(pause=True)
++        finally:
++            torch.set_num_threads(previous_threads)
++        return
++    if mode == 'learn':
++        from selfplay.tictactoe_lab import run
++        print("Predict: can a learner improve by playing only against itself?")
++        input("Press Enter to run the experiment. ")
++        run(seed=0)
++        print("Explain: did it learn every position, or just those its play reached?")
++        print("Next: course/module-06-selfplay-rl/README.md, Part A.")
++        return
+ 
+     if mode == "random":
+         play_random_vs_random(interactive=True)
+@@ -1064,7 +1084,7 @@ def main():
+         test_mcts_vs_minimax()
+     else:
+         print(f"Unknown mode: {mode}")
+-        print("Usage: python play.py [random|human|human-material|human-minimax|test|material|minimax|minimax-material|test-material|test-minimax|test-minimax-material|human-mcts|mcts|test-mcts|test-mcts-minimax]")
++        print("Usage: python play.py [think|learn|course|random|human|human-material|human-minimax|test|material|minimax|minimax-material|test-material|test-minimax|test-minimax-material|human-mcts|mcts|test-mcts|test-mcts-minimax]")
+ 
+ 
+ if __name__ == "__main__":
+diff --git a/course/JOURNAL_TEMPLATE.md b/course/JOURNAL_TEMPLATE.md
+new file mode 100644
+index 0000000..7763f85
+--- /dev/null
++++ b/course/JOURNAL_TEMPLATE.md
+@@ -0,0 +1,23 @@
++# My Chess RL journal
++
++Current module:
++Next step when I return:
++
++Use one entry for each experiment where the course asks you to predict or
++interpret a result. Do not log every command or every self-check question.
++Write the prediction before running; preserve it even when it was wrong.
++A few sentences are enough. Add a bug or breakthrough whenever it is useful.
++
++## Module __ / experiment __ / date __
++
++**Before:** I predict __ because __. I will compare __ with __, measure __,
++and regard __ as evidence against my prediction.
++
++**Setup:** command/settings/seed __. Results folder __. Code version __.
++
++**After:** I observed __ (including uncertainty). This supports __, but does
++not establish __. My next question is __.
++
++**Optional bug or breakthrough:** __. What exposed it / made it click: __.
++
++<!-- Copy this entry for the next experiment. Do not overwrite old predictions. -->
+diff --git a/course/README.md b/course/README.md
+index beba37b..434dafb 100644
+--- a/course/README.md
++++ b/course/README.md
+@@ -15,6 +15,9 @@ term when it first appears. You will know why self-play improves anything
+ at all, and why it sometimes doesn't. You will have built and
+ measured every piece, and you will have watched an RL loop learn.
+ 
++Start with the [opening session](module-00-orientation/README.md#opening-session-see-the-destination-first):
++make a prediction and watch learning happen before building the parts.
++
+ ## How to use each module page
+ 
+ Every module opens with the same three lines, so you always know where you
+@@ -92,7 +95,7 @@ idea of the heavier ones.
+ | 3 | [Monte Carlo Tree Search](module-03-mcts/README.md) | UCT, rollouts (games played out to the end) | exploration versus exploitation (trying less-tested moves against repeating good ones, studied as the bandit problem); Monte Carlo evaluation | 4-6 h, plus matches running in the background |
+ | 4 | [The Neural Network](module-04-neural-network/README.md) | Board encoding, a residual network (ResNet) that suggests moves and scores positions, supervised training (learning from human moves) | policy and value as learned functions; why learning by copying human moves is not RL | two sessions: 3 h, plus training in the background |
+ | 5 | [PUCT: Search Meets Network](module-05-puct/README.md) | AlphaZero's search, which uses the network instead of rollouts | search as policy improvement; Q(s, a) from the tree (the average result of move a in position s) | 4-6 h |
+-| 6 | [Self-Play RL](module-06-selfplay-rl/README.md) | The full loop: tic-tac-toe first (watch it learn), then chess | policy iteration, Monte Carlo targets (training on final game results), credit assignment, off-policy data (training on games from earlier networks) | 5-8 h, plus an overnight run |
++| 6 | [Self-Play RL](module-06-selfplay-rl/README.md) | The full loop: tic-tac-toe first (watch it learn), then chess | policy iteration, Monte Carlo targets (training on final game results), credit assignment, off-policy data (training on games from earlier networks) | 5-8 h, plus a long run (~3 h on the reference CPU) |
+ | 7 | [Measure and Scale](module-07-measure-and-scale/README.md) | Reliable Elo measurement, settings for larger runs | evaluating an agent reliably | 3-4 h, plus matches running in the background |
+ | 8 | [Engineering Extras](module-08-engineering/README.md) | Packaging, continuous integration (CI), performance work: the software engineering around the experiments | none | open-ended |
+ | 9 | [Capstone](module-09-capstone/README.md) | The experiment report: measured strength of each engine, training story, one designed experiment, a review of what went wrong | explaining your own run in RL terms | 1-2 days |
+@@ -102,11 +105,35 @@ AlphaZero parts. Modules 7-8 cover measurement and software engineering
+ practice. Module 9 is the final assessment, and it is the one checkpoint
+ with no command to run.
+ 
+-**If you are short on time,** the RL modules are 0, 3, 5 and 6 Part A.
+-Module 6's tic-tac-toe lab runs the whole AlphaZero loop in seconds and needs
+-no training data, so you can see the complete loop early. Module 6 Part B
+-(the chess loop) and Module 5's network exercises need a model trained in
+-Module 4 (a checkpoint), so come back for those after Module 4.
++## Choose your pace
++
++The **core lessons** show mechanisms and check your understanding. The
++**extended experiments** ask whether those mechanisms improve strength and
++how confidently you can tell. You can pause after a core lesson with a real
++result to explain, even when a long match would be inconclusive.
++
++| Module | Core lesson | Extended experiment |
++|---|---|---|
++| 0 | Opening session: predict, watch, explain; start your journal | Play several engines and map their code |
++| 1 | Add a rook-file bonus and check its sign on controlled boards | Measure its effect in matches |
++| 2 | Compare node counts and implement a hard search deadline | Killer moves and transposition-table experiments |
++| 3 | Compare visit distributions; make search reproducible | Rollout/filter tournaments |
++| 4 | Trace encoding and train the small material network | Human-game data, full policy/value training and augmentation |
++| 5 | Material-guided PUCT and the change-of-mind lab | Compare trained networks and inference speed |
++| 6 | Tic-tac-toe learning and exploration; chess smoke test | Resume exercise **before** long chess runs, then larger experiments |
++| 7 | Interpret uncertainty and design a comparison | Calibrated matches and scaling experiments |
++| 8 | Optional engineering topics | Choose a topic that supports your experiment |
++| 9 | Plan a question from your journal | Full capstone with your own measured evidence |
++
++The core route is a conceptual introduction, not completion of every exercise.
++The full engine-building route includes the exercise tests and extended work
++needed by the capstone. Module 5's larger network experiments and Module 6's
++long chess run need your Module 4 trained model. The opening lab's deliberately
++biased checkpoint is **not** a substitute for that model.
++
++Create `JOURNAL.md` using the template in Module 0. Add short entries only when
++an experiment asks for a prediction or interpretation, and keep a note of your
++next step. Bring those entries to the module checkpoints and final report.
+ 
+ ## Your toolbox
+ 
+@@ -124,13 +151,26 @@ always prints one, and says so when the match can't tell the engines apart.
+ 
+ ## If you are stuck: solutions
+ 
+-Reference implementations for the `tests/course/` exercises are on the
+-`course-solutions` branch (`git diff main course-solutions` shows every
+-solution as a readable diff). Try each exercise yourself for at least 30
+-minutes first. Then look at how the solution approaches the problem, close
+-it, and write your own version from memory. You learn much less from reading
+-a solution than from working it out yourself. But a learner who stays stuck
+-learns nothing, so the solutions are available.
++Read the exercise test's contract first. If it is meant to fail before you
++implement anything, remove the **whole** `@pytest.mark.skip(...)` decorator
++first (it often spans several lines), then run that test. A skipped test never
++checks your implementation. For the resume exercise, remove its module-level
++`pytestmark` instead. Keep all unrelated exercise skips in place.
++
++If stuck, use a hint from the [exercise recovery guide](../tests/course/README.md)
++before inspecting a reference. For example, to view only the evaluator solution
++without switching branches:
++
++```bash
++git fetch origin course-solutions:refs/remotes/origin/course-solutions
++git diff main origin/course-solutions -- engine/evaluator.py
++```
++
++This reads reference code; it does not modify your working files. The remote
++branch can lag behind the course: use the current test as the contract, not a
++promise that copying an older file will pass. The revised resume exercise has
++its own local reference patch, described in the recovery guide. Try the idea,
++then close the solution and implement it in your own words/code.
+ 
+ ## Two themes of the course
+ 
+diff --git a/course/module-00-orientation/README.md b/course/module-00-orientation/README.md
+index a67908a..82f829c 100644
+--- a/course/module-00-orientation/README.md
++++ b/course/module-00-orientation/README.md
+@@ -8,8 +8,60 @@
+ > - describe chess as a reinforcement-learning problem: agent, environment, state, action, reward
+ > - use a failing test to find which part of the code you broke
+ 
+-Throughout the course, every checkpoint is a command you can run and a
+-result you can check.
++Throughout the course, checkpoints combine runnable checks with an explanation
++you can give in your own words.
++
++## Opening session: see the destination first
++
++Aim for about 20 minutes **after setup**. This is a suggested learning pace,
++not a measured completion time for beginners. You can return to the detailed
++engine-building route afterwards; you do not need to understand the network
++internals yet.
++
++1. **Start your journal.** From the repository root, copy the template once:
++   ```bash
++   cp -n course/JOURNAL_TEMPLATE.md JOURNAL.md
++   ```
++   `-n` preserves an existing journal. Set "Current module" to 0. Use this file
++   only for experiments that ask you to predict or interpret something, plus
++   memorable bugs or breakthroughs. Self-check questions need no written entry.
++2. **Predict a chess move, then watch it change.** With the training extras
++   installed (`pip install -e ".[train,dev]"`), run:
++   ```bash
++   python3 selfplay/mind_change_lab.py --pause
++   ```
++   Look at the board and predict Black's reply to the tempting capture before
++   pressing Enter. Later, predict whether fitting this one lesson will help on
++   the comparison boards. The script pauses for both predictions.
++   **Expected:** the prepared learner initially wants the pawn; search finds
++   checkmate against it, and training changes its next first choice. This is
++   one prepared lesson, not proof of stronger chess. Explain which step changed
++   the weights. Module 5 returns to the details.
++3. **Watch a complete learning loop.** No torch or game download is needed:
++   ```bash
++   python3 selfplay/tictactoe_lab.py
++   ```
++   Before running, predict whether playing only against itself can help it
++   avoid losing to a perfect player. Follow `vs_perfect`: it means games not
++   lost by the learned table **without search**; a perfect opponent cannot lose.
++   **Expected with seed 0:** it rises from 0 to about 89 out of 100 games.
++   Exact runtime depends on your computer; measured runs take seconds.
++4. **Make one change.** Predict what happens if the learner never explores:
++   ```bash
++   python3 selfplay/tictactoe_lab.py --no-root-noise --temperature-moves 0
++   ```
++   Compare `coverage` (positions encountered) with the first run. Record your
++   prediction and observation in one journal entry. Module 6 explains why
++   repeated experience can teach so little.
++
++**Stop and explain:** What can search discover? What does training remember?
++Why doesn't fitting one board prove useful generalisation? It's fine to have
++questions: put one in your journal and look for its answer as you build.
++
++Want to play first? `python3 cli/play.py` offers Play, Watch an engine think,
++Watch it learn, and Continue the course. Moves accept `e4` or `e2e4`; `q` quits.
++If you installed only the core dependencies, start with tic-tac-toe and return
++to the chess lab after installing the training extras.
+ 
+ ## Concepts
+ 
+@@ -145,6 +197,10 @@ number back. Working out which of those choices earned the win is the
+ 
+ ## Checkpoint
+ 
++Bring the relevant prediction/interpretation entries from your `JOURNAL.md`
++(see the [template](../JOURNAL_TEMPLATE.md)). No entry is needed for routine
++commands or each self-check question. Note your next step before stopping.
++
+ - [ ] `pytest -q` passes
+ - [ ] You beat the random engine
+ - [ ] You ran a `cli/match.py` match and can read its interval
+diff --git a/course/module-01-board-and-evaluation/README.md b/course/module-01-board-and-evaluation/README.md
+index 2c84b1f..4294274 100644
+--- a/course/module-01-board-and-evaluation/README.md
++++ b/course/module-01-board-and-evaluation/README.md
+@@ -8,6 +8,12 @@
+ > - measure whether a change made the engine stronger, and say how sure you are
+ > - explain what a *value function* is, using `evaluate()` as the example
+ 
++## Choose your pace
++
++Core lesson: inspect controlled positions, add the bonus, and pass its test.
++The match in step 3 is an extended strength experiment; an inconclusive score
++does not undo what the controlled examples taught you.
++
+ ## Concepts
+ 
+ **The board library handles the rules.** `python-chess` generates legal
+@@ -138,6 +144,10 @@ function from experience, that is, from the results of games. Modules 4 and
+ 
+ ## Checkpoint
+ 
++Bring the relevant prediction/interpretation entries from your `JOURNAL.md`
++(see the [template](../JOURNAL_TEMPLATE.md)). No entry is needed for routine
++commands or each self-check question. Note your next step before stopping.
++
+ - [ ] `pytest -q` passes, including
+       `tests/course/test_module01_evaluator.py` with its skip line removed
+ - [ ] A `cli/match.py` result for your term, with its interval, and one
+diff --git a/course/module-02-minimax-search/README.md b/course/module-02-minimax-search/README.md
+index e58c396..86ee039 100644
+--- a/course/module-02-minimax-search/README.md
++++ b/course/module-02-minimax-search/README.md
+@@ -8,6 +8,12 @@
+ > - say why a stored search result (a transposition-table entry) needs a flag marking its score as exact or a bound
+ > - write minimax as a Bellman backup, the equation that reinforcement learning (RL) methods are built on
+ 
++## Choose your pace
++
++Core lesson: steps 1–2 show lookahead cost and enforce a deadline. Steps 3–4
++extend this with move ordering and caching. A full module checkpoint includes
++those exercises; you can pause after the core lesson and return later.
++
+ ## Concepts
+ 
+ A search builds a *game tree*: each *node* is a position and each branch is
+@@ -149,10 +155,12 @@ lines to plan (Module 3) are what the rest of the course adds.
+    - catch it in the function that runs the iterations, and play the
+      previous iteration's move
+ 
+-   Your checkpoint is `tests/course/test_module02_search.py`. Run it before
+-   implementing. Expected: it fails after about 18 seconds. Then delete the
+-   `@pytest.mark.skip` line above the test (it tells pytest to skip the
+-   test), and make the test pass.
++   Your checkpoint is `tests/course/test_module02_search.py`. First remove
++   its entire multiline `@pytest.mark.skip(...)` decorator. Then run
++   `pytest tests/course/test_module02_search.py -q` before implementing.
++   Expected on the reference machine: it fails after about 18 seconds (timing
++   varies). A skipped test cannot expose the bug. Implement the abort and
++   rerun the same command until it passes.
+ 3. **Exercise: killer moves.** A move that is not a capture and that caused
+    a cutoff at one node often causes cutoffs at *sibling nodes*
+    (other nodes at the same depth). Keep two such killer moves per depth and
+@@ -240,6 +248,10 @@ same leaf-value question.
+ 
+ ## Checkpoint
+ 
++Bring the relevant prediction/interpretation entries from your `JOURNAL.md`
++(see the [template](../JOURNAL_TEMPLATE.md)). No entry is needed for routine
++commands or each self-check question. Note your next step before stopping.
++
+ ```bash
+ pytest tests/test_minimax.py -q                 # regression suite still green
+ pytest tests/course/test_module02_search.py tests/course/test_module02_killers.py -q  # un-skipped and passing
+diff --git a/course/module-03-mcts/README.md b/course/module-03-mcts/README.md
+index 3cfa44a..2a01aee 100644
+--- a/course/module-03-mcts/README.md
++++ b/course/module-03-mcts/README.md
+@@ -8,6 +8,13 @@
+ > - estimate a position's value by Monte Carlo rollouts (games played out to the end), and say why that estimate is noisy
+ > - name the two parts of `mcts.py` that Module 5 replaces with the network
+ 
++## Choose your pace
++
++Core lesson: compare visits in step 2 and make search reproducible in step 4.
++The tournaments in steps 1 and 3 (and the match part of step 2) are extended
++experiments. First observe the mechanism on a position; then ask whether it
++improves strength. The smoke match below checks setup, not learning.
++
+ ## Concepts
+ 
+ Minimax searches every move to a fixed depth. Monte Carlo tree search (MCTS)
+@@ -214,6 +221,10 @@ value function.
+ 
+ ## Checkpoint
+ 
++Bring the relevant prediction/interpretation entries from your `JOURNAL.md`
++(see the [template](../JOURNAL_TEMPLATE.md)). No entry is needed for routine
++commands or each self-check question. Note your next step before stopping.
++
+ ```bash
+ pytest tests/test_mcts.py -q                  # regression suite still green
+ pytest tests/course/test_module03_mcts.py -q  # un-skipped and passing
+diff --git a/course/module-04-neural-network/README.md b/course/module-04-neural-network/README.md
+index fcd9880..b5099dd 100644
+--- a/course/module-04-neural-network/README.md
++++ b/course/module-04-neural-network/README.md
+@@ -15,6 +15,12 @@ Requires torch (PyTorch, the deep-learning library the code uses): `pip install
+ 
+ Do Part A, take a break, then start Part B's quick run and read while it trains.
+ 
++## Choose your pace
++
++Core lesson: Part A steps 1 and 4 let you inspect representation and watch a
++small network learn. Data preparation and full chess training are extended
++work, required for later trained-network matches but not the opening lab.
++
+ ## The four machine-learning ideas this module uses
+ 
+ You don't need a machine-learning (ML) course first. These four ideas are enough:
+@@ -477,6 +483,10 @@ The fix is more games instead of more epochs (exercise 7).
+ 
+ ## Checkpoint
+ 
++Bring the relevant prediction/interpretation entries from your `JOURNAL.md`
++(see the [template](../JOURNAL_TEMPLATE.md)). No entry is needed for routine
++commands or each self-check question. Note your next step before stopping.
++
+ ```bash
+ pytest tests/test_encoding.py tests/test_model.py -q         # still green
+ pytest tests/course/test_module04_augmentation.py \
+diff --git a/course/module-05-puct/README.md b/course/module-05-puct/README.md
+index b641c16..91de356 100644
+--- a/course/module-05-puct/README.md
++++ b/course/module-05-puct/README.md
+@@ -13,6 +13,12 @@ The name PUCT stands for Predictor + Upper Confidence bounds for Trees. The
+ is the idea behind UCT (Upper Confidence bounds applied to Trees) in Module 3: add a bonus to moves the search knows
+ little about, so they still get tried.
+ 
++## Choose your pace
++
++Core lesson: step 1 and the bridge lab need no human-game checkpoint. They
++show where search gets knowledge and how training retains a search result.
++Steps 2–5 extend this into trained-network comparisons and performance work.
++
+ ## Concepts
+ 
+ Everything below is in `search/puct.py`, which has docstrings written for teaching.
+@@ -369,6 +375,10 @@ Module 6 adds varied experience, final game results, and repeated evaluation.
+ 
+ ## Checkpoint
+ 
++Bring the relevant prediction/interpretation entries from your `JOURNAL.md`
++(see the [template](../JOURNAL_TEMPLATE.md)). No entry is needed for routine
++commands or each self-check question. Note your next step before stopping.
++
+ ```bash
+ pytest tests/test_puct.py -q                  # regression suite still green
+ pytest tests/course/test_module05_puct.py -q  # un-skipped and passing
+diff --git a/course/module-06-selfplay-rl/README.md b/course/module-06-selfplay-rl/README.md
+index dd68936..eb8b153 100644
+--- a/course/module-06-selfplay-rl/README.md
++++ b/course/module-06-selfplay-rl/README.md
+@@ -1,7 +1,7 @@
+ # Module 6: Self-Play Reinforcement Learning
+ 
+ > **Where you are:** the last step in building the engine. You remove the human games: the engine generates its own experience, and every piece from Modules 1-5 becomes one step of a reinforcement-learning loop.
+-> **Time:** 5-8 hours, plus one overnight run. Part A (tic-tac-toe) takes 2-3 hours, including two coding exercises; most runs finish in seconds. Part B (chess) is mostly waiting.
++> **Time:** 5-8 hours, plus one long run (about 3 hours on the reference 8-core CPU). Part A (tic-tac-toe) takes 2-3 hours, including two coding exercises; most runs finish in seconds. Part B (chess) is mostly waiting.
+ > **You'll be able to:**
+ > - describe the AlphaZero loop in terms of reinforcement learning (RL), which is learning by trial and error from rewards. Say which part evaluates the policy, which part improves it, and where the reward comes from
+ > - watch an RL loop learn, read its learning curve, and break it on purpose in three different ways
+@@ -9,6 +9,13 @@
+ > - replace a lookup table with a neural network, and measure what generalisation (giving sensible answers for positions never seen in training) gains and costs
+ > - run the chess loop, and write a report that separates real learning from noise
+ 
++## Choose your pace
++
++Core lesson: start with Part A steps 1–3, then the short chess smoke test in
++Part B. Complete the resume exercise before any long chess run. The larger
++experiments support the full module checkpoint and capstone; you can return
++to them after understanding the small loop.
++
+ ## Concepts
+ 
+ The [Module 5 bridge lab](../module-05-puct/README.md#bridge-lab-watch-the-engine-change-its-mind)
+@@ -315,7 +322,7 @@ below asks what that changes.
+    strength:
+    ```bash
+    python3 selfplay/train_loop.py --iterations 2 --games-per-iter 2 \
+-       --simulations 16 --train-steps 20 --arena-games 2
++       --simulations 16 --train-steps 20 --arena-games 2 --checkpoint-dir runs/m6_smoke_01
+    ```
+    **Expected (measured):** 0 promotions, arena scores of 50%, a policy loss
+    around 7.7 and a value loss near 0. The policy loss is close to ln(4672) ≈
+@@ -323,7 +330,7 @@ below asks what that changes.
+    over all 4,672 outputs: an untrained network knows nothing yet. With
+    `--arena-games 2` the arena can only score 0%, 25%, 50%, 75% or 100%, so
+    here it only checks that the code runs and is not a measurement. Each
+-   iteration also appends a row to `selfplay_checkpoints/run_log.csv`.
++   iteration also appends a row to `runs/m6_smoke_01/run_log.csv`.
+ 
+    The value loss is near 0 because a random network never finishes a game
+    within the 200-ply limit (a ply is one move by one side), so every game
+@@ -331,48 +338,106 @@ below asks what that changes.
+    problem*: the value head has nothing to learn from until games start
+    ending in a win or a loss. It is also why warm-starting from Module 4
+    (starting from your trained network) helps so much.
+-9. **Run a real (small) loop overnight.** Warm-start from your Module 4
+-   supervised checkpoint. AlphaGo, DeepMind's first Go program, did the
+-   same; AlphaZero started from random weights.
++9. **Exercise: resume before the long run.** A run folder is now protected:
++   the unmodified program refuses any occupied folder and tells you to choose
++   a new `--checkpoint-dir`. Rerun step 8 in `runs/m6_smoke_02`, never in the
++   folder containing your long experiment. There is no destructive override.
++
++   At startup, `config.json` records the settings actually used, including the
++   architecture loaded from a warm-start checkpoint. Each completed iteration
++   gets an immutable directory under `iterations/`. `completed.json` points to
++   the last complete snapshot, with hashes of its champion, candidate, buffer
++   and log. The marker changes only after all four files have been written.
++   Top-level `champion.pt`, `replay_buffer.npz` and `run_log.csv` are convenience
++   copies for existing play commands; they can be stale after an interruption.
++   Snapshots retain each iteration's buffer, so allow disk space for the run's
++   history. Do not remove the snapshot referenced by `completed.json`.
++
++   Implement `load_resume_state(checkpoint_dir)` in `selfplay/train_loop.py`,
++   `run_training_loop(..., resume=True)`, and a `--resume` flag. The test contract
++   is in `tests/course/test_module06_resume.py`. Remove its module-level
++   `pytestmark`, run it to observe the missing feature, then make it pass:
+    ```bash
+-   python3 selfplay/train_loop.py --init-checkpoint checkpoints/best_model.pt \
+-       --iterations 10 --games-per-iter 20 --simulations 64 --train-steps 300
++   pytest tests/course/test_module06_resume.py -q
+    ```
+-   **Expected (measured):** about 40 seconds per game at 64 simulations,
+-   with a 4×128 network (4 residual blocks of 128 channels, as in Module 4)
+-   on an 8-core CPU. One iteration (20 self-play games, training and a
+-   6-game arena) takes about 18 minutes, and the whole run about 3 hours.
+-   The run ends after its 10 iterations; there is no early stop. In a
+-   healthy run the policy loss falls between iterations. Promotions may be
+-   rare (see Q1).
+-
+-   In our one-iteration trial with the Module 4 network trained on one month
+-   of games, both self-play games were drawn, so every value target
+-   was 0 and the value loss read 0.0000. This is the sparse reward problem
+-   again, even with a warm start. The candidate scored 25% and was rejected.
+-
+-   While the run is going, watch the value loss column for the same reason.
+-   `selfplay_checkpoints/run_log.csv` records, for each iteration, the
+-   buffer size, the policy and value losses, the arena score and whether the
+-   candidate was promoted.
+-
+-   When the run has finished, test whether the loop gained anything:
++   Your implementation must:
++   - validate the committed snapshot and load its champion, buffer and iteration
++   - reject corrupt/missing state and disagreement with `config.json`
++   - let only explicit resume bypass the occupied-folder refusal
++   - preserve the committed log rows, original configuration and old snapshots
++   - restore saved scientific settings, with `iterations` meaning additional
++     iterations; device and verbosity may change for the new invocation
++   - inherit architecture from the saved model when omitted, and reject an
++     explicitly incompatible `--res-blocks` or `--channels`
++   - reject using `--resume` together with `--init-checkpoint`.
++
++   **Promise:** continue from the last completed iteration, not reproduce an
++   uninterrupted run exactly. Work within an incomplete iteration is repeated.
++   `train_candidate` creates a new Adam optimiser every iteration, so no Adam
++   state needs restoring at that boundary. Python/NumPy/torch random-number
++   states are not saved; replaying them exactly is an optional extension.
++
++   Hint: use the committed snapshot's log as the base for the next row, not a
++   possibly partial top-level log. Read and validate before writing anything.
++   If stuck, use the [local reference patch](../solutions/module06_resume.patch)
++   through the [recovery guide](../../tests/course/README.md).
++
++   After your exercise tests pass, test continuation on the **small** run:
+    ```bash
+-   python3 cli/match.py puct:sims=64,net=selfplay_checkpoints/champion.pt \
+-       puct:sims=64,net=checkpoints/best_model.pt --games 20
++   python3 selfplay/train_loop.py --resume --checkpoint-dir runs/m6_smoke_01 --iterations 1
+    ```
+-   Twenty games is a quick check: its 95% interval is about ±22
+-   percentage points ([Module 7](../module-07-measure-and-scale/README.md),
+-   Part 0), so it can detect a large gain or a collapse. For a claim you can
+-   defend, run 100 games overnight.
+-10. **Exercise: break the chess loop on purpose.** Do three short runs:
++   **Expected:** the saved settings are reused and iteration 3 is added; rows
++   1–2 remain. `--resume` is not available until you implement the exercise.
++   Only proceed to the long run once this works. To change scientific settings,
++   start a new named run; do not silently change an experiment while resuming.
++
++10. **Extended experiment: a long chess run.** Warm-start from your Module 4
++    supervised checkpoint. AlphaGo, DeepMind's first Go program, did the
++    same; AlphaZero started from random weights.
++    ```bash
++    python3 selfplay/train_loop.py --init-checkpoint checkpoints/best_model.pt \
++        --iterations 10 --games-per-iter 20 --simulations 64 --train-steps 300 \
++        --checkpoint-dir runs/m6_main_01
++    ```
++    **Expected (measured):** about 40 seconds per game at 64 simulations,
++    with a 4×128 network (4 residual blocks of 128 channels, as in Module 4)
++    on an 8-core CPU. One iteration (20 self-play games, training and a
++    6-game arena) takes about 18 minutes, and the whole run about 3 hours.
++    The run ends after its 10 iterations; there is no early stop. In a
++    healthy run the policy loss falls between iterations. Promotions may be
++    rare (see Q1).
++
++    In our one-iteration trial with the Module 4 network trained on one month
++    of games, both self-play games were drawn, so every value target
++    was 0 and the value loss read 0.0000. This is the sparse reward problem
++    again, even with a warm start. The candidate scored 25% and was rejected.
++
++    While the run is going, watch the value loss column for the same reason.
++    `runs/m6_main_01/run_log.csv` records, for each iteration, the
++    buffer size, the policy and value losses, the arena score and whether the
++    candidate was promoted.
++
++    When the run has finished, test whether the loop gained anything:
++    ```bash
++    python3 cli/match.py puct:sims=64,net=runs/m6_main_01/champion.pt \
++        puct:sims=64,net=checkpoints/best_model.pt --games 20
++    ```
++    Twenty games is a quick check: its 95% interval is about ±22
++    percentage points ([Module 7](../module-07-measure-and-scale/README.md),
++    Part 0), so it can detect a large gain or a collapse. For a claim you can
++    defend, run 100 games overnight.
++11. **Extended experiment: break the chess loop on purpose.** Do three short runs:
+     (a) `--no-root-noise`, (b) `--temperature-moves 0`,
+     (c) `--promote-threshold 0.30`. Use the small-scale settings from step 8
+     with `--iterations 5`.
+ 
+     1. Before running, predict each failure from what Part A showed you.
+     2. Run each one. The command for (a) is:
+-       `python3 selfplay/train_loop.py --iterations 5 --games-per-iter 2 --simulations 16 --train-steps 20 --arena-games 2 --no-root-noise --checkpoint-dir sabotage_a`
++       `python3 selfplay/train_loop.py --iterations 5 --games-per-iter 2 --simulations 16 --train-steps 20 --arena-games 2 --no-root-noise --checkpoint-dir runs/m6_sabotage_a_01`
++
++       For (b) and (c), use `runs/m6_sabotage_b_01` and `runs/m6_sabotage_c_01`.
++       On another attempt, use suffix `_02` rather than reusing an occupied folder.
++
+     3. Check `run_log.csv`: look at the promoted column and at whether the
+        policy loss changes.
+     4. Write three sentences, including whether chess at this scale shows
+@@ -385,17 +450,18 @@ below asks what that changes.
+     that lose, so it no longer protects anything. (a) and (b) are harder to
+     see at this scale, which makes them worth predicting.
+     </details>
+-11. **Exercise: buffer-size sweep.** Compare `--buffer-capacity 2000` with
++12. **Extended experiment: buffer-size sweep.** Compare `--buffer-capacity 2000` with
+     `50000` at a fixed number of games per iteration. For example, run step
+-    9's command with `--iterations 5`, once with
+-    `--buffer-capacity 2000 --checkpoint-dir buf_small` and once with
+-    `--buffer-capacity 50000 --checkpoint-dir buf_large`. Then compare the
++    10's command with `--iterations 5`, once with
++    `--buffer-capacity 2000 --checkpoint-dir runs/m6_buf_small_01` and once with
++    `--buffer-capacity 50000 --checkpoint-dir runs/m6_buf_large_01`. Then compare the
+     `promoted` columns of the two `run_log.csv` files. Each run takes a few
+     hours on a laptop CPU.
+ 
+     **Laptop version (about 10 minutes each):** use step 8's small-scale
+     settings with `--iterations 4 --buffer-capacity 300`, and again with
+-    `--buffer-capacity 50000`. A game at these settings is a few hundred
++    `--buffer-capacity 50000`; use `runs/m6_buf_small_quick_01` and
++    `runs/m6_buf_large_quick_01` for these shorter runs. A game at these settings is a few hundred
+     positions long, so a 300-position buffer drops almost everything each
+     iteration. This version shows the mechanics: watch
+     `positions_in_buffer` in `run_log.csv` stop growing. It does not show
+@@ -404,15 +470,6 @@ below asks what that changes.
+ 
+     Which setting promotes more often early in the run, and which later? How
+     many seeds would you need to believe the answer (Part A, step 4)?
+-12. **Exercise: resumable loops.** The loop already saves
+-    `champion.pt`/`replay_buffer.npz`. Implement
+-    `load_resume_state(checkpoint_dir)` in `selfplay/train_loop.py`. Add a
+-    `--resume` flag in its `main()` that uses it. A stopped run should then
+-    continue: it loads the buffer and the champion and keeps the iteration
+-    numbering. Long
+-    RL runs are often interrupted, so resuming matters.
+-    `tests/course/test_module06_resume.py` sets out what the code must do
+-    and is part of this module's checkpoint; remove its pytest skip marker.
+ 
+ ## Check your understanding
+ 
+@@ -441,7 +498,7 @@ search's judgment (everything it learned about the moves it did not pick).
+ </details>
+ 
+ <details>
+-<summary><b>Q3.</b> You remove Dirichlet noise but keep temperature (step 10, run (a)). What failure do you predict, mechanically?</summary>
++<summary><b>Q3.</b> You remove Dirichlet noise but keep temperature (step 11, run (a)). What failure do you predict, mechanically?</summary>
+ 
+ Temperature still varies which move is played at the root (the current position). But within each
+ search, the priors alone decide what gets explored. Moves that the current
+@@ -491,6 +548,10 @@ improvement is hard to measure, the gate stops the loop from learning.
+ 
+ ## Checkpoint
+ 
++Bring the relevant prediction/interpretation entries from your `JOURNAL.md`
++(see the [template](../JOURNAL_TEMPLATE.md)). No entry is needed for routine
++commands or each self-check question. Note your next step before stopping.
++
+ ```bash
+ pytest tests/test_selfplay.py tests/test_tictactoe_lab.py -q   # regression suite still green
+ pytest tests/course/test_module06_nstep.py tests/course/test_module06_network.py \
+@@ -504,7 +565,7 @@ pytest tests/course/test_module06_nstep.py tests/course/test_module06_network.py
+       comparison from step 7
+ - [ ] You can answer R5-R8 in the "Going deeper" section of
+       [RL_CONCEPTS.md](../RL_CONCEPTS.md) before opening the answers
+-- [ ] **Run report** for your overnight loop (step 9):
++- [ ] **Run report** for your long loop (step 10):
+       1. From `run_log.csv`, report the iterations completed, positions in
+          the buffer, the arena score for each iteration and the promotions.
+       2. Report the match between the champion and the initial network,
+diff --git a/course/module-07-measure-and-scale/README.md b/course/module-07-measure-and-scale/README.md
+index 164f052..d2a5754 100644
+--- a/course/module-07-measure-and-scale/README.md
++++ b/course/module-07-measure-and-scale/README.md
+@@ -16,6 +16,12 @@ into playing strength.
+ Elo points stronger than another is expected to score about 64%, and a
+ 400-point gap means an expected score of about 91%.
+ 
++## Choose your pace
++
++Core lesson: interpret uncertainty and plan a comparison before running it.
++Short matches check setup. Calibrated strength measurements and scaling runs
++are extended experiments needed for claims in the full capstone.
++
+ ## Part 0: What a match result tells you
+ 
+ As an analogy, a game between two engines is like a coin flip with an
+@@ -181,9 +187,9 @@ and halve the games, so the running time stays the same. Run both
+ configurations for 5 iterations, with every other flag the same:
+ ```bash
+ python3 selfplay/train_loop.py --init-checkpoint checkpoints/best_model.pt --iterations 5 \
+-    --simulations 32 --games-per-iter 20 --train-steps 300 --checkpoint-dir run_a
++    --simulations 32 --games-per-iter 20 --train-steps 300 --checkpoint-dir runs/m7_a_01
+ python3 selfplay/train_loop.py --init-checkpoint checkpoints/best_model.pt --iterations 5 \
+-    --simulations 64 --games-per-iter 10 --train-steps 300 --checkpoint-dir run_b
++    --simulations 64 --games-per-iter 10 --train-steps 300 --checkpoint-dir runs/m7_b_01
+ ```
+ Time the first iteration of each. If one is much slower, the comparison is
+ not at fixed computing time, so adjust `--games-per-iter` until they match.
+@@ -192,7 +198,7 @@ Each run takes a few hours on a laptop CPU.
+ After the runs, play the two champions against each other in a 40-game
+ match:
+ ```bash
+-python3 cli/match.py puct:sims=64,net=run_a/champion.pt puct:sims=64,net=run_b/champion.pt --games 40
++python3 cli/match.py puct:sims=64,net=runs/m7_a_01/champion.pt puct:sims=64,net=runs/m7_b_01/champion.pt --games 40
+ ```
+ Which use of the computing time won? Before you run the match, use Part 0
+ to work out how big a difference 40 games can detect, and write it down.
+@@ -208,7 +214,8 @@ match can show only a large difference.
+ **Laptop version (under half an hour in total):** run the same pair with
+ `--iterations 2 --games-per-iter 4` and `--train-steps 50` (use `2` games
+ per iteration for run B). Then play a 10-game match instead of the 40-game
+-one. This covers the whole procedure, but the interval will contain 50%, so
++one. Use `runs/m7_a_quick_01` and `runs/m7_b_quick_01` for these shorter
++runs and point the match command at those folders. This covers the whole procedure, but the interval will contain 50%, so
+ say so in your conclusion. To answer the question, you need the full runs.
+ 
+ ## Check your understanding
+@@ -244,6 +251,10 @@ it cannot measure a small improvement.
+ 
+ ## Checkpoint
+ 
++Bring the relevant prediction/interpretation entries from your `JOURNAL.md`
++(see the [template](../JOURNAL_TEMPLATE.md)). No entry is needed for routine
++commands or each self-check question. Note your next step before stopping.
++
+ - [ ] A measured rating with a 95% interval, from at least 100 games against a
+       calibrated opponent
+ - [ ] One scaling experiment with a conclusion you'd defend
+diff --git a/course/module-08-engineering/README.md b/course/module-08-engineering/README.md
+index 97e159a..cb735ad 100644
+--- a/course/module-08-engineering/README.md
++++ b/course/module-08-engineering/README.md
+@@ -204,6 +204,10 @@ you weren't editing. Exercise 1 keeps the suite fast enough for that.
+ 
+ ## Checkpoint
+ 
++Bring the relevant prediction/interpretation entries from your `JOURNAL.md`
++(see the [template](../JOURNAL_TEMPLATE.md)). No entry is needed for routine
++commands or each self-check question. Note your next step before stopping.
++
+ - [ ] CI passes on your fork (your own copy of the repository on GitHub) for
+       a pull request that changes real code
+ - [ ] At least one exercise above merged, with tests
+diff --git a/course/module-09-capstone/README.md b/course/module-09-capstone/README.md
+index ddcb9dd..2e12229 100644
+--- a/course/module-09-capstone/README.md
++++ b/course/module-09-capstone/README.md
+@@ -12,6 +12,10 @@ Write a short experiment report that could convince a sceptical engineer.
+ It is the final assessment of the whole course, and you cannot complete it
+ by running commands alone.
+ 
++Bring your `JOURNAL.md` entries from the earlier modules. Select the predictions,
++results, bugs and breakthroughs that support your report; preserve the original
++predictions so they cannot become explanations written after the result.
++
+ ## The deliverable
+ 
+ One document (Markdown is fine, about 2 pages), committed to your fork as
+diff --git a/selfplay/__init__.py b/selfplay/__init__.py
+index 299c68a..1a89551 100644
+--- a/selfplay/__init__.py
++++ b/selfplay/__init__.py
+@@ -30,7 +30,7 @@ Modules:
+ 
+ Run a tiny end-to-end loop (minutes on CPU, proves the plumbing):
+     python3 selfplay/train_loop.py --iterations 2 --games-per-iter 2 \
+-        --simulations 16 --train-steps 20 --arena-games 2
++        --simulations 16 --train-steps 20 --arena-games 2 --checkpoint-dir runs/package_smoke_01
+ """
+ 
+ from .replay_buffer import ReplayBuffer
+diff --git a/selfplay/train_loop.py b/selfplay/train_loop.py
+index afb595b..2c2e48d 100644
+--- a/selfplay/train_loop.py
++++ b/selfplay/train_loop.py
+@@ -21,7 +21,7 @@ which we compute manually with log_softmax. The value loss is MSE, as before.
+ Start tiny. This runs end-to-end on a laptop CPU in a few minutes:
+ 
+     python3 selfplay/train_loop.py --iterations 2 --games-per-iter 2 \
+-        --simulations 16 --train-steps 20 --arena-games 2
++        --simulations 16 --train-steps 20 --arena-games 2 --checkpoint-dir runs/example_smoke_01
+ 
+ It will NOT get strong at that scale — the point is to verify the plumbing.
+ Real improvement needs orders of magnitude more games and simulations
+@@ -30,9 +30,16 @@ Real improvement needs orders of magnitude more games and simulations
+ 
+ import argparse
+ import copy
++import hashlib
++import json
+ import os
++from pathlib import Path
++import platform
+ import random
++import shutil
+ import sys
++import tempfile
++from datetime import datetime, timezone
+ 
+ # Add project root to path
+ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+@@ -121,6 +128,76 @@ def save_checkpoint(model, path, iteration):
+     }, path)
+ 
+ 
++LOG_HEADER = "iteration,positions_in_buffer,policy_loss,value_loss,arena_score,promoted\n"
++
++
++def reserve_run_directory(checkpoint_dir):
++    """Protect existing work before allocating a model or opening any outputs.
++
++    The exclusive reservation also prevents two new runs racing for one empty
++    directory. An interrupted startup keeps its reservation: use a new folder.
++    Resume is deliberately a course exercise, not an implicit overwrite mode.
++    """
++    path = Path(checkpoint_dir)
++    path.mkdir(parents=True, exist_ok=True)
++    message = (f"Run folder '{path}' already contains files. Nothing was overwritten. "
++               "Choose a NEW folder, for example --checkpoint-dir runs/m6_smoke_02. "
++               "To continue an old run, first complete Module 6's resume exercise.")
++    if any(path.iterdir()):
++        raise FileExistsError(message)
++    try:
++        with (path / ".run-started").open("x") as reservation:
++            reservation.write("Reserved for one training run.\n")
++    except FileExistsError:
++        raise FileExistsError(message) from None
++    return path
++
++
++def _sha256(path):
++    digest = hashlib.sha256()
++    with Path(path).open("rb") as source:
++        for chunk in iter(lambda: source.read(1024 * 1024), b""):
++            digest.update(chunk)
++    return digest.hexdigest()
++
++
++def save_completed_iteration(directory, champion, candidate, buffer, iteration, log_text):
++    """Publish a complete, immutable iteration before updating convenience files.
++
++    completed.json is replaced atomically only after all snapshot files exist.
++    A stopped write leaves the previous marker usable. Snapshots are retained
++    (including buffers), trading disk space for recoverable experiment history.
++    This protects process interruptions; it is not a power-loss durability claim.
++    """
++    directory = Path(directory)
++    snapshots = directory / "iterations"
++    snapshots.mkdir(exist_ok=True)
++    snapshot = Path(tempfile.mkdtemp(prefix=f"iter_{iteration:06d}_", dir=snapshots))
++    save_checkpoint(champion, snapshot / "champion.pt", iteration)
++    save_checkpoint(candidate, snapshot / "candidate.pt", iteration)
++    buffer.save(str(snapshot / "replay_buffer.npz"))
++    (snapshot / "run_log.csv").write_text(log_text)
++    marker = {
++        "iteration": iteration,
++        "snapshot": snapshot.relative_to(directory).as_posix(),
++        "sha256": {name: _sha256(snapshot / name) for name in
++                   ("champion.pt", "candidate.pt", "replay_buffer.npz", "run_log.csv")},
++    }
++    pending_marker = directory / "completed.json.tmp"
++    pending_marker.write_text(json.dumps(marker, indent=2) + "\n")
++    os.replace(pending_marker, directory / "completed.json")
++
++    # Existing play/evaluation commands can still use these top-level paths.
++    # Recovery must use completed.json, since interruption can leave these stale.
++    for source, destination in (("champion.pt", "champion.pt"),
++                                ("candidate.pt", f"candidate_iter_{iteration}.pt"),
++                                ("replay_buffer.npz", "replay_buffer.npz"),
++                                ("run_log.csv", "run_log.csv")):
++        temporary = directory / (destination + ".tmp")
++        shutil.copyfile(snapshot / source, temporary)
++        os.replace(temporary, directory / destination)
++
++
+ def run_training_loop(iterations=5,
+                       games_per_iter=10,
+                       simulations=50,
+@@ -134,8 +211,8 @@ def run_training_loop(iterations=5,
+                       root_noise=True,
+                       max_moves=200,
+                       learning_rate=1e-3,
+-                      res_blocks=4,
+-                      channels=128,
++                      res_blocks=None,
++                      channels=None,
+                       init_checkpoint=None,
+                       checkpoint_dir="selfplay_checkpoints",
+                       device=None,
+@@ -147,29 +224,45 @@ def run_training_loop(iterations=5,
+     See module docstring for the algorithm; every parameter is a knob worth
+     experimenting with (that's the course exercise for module 6).
+     """
++    settings = locals().copy()
++    # Check before any output is opened or existing artifacts can be touched.
++    directory = reserve_run_directory(checkpoint_dir)
+     device = torch.device(device) if device else auto_device()
+     rng = random.Random(seed) if seed is not None else None
+     if seed is not None:
+         torch.manual_seed(seed)
+         np.random.seed(seed)
+ 
+-    os.makedirs(checkpoint_dir, exist_ok=True)
+-
+     # The CHAMPION generates data; a CANDIDATE clone trains and challenges
+     if init_checkpoint:
+         champion, _ = load_model(init_checkpoint, device)
+         print(f"Initialized champion from {init_checkpoint}")
+     else:
+-        champion = create_model(num_res_blocks=res_blocks, num_channels=channels)
++        champion = create_model(num_res_blocks=4 if res_blocks is None else res_blocks,
++                                num_channels=128 if channels is None else channels)
+         champion.to(device)
+         champion.eval()
+         print("Initialized champion with RANDOM weights (tabula rasa, like AlphaZero)")
+ 
++    # A warm-start checkpoint determines the effective architecture, even when
++    # --res-blocks/--channels have their default values on the command line.
++    settings.update(res_blocks=champion.num_res_blocks, channels=champion.num_channels,
++                    input_channels=champion.input_channels, device=str(device),
++                    checkpoint_dir=str(directory),
++                    init_checkpoint=str(init_checkpoint) if init_checkpoint else None,
++                    arena_simulations=arena_simulations or simulations)
++    config = {"settings": settings, "created_utc": datetime.now(timezone.utc).isoformat(),
++              "python_version": platform.python_version(), "torch_version": str(torch.__version__)}
++    with (directory / "config.json").open("x") as config_file:
++        json.dump(config, config_file, indent=2)
++        config_file.write("\n")
++
+     buffer = ReplayBuffer(capacity=buffer_capacity)
+     promotions = 0
+     log_path = os.path.join(checkpoint_dir, "run_log.csv")
+-    with open(log_path, "w") as log:
+-        log.write("iteration,positions_in_buffer,policy_loss,value_loss,arena_score,promoted\n")
++    log_text = LOG_HEADER
++    with open(log_path, "x") as log:
++        log.write(log_text)
+ 
+     for iteration in range(1, iterations + 1):
+         print(f"\n{'=' * 70}\nIteration {iteration}/{iterations}\n{'=' * 70}")
+@@ -215,13 +308,9 @@ def run_training_loop(iterations=5,
+             print("✓ PROMOTED: candidate is the new champion")
+         else:
+             print("✗ Rejected: champion stays (candidate not clearly better)")
+-        with open(log_path, "a") as log:
+-            log.write(f"{iteration},{len(buffer)},{policy_loss:.4f},{value_loss:.4f},"
+-                      f"{score:.3f},{int(promoted)}\n")
+-
+-        save_checkpoint(champion, os.path.join(checkpoint_dir, "champion.pt"), iteration)
+-        save_checkpoint(candidate, os.path.join(checkpoint_dir, f"candidate_iter_{iteration}.pt"), iteration)
+-        buffer.save(os.path.join(checkpoint_dir, "replay_buffer.npz"))
++        log_text += (f"{iteration},{len(buffer)},{policy_loss:.4f},{value_loss:.4f},"
++                     f"{score:.3f},{int(promoted)}\n")
++        save_completed_iteration(directory, champion, candidate, buffer, iteration, log_text)
+ 
+     print(f"\n{'=' * 70}")
+     print(f"✅ Loop complete: {iterations} iterations, {promotions} promotions")
+@@ -252,8 +341,8 @@ def main():
+                         help='turn off Dirichlet noise in self-play (sabotage experiment)')
+     parser.add_argument('--max-moves', type=int, default=200)
+     parser.add_argument('--lr', type=float, default=1e-3)
+-    parser.add_argument('--res-blocks', type=int, default=4)
+-    parser.add_argument('--channels', type=int, default=128)
++    parser.add_argument('--res-blocks', type=int, default=None, help='new model: 4; loaded model: checkpoint architecture')
++    parser.add_argument('--channels', type=int, default=None, help='new model: 128; loaded model: checkpoint architecture')
+     parser.add_argument('--init-checkpoint', type=str, default=None,
+                         help='Warm-start from a supervised checkpoint (Phase 3a)')
+     parser.add_argument('--checkpoint-dir', type=str, default='selfplay_checkpoints')
+@@ -261,27 +350,30 @@ def main():
+     parser.add_argument('--seed', type=int, default=None)
+     args = parser.parse_args()
+ 
+-    run_training_loop(
+-        iterations=args.iterations,
+-        games_per_iter=args.games_per_iter,
+-        simulations=args.simulations,
+-        train_steps=args.train_steps,
+-        batch_size=args.batch_size,
+-        arena_games=args.arena_games,
+-        arena_simulations=args.arena_simulations,
+-        promote_threshold=args.promote_threshold,
+-        buffer_capacity=args.buffer_capacity,
+-        temperature_moves=args.temperature_moves,
+-        root_noise=not args.no_root_noise,
+-        max_moves=args.max_moves,
+-        learning_rate=args.lr,
+-        res_blocks=args.res_blocks,
+-        channels=args.channels,
+-        init_checkpoint=args.init_checkpoint,
+-        checkpoint_dir=args.checkpoint_dir,
+-        device=args.device,
+-        seed=args.seed,
+-    )
++    try:
++        run_training_loop(
++            iterations=args.iterations,
++            games_per_iter=args.games_per_iter,
++            simulations=args.simulations,
++            train_steps=args.train_steps,
++            batch_size=args.batch_size,
++            arena_games=args.arena_games,
++            arena_simulations=args.arena_simulations,
++            promote_threshold=args.promote_threshold,
++            buffer_capacity=args.buffer_capacity,
++            temperature_moves=args.temperature_moves,
++            root_noise=not args.no_root_noise,
++            max_moves=args.max_moves,
++            learning_rate=args.lr,
++            res_blocks=args.res_blocks,
++            channels=args.channels,
++            init_checkpoint=args.init_checkpoint,
++            checkpoint_dir=args.checkpoint_dir,
++            device=args.device,
++            seed=args.seed,
++        )
++    except FileExistsError as error:
++        parser.exit(2, f"{error}\n")
+ 
+ 
+ if __name__ == "__main__":
+diff --git a/tests/course/README.md b/tests/course/README.md
+index e8b6ab4..862bb5e 100644
+--- a/tests/course/README.md
++++ b/tests/course/README.md
+@@ -1,27 +1,73 @@
+-# Course exercise tests: how your exercises are checked
+-
+-Every file here is a test for one course exercise, and each test is skipped
+-until you do that exercise. The workflow:
+-
+-1. Read the exercise in the module README. Each test's skip reason (the
+-   text in the skip line above the test) names the module and exercise.
+-2. Implement it in the real codebase.
+-3. Delete the `@pytest.mark.skip(...)` line.
+-4. Run `pytest tests/course/ -q`. A passing test means your implementation
+-   works.
+-
+-These tests are different from the tests in `tests/`. Those check the
+-existing project code, and they pass on a fresh clone. The tests here fail
+-until you do the work, because they check your code. That is why they work
+-as checkpoints.
+-
+-Each test's docstring states the requirements for its exercise: the exact
+-function signature and the behaviour you are implementing. If you disagree
+-with the requirements, you may change them. That is a design decision, and
+-explaining your reasons for it is part of the exercise.
+-
+-Reference solutions for every exercise here are on the
+-`course-solutions` branch: `git diff main course-solutions` shows them
+-all as one readable diff, and on that branch every test passes with no
+-skips. The module pages also give measured results, so you can check your
+-numbers without looking at the solutions.
++# Course exercises: checks, hints and recovery
++
++The project regression tests pass before you start. Course tests are skipped
++until you choose their exercise. For one exercise at a time:
++
++1. Read its test docstring: it specifies the function and behaviour to build.
++2. Remove its **entire** `@pytest.mark.skip(...)` decorator, including any
++   continuation lines. For the resume exercise, remove the module-level
++   `pytestmark` line instead; it enables that exercise's whole group of tests.
++3. Run just that file before implementing. It may fail with a missing import,
++   an unsupported argument, or a behaviour assertion. A skip is not a failure
++   and is not evidence that your implementation works.
++4. Implement the change and rerun that file. Then run the regression suite.
++   Leave unrelated exercises skipped until you reach them.
++
++## One hint before the solution
++
++| Exercise test | First thing to inspect | Reference source file |
++|---|---|---|
++| `test_module01_evaluator.py` | Reward open files for both colours with opposite signs | `engine/evaluator.py` |
++| `test_module02_search.py` | Check the clock inside recursion; retain the last completed depth | `search/minimax.py` |
++| `test_module02_killers.py` | A killer changes order, never the minimax score | `search/minimax.py` |
++| `test_module03_mcts.py` | Pass one RNG through every random choice, not just the root | `search/mcts.py` |
++| `test_module04_augmentation.py` | Mirror both board and move; transform twice to recover the original | `net/encoding.py` |
++| `test_module04_first_network.py` | Compare held-out material error with always predicting the mean | `training/first_network.py` |
++| `test_module05_puct.py` | The value is for the side to move, not always White | `search/puct.py` |
++| `test_module06_nstep.py` | Negate a bootstrapped value when the number of plies is odd | `selfplay/tictactoe_lab.py` |
++| `test_module06_network.py` | The replacement must satisfy the table's interface, including caching | `selfplay/tictactoe_lab.py` |
++| `test_module06_resume.py` | Validate the committed snapshot before touching the run's files | Local patch below |
++
++The time-budget test is intentionally slow when it fails. The course's
++18-second estimate is a reference measurement, not a deadline that every
++machine must reproduce. It cannot demonstrate the failure until enabled.
++
++## Inspect one reference without changing your branch
++
++From the repository root:
++
++```bash
++git fetch origin course-solutions:refs/remotes/origin/course-solutions
++git diff main origin/course-solutions -- engine/evaluator.py
++```
++
++Substitute the source file from the table for the exercise you are doing.
++For a complete file, use `git show origin/course-solutions:engine/evaluator.py`.
++These commands do not switch branches or replace your work. Fetch needs network
++access; if the remote branch is already present, the read commands work offline.
++The remote branch may lag behind this course. Treat it as an explanation of an
++approach; the current test remains the contract. Avoid copying an entire older
++file over other exercises you have already completed.
++
++## Revised resume reference
++
++Module 6 exercise 9 has a local reference patch matching the protected snapshot
++format: [module06_resume.patch](../../course/solutions/module06_resume.patch).
++Read the patch first. To try it in a disposable copy after saving your work:
++
++```bash
++git apply --check course/solutions/module06_resume.patch
++git apply course/solutions/module06_resume.patch
++```
++
++The first command verifies that it applies without changing files. If it fails,
++your learner edits differ; inspect the patch and adapt the idea instead of
++forcing it. The patch does not enable exercise tests for you. Remove that
++file's `pytestmark` and run `pytest tests/course/test_module06_resume.py -q`.
++It restores saved scientific settings; `--iterations` means additional
++iterations, while device/verbosity can change. It does not restore RNG state.
++The original `config.json` is preserved and resume invocations are recorded
++separately. Run only one writer per experiment directory.
++
++If you disagree with a test's requirements, explain and test your alternative.
++That is a design decision, not a reason to hide a failure behind a skip marker.
+diff --git a/tests/course/test_module02_search.py b/tests/course/test_module02_search.py
+index 923226f..db0d4e5 100644
+--- a/tests/course/test_module02_search.py
++++ b/tests/course/test_module02_search.py
+@@ -26,7 +26,7 @@ def test_time_budget_is_a_hard_promise():
+     iteration's move.
+ 
+     Without the abort this test takes ~18s and fails; with it, ~6s and
+-    passes. (Run it before implementing to watch the failure mode — that's
++    passes. (Remove the whole skip decorator, then run before implementing — that's
+     the point of the exercise.)
+     """
+     from search.minimax import best_move_iterative
+diff --git a/tests/course/test_module06_resume.py b/tests/course/test_module06_resume.py
+index f21eccc..a5ddbf6 100644
+--- a/tests/course/test_module06_resume.py
++++ b/tests/course/test_module06_resume.py
+@@ -1,46 +1,119 @@
+-"""Module 6, exercise 12 — resumable training loops."""
++"""Module 6, exercise 9 — resume before spending hours on a run.
++
++Remove the module-level pytestmark below, run to see the missing API, then
++implement load_resume_state(directory) -> (champion, buffer, iteration),
++run_training_loop(..., resume=True), and --resume in the CLI.
++
++Contract:
++* Follow completed.json, validate hashes and architecture against config.json,
++  and load champion/buffer from that snapshot, never stale top-level exports.
++* Refuse missing/corrupt/inconsistent snapshots; no guessing from filenames.
++* Resume alone bypasses the occupied-folder check. Keep old log rows exactly,
++  number the next iteration correctly, and preserve config.json and snapshots.
++* iterations means ADDITIONAL iterations. Restore saved scientific settings;
++  device, verbosity and iteration count may be supplied for this invocation.
++  Reject an explicitly incompatible res_blocks/channels, but omitted values
++  inherit the checkpoint. Reject combining resume with init_checkpoint.
++* No exact RNG replay is promised. Adam is new on every iteration already.
++
++The snapshot writer is infrastructure. Loading, validation and continuation
++are YOUR exercise; a reference patch is in course/solutions/module06_resume.patch.
++"""
++
++import json
++import os
++from pathlib import Path
++import subprocess
++import sys
+ 
+-import numpy as np
+ import pytest
+ 
++pytestmark = pytest.mark.skip(reason="Module 6 exercise 9: implement resume, then remove this module-level marker")
++
++
++@pytest.fixture
++def completed_run(tmp_path):
++    torch = pytest.importorskip('torch')
++    from selfplay.train_loop import run_training_loop
++    previous = torch.get_num_threads()
++    torch.set_num_threads(1)
++    folder = tmp_path / 'run'
++    run_training_loop(checkpoint_dir=str(folder), iterations=1, games_per_iter=1,
++                      simulations=2, train_steps=1, batch_size=2, arena_games=2,
++                      max_moves=4, buffer_capacity=100, res_blocks=1, channels=8,
++                      device='cpu', seed=7, verbose=False)
++    yield folder
++    torch.set_num_threads(previous)
++
++
++def test_resume_loads_committed_snapshot_not_stale_exports(completed_run):
++    from selfplay.train_loop import load_resume_state
++    # Simulate interruption while exporting convenience files after committing.
++    (completed_run / 'champion.pt').write_bytes(b'incomplete export')
++    (completed_run / 'replay_buffer.npz').write_bytes(b'incomplete export')
++    champion, buffer, iteration = load_resume_state(str(completed_run))
++    assert iteration == 1 and len(buffer) == 4 and buffer.buffer.maxlen == 100
++    assert (champion.num_res_blocks, champion.num_channels) == (1, 8)
++
++
++def test_resume_continues_numbering_preserves_log_and_config(completed_run):
++    from selfplay.train_loop import run_training_loop
++    old_log = (completed_run / 'run_log.csv').read_text()
++    old_config = (completed_run / 'config.json').read_bytes()
++    old_marker = json.loads((completed_run / 'completed.json').read_text())
++    old_snapshot = completed_run / old_marker['snapshot']
++    original = {p.name: p.read_bytes() for p in old_snapshot.iterdir()}
++    # Even if an uncommitted top-level log exists, recover the committed log.
++    (completed_run / 'run_log.csv').write_text(old_log + '999,partial\n')
++    run_training_loop(checkpoint_dir=str(completed_run), iterations=1,
++                      resume=True, device='cpu', verbose=False)
++    log = (completed_run / 'run_log.csv').read_text()
++    assert log.startswith(old_log) and len(log.splitlines()) == 3
++    assert log.splitlines()[-1].startswith('2,8,')
++    assert '999,partial' not in log
++    assert (completed_run / 'config.json').read_bytes() == old_config
++    assert original == {p.name: p.read_bytes() for p in old_snapshot.iterdir()}
++    assert json.loads((completed_run / 'completed.json').read_text())['iteration'] == 2
++    with pytest.raises(FileExistsError):
++        run_training_loop(checkpoint_dir=str(completed_run), iterations=1)
++
++
++def test_resume_refuses_incompatible_architecture(completed_run):
++    from selfplay.train_loop import run_training_loop
++    before = (completed_run / 'completed.json').read_bytes()
++    with pytest.raises(ValueError, match='architecture|channels|res_blocks'):
++        run_training_loop(checkpoint_dir=str(completed_run), resume=True,
++                          iterations=1, channels=16, device='cpu')
++    assert (completed_run / 'completed.json').read_bytes() == before
++    with pytest.raises(ValueError, match='init_checkpoint|initial|warm'):
++        run_training_loop(checkpoint_dir=str(completed_run), resume=True,
++                          init_checkpoint=str(completed_run / 'champion.pt'))
++
++
++@pytest.mark.parametrize('damage', ['missing_marker', 'buffer', 'config'])
++def test_resume_refuses_inconsistent_saves(completed_run, damage):
++    from selfplay.train_loop import load_resume_state
++    marker_path = completed_run / 'completed.json'
++    marker = json.loads(marker_path.read_text())
++    if damage == 'missing_marker':
++        marker_path.unlink()
++    elif damage == 'buffer':
++        (completed_run / marker['snapshot'] / 'replay_buffer.npz').write_bytes(b'partial')
++    else:
++        config_path = completed_run / 'config.json'
++        config = json.loads(config_path.read_text())
++        config['settings']['channels'] = 16
++        config_path.write_text(json.dumps(config))
++    with pytest.raises((ValueError, FileNotFoundError)):
++        load_resume_state(str(completed_run))
++
+ 
+-@pytest.mark.skip(reason="Course Module 6, exercise 12: implement "
+-                         "load_resume_state(checkpoint_dir) in "
+-                         "selfplay/train_loop.py and a --resume flag that "
+-                         "uses it, then delete this skip line")
+-def test_resume_state_round_trips(tmp_path):
+-    """Contract: selfplay/train_loop.py gains
+-
+-        def load_resume_state(checkpoint_dir) -> (champion, buffer, iteration)
+-
+-    reading the artifacts the loop already writes: champion.pt (a
+-    self-describing checkpoint whose 'selfplay_iteration' key gives the
+-    iteration) and replay_buffer.npz. run_training_loop(..., resume=True)
+-    should use it to continue numbering from iteration+1 instead of
+-    starting over. Long RL runs die; the ones that matter are the ones you
+-    can restart.
+-    """
+-    torch = pytest.importorskip("torch")
+-
+-    from net.model import create_model
+-    from selfplay.replay_buffer import ReplayBuffer
+-    from selfplay.train_loop import load_resume_state, save_checkpoint
+-
+-    # Simulate a killed run's artifacts
+-    model = create_model(num_res_blocks=1, num_channels=16)
+-    save_checkpoint(model, str(tmp_path / "champion.pt"), iteration=3)
+-
+-    buffer = ReplayBuffer(capacity=50)
+-    rng = np.random.default_rng(0)
+-    for i in range(4):
+-        state = rng.random((20, 8, 8), dtype=np.float32)
+-        policy = np.zeros(4672, dtype=np.float32)
+-        policy[i] = 1.0
+-        buffer.add(state, policy, 0.0)
+-    buffer.save(str(tmp_path / "replay_buffer.npz"))
+-
+-    champion, restored_buffer, iteration = load_resume_state(str(tmp_path))
+-
+-    assert iteration == 3
+-    assert len(restored_buffer) == 4
+-    assert champion.num_res_blocks == 1 and champion.num_channels == 16
++def test_resume_cli_is_wired(completed_run):
++    root = Path(__file__).resolve().parents[2]
++    result = subprocess.run([
++        sys.executable, str(root / 'selfplay/train_loop.py'), '--resume',
++        '--checkpoint-dir', str(completed_run), '--iterations', '1', '--device', 'cpu',
++    ], cwd=root, env=dict(os.environ, OMP_NUM_THREADS='1', MKL_NUM_THREADS='1'),
++       capture_output=True, text=True, timeout=60)
++    assert result.returncode == 0, result.stdout + result.stderr
++    assert json.loads((completed_run / 'completed.json').read_text())['iteration'] == 2
+diff --git a/tests/test_play.py b/tests/test_play.py
+new file mode 100644
+index 0000000..847fe07
+--- /dev/null
++++ b/tests/test_play.py
+@@ -0,0 +1,40 @@
++"""Learners can use familiar notation and navigate without starting a long game."""
++import chess
++import pytest
++from cli import play
++
++
++@pytest.mark.parametrize('text,uci', [('e4','e2e4'), ('e2e4','e2e4'), ('Nf3','g1f3'), ('  e4  ','e2e4')])
++def test_move_formats(text, uci):
++    board = chess.Board()
++    assert play.parse_human_move(board, text).uci() == uci
++    assert board.ply() == 0
++
++
++@pytest.mark.parametrize('text', ['e5','e2e5','Nf6','--','0000','nonsense'])
++def test_invalid_or_null_moves_do_not_mutate_board(text):
++    board = chess.Board()
++    with pytest.raises(ValueError):
++        play.parse_human_move(board, text)
++    assert board.fen() == chess.STARTING_FEN
++
++
++def test_special_moves_and_ambiguity():
++    castle = chess.Board('r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1')
++    assert play.parse_human_move(castle, 'O-O').uci() == 'e1g1'
++    promotion = chess.Board('7k/P7/8/8/8/8/8/4K3 w - - 0 1')
++    assert play.parse_human_move(promotion, 'a8=Q+').uci() == 'a7a8q'
++    assert play.parse_human_move(promotion, 'a7a8n').uci() == 'a7a8n'
++    ambiguous = chess.Board('4k3/8/8/8/8/8/8/1N2KN2 w - - 0 1')
++    with pytest.raises(ValueError):
++        play.parse_human_move(ambiguous, 'Nd2')
++    assert play.parse_human_move(ambiguous, 'Nbd2').uci() == 'b1d2'
++
++
++@pytest.mark.parametrize('choices,expected', [(['q'],None), (['bad','q'],None),
++    (['1','1'],'human'), (['2'],'think'), (['3'],'learn'), (['4'],'course'),
++    (['a','minimax'],'minimax'), (['1','b','q'],None)])
++def test_menu_choices(monkeypatch, choices, expected):
++    answers=iter(choices)
++    monkeypatch.setattr('builtins.input', lambda _: next(answers))
++    assert play.choose_mode() == expected
+diff --git a/tests/test_run_artifacts.py b/tests/test_run_artifacts.py
+new file mode 100644
+index 0000000..ca9414f
+--- /dev/null
++++ b/tests/test_run_artifacts.py
+@@ -0,0 +1,98 @@
++"""Experiment files must survive reruns and interrupted iteration writes."""
++
++import json
++from pathlib import Path
++
++import numpy as np
++import pytest
++
++torch = pytest.importorskip('torch')
++
++from net.model import create_model
++from selfplay.replay_buffer import ReplayBuffer
++from selfplay import train_loop as loop
++
++
++@pytest.fixture(autouse=True)
++def one_thread():
++    previous = torch.get_num_threads()
++    torch.set_num_threads(1)
++    yield
++    torch.set_num_threads(previous)
++
++
++def tiny_run(path, **kwargs):
++    options = dict(iterations=1, games_per_iter=1, simulations=2, train_steps=1,
++                   batch_size=2, arena_games=2, max_moves=4, res_blocks=1,
++                   channels=8, device='cpu', seed=7, verbose=False,
++                   checkpoint_dir=str(path))
++    options.update(kwargs)
++    return loop.run_training_loop(**options)
++
++
++def test_rerun_refuses_before_touching_any_saved_results(tmp_path, monkeypatch):
++    folder = tmp_path / 'run'
++    tiny_run(folder)
++    original = {p.relative_to(folder): p.read_bytes() for p in folder.rglob('*') if p.is_file()}
++    def must_not_construct_model(*args, **kwargs):
++        pytest.fail('occupied directory must be refused before creating a model')
++    monkeypatch.setattr(loop, 'create_model', must_not_construct_model)
++    with pytest.raises(FileExistsError, match='--checkpoint-dir runs/m6_smoke_02'):
++        tiny_run(folder)
++    assert original == {p.relative_to(folder): p.read_bytes() for p in folder.rglob('*') if p.is_file()}
++
++
++def test_even_an_unrelated_file_is_preserved(tmp_path):
++    (tmp_path / 'notes.txt').write_text('keep this')
++    with pytest.raises(FileExistsError, match='Nothing was overwritten'):
++        loop.reserve_run_directory(tmp_path)
++    assert list(tmp_path.iterdir()) == [tmp_path / 'notes.txt']
++
++
++def test_config_records_loaded_architecture_and_actual_settings(tmp_path):
++    warm_start = tmp_path / 'warm.pt'
++    loop.save_checkpoint(create_model(num_res_blocks=1, num_channels=8), warm_start, 0)
++    folder = tmp_path / 'run'
++    tiny_run(folder, init_checkpoint=warm_start, res_blocks=4, channels=128)
++    config = json.loads((folder / 'config.json').read_text())
++    settings = config['settings']
++    assert (settings['res_blocks'], settings['channels']) == (1, 8)
++    assert settings['arena_simulations'] == 2
++    assert settings['seed'] == 7 and settings['device'] == 'cpu'
++    assert settings['init_checkpoint'] == str(warm_start)
++    assert config['torch_version'] and config['created_utc']
++
++
++def test_completed_snapshot_contains_matching_state_and_log(tmp_path):
++    folder = tmp_path / 'run'
++    tiny_run(folder)
++    marker = json.loads((folder / 'completed.json').read_text())
++    snapshot = folder / marker['snapshot']
++    for name, digest in marker['sha256'].items():
++        assert loop._sha256(snapshot / name) == digest
++    checkpoint = torch.load(snapshot / 'champion.pt', weights_only=True)
++    assert checkpoint['selfplay_iteration'] == marker['iteration'] == 1
++    assert (snapshot / 'run_log.csv').read_text().splitlines()[-1].startswith('1,4,')
++    assert len(ReplayBuffer.load(snapshot / 'replay_buffer.npz')) == 4
++    for name in ('champion.pt', 'replay_buffer.npz', 'run_log.csv'):
++        assert (folder / name).read_bytes() == (snapshot / name).read_bytes()
++
++
++def test_interrupted_snapshot_keeps_previous_commit_usable(tmp_path, monkeypatch):
++    folder = tmp_path / 'run'
++    champion = tiny_run(folder)
++    before = (folder / 'completed.json').read_bytes()
++    old_log = (folder / 'run_log.csv').read_bytes()
++    buffer = ReplayBuffer(capacity=10)
++    buffer.add(np.zeros((20, 8, 8)), np.zeros(4672), 0)
++    def interrupted_save(path):
++        Path(path).write_bytes(b'incomplete buffer')
++        raise OSError('simulated interrupted write')
++    monkeypatch.setattr(buffer, 'save', interrupted_save)
++    with pytest.raises(OSError, match='interrupted'):
++        loop.save_completed_iteration(folder, champion, champion, buffer, 2, 'new log')
++    assert (folder / 'completed.json').read_bytes() == before
++    assert (folder / 'run_log.csv').read_bytes() == old_log
++    marker = json.loads(before)
++    for name, digest in marker['sha256'].items():
++        assert loop._sha256(folder / marker['snapshot'] / name) == digest

@@ -15,6 +15,9 @@ term when it first appears. You will know why self-play improves anything
 at all, and why it sometimes doesn't. You will have built and
 measured every piece, and you will have watched an RL loop learn.
 
+Start with the [opening session](module-00-orientation/README.md#opening-session-see-the-destination-first):
+make a prediction and watch learning happen before building the parts.
+
 ## How to use each module page
 
 Every module opens with the same three lines, so you always know where you
@@ -24,7 +27,7 @@ are:
 > **Time:** a realistic estimate, including anything that runs in the background
 > **You'll be able to:** three or four things you can check you can do at the end
 
-Then every module has the same sections, in this order:
+Most modules follow this pattern:
 
 1. **Concepts.** The idea and why it exists, with the intuition first.
 2. **RL connection.** The reinforcement-learning idea in this module, named and
@@ -43,8 +46,8 @@ Two kinds of tests check your work, and they check different things:
   your changes break something.
 - **`tests/course/`** holds the exercise tests. Each main exercise has a test
   that is skipped until you do the exercise. The test's docstring states
-  exactly what your code must do. Implement it, delete the
-  `@pytest.mark.skip` line, and a passing test means your code works. These
+  exactly what your code must do. Remove the whole skip marker to observe
+  the initial failure, then implement the exercise and rerun the test. These
   tests fail until you do the work, so they cannot pass by accident. See
   [tests/course/README.md](../tests/course/README.md).
 
@@ -92,21 +95,47 @@ idea of the heavier ones.
 | 3 | [Monte Carlo Tree Search](module-03-mcts/README.md) | UCT, rollouts (games played out to the end) | exploration versus exploitation (trying less-tested moves against repeating good ones, studied as the bandit problem); Monte Carlo evaluation | 4-6 h, plus matches running in the background |
 | 4 | [The Neural Network](module-04-neural-network/README.md) | Board encoding, a residual network (ResNet) that suggests moves and scores positions, supervised training (learning from human moves) | policy and value as learned functions; why learning by copying human moves is not RL | two sessions: 3 h, plus training in the background |
 | 5 | [PUCT: Search Meets Network](module-05-puct/README.md) | AlphaZero's search, which uses the network instead of rollouts | search as policy improvement; Q(s, a) from the tree (the average result of move a in position s) | 4-6 h |
-| 6 | [Self-Play RL](module-06-selfplay-rl/README.md) | The full loop: tic-tac-toe first (watch it learn), then chess | policy iteration, Monte Carlo targets (training on final game results), credit assignment, off-policy data (training on games from earlier networks) | 5-8 h, plus an overnight run |
+| 6 | [Self-Play RL](module-06-selfplay-rl/README.md) | The full loop: tic-tac-toe first (watch it learn), then chess | policy iteration, Monte Carlo targets (training on final game results), credit assignment, off-policy data (training on games from earlier networks) | 5-8 h, plus a long run (~3 h on the reference CPU) |
 | 7 | [Measure and Scale](module-07-measure-and-scale/README.md) | Reliable Elo measurement, settings for larger runs | evaluating an agent reliably | 3-4 h, plus matches running in the background |
 | 8 | [Engineering Extras](module-08-engineering/README.md) | Packaging, continuous integration (CI), performance work: the software engineering around the experiments | none | open-ended |
 | 9 | [Capstone](module-09-capstone/README.md) | The experiment report: measured strength of each engine, training story, one designed experiment, a review of what went wrong | explaining your own run in RL terms | 1-2 days |
 
-Modules 0-3 need no ML background and no torch (PyTorch, the neural-network library). Modules 4-6 build the
+The engine exercises in Modules 0–3 need no ML background and no torch
+(PyTorch, the neural-network library). The optional opening chess preview uses
+torch; its tic-tac-toe alternative does not. Modules 4-6 build the
 AlphaZero parts. Modules 7-8 cover measurement and software engineering
 practice. Module 9 is the final assessment, and it is the one checkpoint
 with no command to run.
 
-**If you are short on time,** the RL modules are 0, 3, 5 and 6 Part A.
-Module 6's tic-tac-toe lab runs the whole AlphaZero loop in seconds and needs
-no training data, so you can see the complete loop early. Module 6 Part B
-(the chess loop) and Module 5's network exercises need a model trained in
-Module 4 (a checkpoint), so come back for those after Module 4.
+## Choose your pace
+
+The **core lessons** show mechanisms and check your understanding. The
+**extended experiments** ask whether those mechanisms improve strength and
+how confidently you can tell. You can pause after a core lesson with a real
+result to explain, even when a long match would be inconclusive.
+
+| Module | Core lesson | Extended experiment |
+|---|---|---|
+| 0 | Opening session: predict, watch, explain; start your journal | Play several engines and map their code |
+| 1 | Add a rook-file bonus and check its sign on controlled boards | Measure its effect in matches |
+| 2 | Compare node counts and implement a hard search deadline | Killer moves and transposition-table experiments |
+| 3 | Compare visit distributions; make search reproducible | Rollout/filter tournaments |
+| 4 | Trace encoding and train the small material network | Human-game data, full policy/value training and augmentation |
+| 5 | Material-guided PUCT and the change-of-mind lab | Compare trained networks and inference speed |
+| 6 | Tic-tac-toe learning and exploration; chess smoke test | Resume exercise **before** long chess runs, then larger experiments |
+| 7 | Interpret uncertainty and design a comparison | Calibrated matches and scaling experiments |
+| 8 | Optional engineering topics | Choose a topic that supports your experiment |
+| 9 | Plan a question from your journal | Full capstone with your own measured evidence |
+
+The core route is a conceptual introduction, not completion of every exercise.
+The full engine-building route includes the exercise tests and extended work
+needed by the capstone. Module 5's larger network experiments and Module 6's
+long chess run need your Module 4 trained model. The opening lab's deliberately
+biased checkpoint is **not** a substitute for that model.
+
+Create `JOURNAL.md` using the template in Module 0. Add short entries only when
+an experiment asks for a prediction or interpretation, and keep a note of your
+next step. Bring those entries to the module checkpoints and final report.
 
 ## Your toolbox
 
@@ -124,13 +153,26 @@ always prints one, and says so when the match can't tell the engines apart.
 
 ## If you are stuck: solutions
 
-Reference implementations for the `tests/course/` exercises are on the
-`course-solutions` branch (`git diff main course-solutions` shows every
-solution as a readable diff). Try each exercise yourself for at least 30
-minutes first. Then look at how the solution approaches the problem, close
-it, and write your own version from memory. You learn much less from reading
-a solution than from working it out yourself. But a learner who stays stuck
-learns nothing, so the solutions are available.
+Read the exercise test's contract first. If it is meant to fail before you
+implement anything, remove the **whole** `@pytest.mark.skip(...)` decorator
+first (it often spans several lines), then run that test. A skipped test never
+checks your implementation. For the resume exercise, remove its module-level
+`pytestmark` instead. Keep all unrelated exercise skips in place.
+
+If stuck, use a hint from the [exercise recovery guide](../tests/course/README.md)
+before inspecting a reference. For example, to view only the evaluator solution
+without switching branches:
+
+```bash
+git fetch origin course-solutions:refs/remotes/origin/course-solutions
+git diff main origin/course-solutions -- engine/evaluator.py
+```
+
+This reads reference code; it does not modify your working files. The remote
+branch can lag behind the course: use the current test as the contract, not a
+promise that copying an older file will pass. The revised resume exercise has
+its own local reference patch, described in the recovery guide. Try the idea,
+then close the solution and implement it in your own words/code.
 
 ## Two themes of the course
 

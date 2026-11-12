@@ -8,6 +8,12 @@
 > - say why a stored search result (a transposition-table entry) needs a flag marking its score as exact or a bound
 > - write minimax as a Bellman backup, the equation that reinforcement learning (RL) methods are built on
 
+## Choose your pace
+
+Core lesson: steps 1–2 show lookahead cost and enforce a deadline. Steps 3–4
+extend this with move ordering and caching. A full module checkpoint includes
+those exercises; you can pause after the core lesson and return later.
+
 ## Concepts
 
 A search builds a *game tree*: each *node* is a position and each branch is
@@ -149,10 +155,12 @@ lines to plan (Module 3) are what the rest of the course adds.
    - catch it in the function that runs the iterations, and play the
      previous iteration's move
 
-   Your checkpoint is `tests/course/test_module02_search.py`. Run it before
-   implementing. Expected: it fails after about 18 seconds. Then delete the
-   `@pytest.mark.skip` line above the test (it tells pytest to skip the
-   test), and make the test pass.
+   Your checkpoint is `tests/course/test_module02_search.py`. First remove
+   its entire multiline `@pytest.mark.skip(...)` decorator. Then run
+   `pytest tests/course/test_module02_search.py -q` before implementing.
+   Expected on the reference machine: it fails after about 18 seconds (timing
+   varies). A skipped test cannot expose the bug. Implement the abort and
+   rerun the same command until it passes.
 3. **Exercise: killer moves.** A move that is not a capture and that caused
    a cutoff at one node often causes cutoffs at *sibling nodes*
    (other nodes at the same depth). Keep two such killer moves per depth and
@@ -239,6 +247,10 @@ same leaf-value question.
 </details>
 
 ## Checkpoint
+
+Bring the relevant prediction/interpretation entries from your `JOURNAL.md`
+(see the [template](../JOURNAL_TEMPLATE.md)). No entry is needed for routine
+commands or each self-check question. Note your next step before stopping.
 
 ```bash
 pytest tests/test_minimax.py -q                 # regression suite still green

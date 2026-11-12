@@ -12,6 +12,10 @@ Write a short experiment report that could convince a sceptical engineer.
 It is the final assessment of the whole course, and you cannot complete it
 by running commands alone.
 
+Bring your `JOURNAL.md` entries from the earlier modules. Select the predictions,
+results, bugs and breakthroughs that support your report; preserve the original
+predictions so they cannot become explanations written after the result.
+
 ## The deliverable
 
 One document (Markdown is fine, about 2 pages), committed to your fork as

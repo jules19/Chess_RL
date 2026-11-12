@@ -46,6 +46,64 @@ def toggle_board_size():
 BOARD_SIZE = get_board_size()
 
 
+def parse_human_move(board, text):
+    """Accept standard chess notation (e4, Nf3, O-O) and UCI (e2e4).
+
+    Neither parser changes the board. Null moves and illegal moves are refused.
+    """
+    try:
+        move = board.parse_uci(text.strip())
+    except ValueError:
+        move = board.parse_san(text.strip())
+    if move not in board.legal_moves:
+        raise ValueError("That move is not legal in this position")
+    return move
+
+
+def choose_mode():
+    """A short learner-facing menu; advanced legacy modes remain available."""
+    while True:
+        print("\nChess RL — play, predict, discover")
+        print("1. Play chess")
+        print("2. Watch an engine think (the change-of-mind lab; needs torch)")
+        print("3. Watch it learn (tic-tac-toe; no torch needed)")
+        print("4. Continue the course")
+        print("a. Advanced engines and display settings")
+        print("q. Quit")
+        choice = input("Choose 1–4, a or q: ").strip().lower()
+        if choice == 'q':
+            return None
+        if choice == '1':
+            print("1. Random   2. Material   3. Minimax   4. MCTS   b. Back")
+            opponent = input("Opponent [1]: ").strip().lower() or '1'
+            modes = {'1': 'human', '2': 'human-material',
+                     '3': 'human-minimax', '4': 'human-mcts'}
+            if opponent in modes:
+                return modes[opponent]
+            if opponent != 'b':
+                print("Choose an opponent from 1–4, or b to go back.")
+        elif choice in ('2', '3', '4'):
+            return {'2': 'think', '3': 'learn', '4': 'course'}[choice]
+        elif choice == 'a':
+            print("Watch: random, material, minimax, minimax-material, mcts")
+            print("Checks: test, test-material, test-minimax, test-minimax-material,")
+            print("        test-mcts, test-mcts-minimax")
+            print("Display: d = size, c = colours; b = back")
+            mode = input("Mode: ").strip().lower()
+            if mode == 'd':
+                toggle_board_size()
+            elif mode == 'c':
+                cycle_color_scheme()
+            elif mode in {'random', 'material', 'minimax', 'minimax-material', 'mcts',
+                           'test', 'test-material', 'test-minimax', 'test-minimax-material',
+                           'test-mcts', 'test-mcts-minimax'}:
+                return mode
+            elif mode != 'b':
+                print("Unknown mode. Choose one of the names shown above.")
+        else:
+            print("Choose 1–4, a or q.")
+
+
 def random_move(board):
     """Select a random legal move."""
     legal_moves = list(board.legal_moves)
@@ -181,8 +239,8 @@ def play_human_vs_random(human_color=chess.WHITE):
         if board.turn == human_color:
             # Human's turn
             while True:
-                print(f"Legal moves: {', '.join([str(m) for m in board.legal_moves])}")
-                move_input = input("Your move (e.g. 'e2e4', 'd'=display, 'c'=colors, 'q'=quit): ").strip()
+                print(f"Legal moves: {', '.join(board.san(m) for m in board.legal_moves)}")
+                move_input = input("Your move (e.g. 'e4' or 'e2e4', 'd'=display, 'c'=colors, 'q'=quit): ").strip()
 
                 if move_input.lower() == 'q':
                     print("Game abandoned.")
@@ -197,7 +255,7 @@ def play_human_vs_random(human_color=chess.WHITE):
                     continue
 
                 try:
-                    move = chess.Move.from_uci(move_input)
+                    move = parse_human_move(board, move_input)
                     if move in board.legal_moves:
                         board.push(move)
                         move_count += 1
@@ -205,7 +263,7 @@ def play_human_vs_random(human_color=chess.WHITE):
                     else:
                         print(f"Illegal move! Try again.")
                 except ValueError:
-                    print(f"Invalid format! Use format like 'e2e4'")
+                    print("Move not recognised or not legal. Try e4, Nf3, O-O or e2e4; q quits.")
         else:
             # Computer's turn
             move = random_move(board)
@@ -248,8 +306,8 @@ def play_human_vs_material(human_color=chess.WHITE):
         if board.turn == human_color:
             # Human's turn
             while True:
-                print(f"Legal moves: {', '.join([str(m) for m in board.legal_moves])}")
-                move_input = input("Your move (e.g. 'e2e4', 'd'=display, 'c'=colors, 'q'=quit): ").strip()
+                print(f"Legal moves: {', '.join(board.san(m) for m in board.legal_moves)}")
+                move_input = input("Your move (e.g. 'e4' or 'e2e4', 'd'=display, 'c'=colors, 'q'=quit): ").strip()
 
                 if move_input.lower() == 'q':
                     print("Game abandoned.")
@@ -264,7 +322,7 @@ def play_human_vs_material(human_color=chess.WHITE):
                     continue
 
                 try:
-                    move = chess.Move.from_uci(move_input)
+                    move = parse_human_move(board, move_input)
                     if move in board.legal_moves:
                         board.push(move)
                         move_count += 1
@@ -272,7 +330,7 @@ def play_human_vs_material(human_color=chess.WHITE):
                     else:
                         print(f"Illegal move! Try again.")
                 except ValueError:
-                    print(f"Invalid format! Use format like 'e2e4'")
+                    print("Move not recognised or not legal. Try e4, Nf3, O-O or e2e4; q quits.")
         else:
             # Material engine's turn
             print("\n💎 Material engine thinking...")
@@ -437,8 +495,8 @@ def play_human_vs_minimax(human_color=chess.WHITE, depth=3):
         if board.turn == human_color:
             # Human's turn
             while True:
-                print(f"Legal moves: {', '.join([str(m) for m in board.legal_moves])}")
-                move_input = input("Your move (e.g. 'e2e4', 'd'=display, 'c'=colors, 'q'=quit): ").strip()
+                print(f"Legal moves: {', '.join(board.san(m) for m in board.legal_moves)}")
+                move_input = input("Your move (e.g. 'e4' or 'e2e4', 'd'=display, 'c'=colors, 'q'=quit): ").strip()
 
                 if move_input.lower() == 'q':
                     print("Game abandoned.")
@@ -453,7 +511,7 @@ def play_human_vs_minimax(human_color=chess.WHITE, depth=3):
                     continue
 
                 try:
-                    move = chess.Move.from_uci(move_input)
+                    move = parse_human_move(board, move_input)
                     if move in board.legal_moves:
                         board.push(move)
                         move_count += 1
@@ -461,7 +519,7 @@ def play_human_vs_minimax(human_color=chess.WHITE, depth=3):
                     else:
                         print(f"Illegal move! Try again.")
                 except ValueError:
-                    print(f"Invalid format! Use format like 'e2e4'")
+                    print("Move not recognised or not legal. Try e4, Nf3, O-O or e2e4; q quits.")
         else:
             # Minimax engine's turn
             print(f"\n🧠 Minimax engine (depth {depth}) thinking...")
@@ -803,8 +861,8 @@ def play_human_vs_mcts(human_color=chess.WHITE, simulations=200):
         if board.turn == human_color:
             # Human's turn
             while True:
-                print(f"Legal moves: {', '.join([str(m) for m in board.legal_moves])}")
-                move_input = input("Your move (e.g. 'e2e4', 'd'=display, 'c'=colors, 'q'=quit): ").strip()
+                print(f"Legal moves: {', '.join(board.san(m) for m in board.legal_moves)}")
+                move_input = input("Your move (e.g. 'e4' or 'e2e4', 'd'=display, 'c'=colors, 'q'=quit): ").strip()
 
                 if move_input.lower() == 'q':
                     print("Game abandoned.")
@@ -819,7 +877,7 @@ def play_human_vs_mcts(human_color=chess.WHITE, simulations=200):
                     continue
 
                 try:
-                    move = chess.Move.from_uci(move_input)
+                    move = parse_human_move(board, move_input)
                     if move in board.legal_moves:
                         board.push(move)
                         move_count += 1
@@ -827,7 +885,7 @@ def play_human_vs_mcts(human_color=chess.WHITE, simulations=200):
                     else:
                         print(f"Illegal move! Try again.")
                 except ValueError:
-                    print(f"Invalid format! Use format like 'e2e4'")
+                    print("Move not recognised or not legal. Try e4, Nf3, O-O or e2e4; q quits.")
         else:
             # MCTS engine's turn
             print(f"\n🌳 MCTS thinking ({simulations} simulations)...")
@@ -946,79 +1004,41 @@ def main():
     if len(sys.argv) > 1:
         mode = sys.argv[1]
     else:
-        current_scheme_name = COLOR_SCHEMES[get_color_scheme()]['name']
-        print("\nChess RL - Phase 2: MCTS Engine (Week 2)")
-        print("="*50)
-        print(f"Display: {get_board_size().upper()} | Colors: {current_scheme_name}")
-        print("(Press 'd' or 'c' during watch mode, or use options 12/13)")
-        print("="*50)
-        print("BASIC MODES:")
-        print("1. Random vs Random (watch)")
-        print("2. Human vs Random (play)")
-        print("3. Human vs Material Engine (play) 💎")
-        print("4. Human vs Minimax Engine (play) 🧠")
-        print("5. Test suite (10 random games)")
-        print("\nPHASE 1 ENGINES (Minimax):")
-        print("6. Material vs Random (watch) 💎")
-        print("7. Minimax vs Random (watch) 🧠")
-        print("8. Minimax vs Material (watch) 🧠💎")
-        print("9. Test Material player (20 games)")
-        print("10. Test Minimax vs Random (20 games)")
-        print("11. Test Minimax vs Material (20 games)")
-        print("\nPHASE 2 ENGINES (MCTS) 🌳 NEW!")
-        print("14. Human vs MCTS (play) 🌳")
-        print("15. MCTS vs Random (watch) 🌳")
-        print("16. Test MCTS vs Random (20 games) 🌳")
-        print("17. Test MCTS vs Minimax (20 games) 🌳 VALIDATION")
-        print("\nOPTIONS:")
-        print("12. Toggle display size (compact ⇄ large) 🎨")
-        print("13. Change color scheme (cycle) 🎨")
-        print("="*50)
-        choice = input("Choose mode (1-17): ").strip()
+        mode = choose_mode()
 
-        if choice == "1":
-            mode = "random"
-        elif choice == "2":
-            mode = "human"
-        elif choice == "3":
-            mode = "human-material"
-        elif choice == "4":
-            mode = "human-minimax"
-        elif choice == "5":
-            mode = "test"
-        elif choice == "6":
-            mode = "material"
-        elif choice == "7":
-            mode = "minimax"
-        elif choice == "8":
-            mode = "minimax-material"
-        elif choice == "9":
-            mode = "test-material"
-        elif choice == "10":
-            mode = "test-minimax"
-        elif choice == "11":
-            mode = "test-minimax-material"
-        elif choice == "12":
-            toggle_board_size()
-            print("Press Enter to continue...")
-            input()
-            return main()  # Show menu again
-        elif choice == "13":
-            cycle_color_scheme()
-            print("Press Enter to continue...")
-            input()
-            return main()  # Show menu again
-        elif choice == "14":
-            mode = "human-mcts"
-        elif choice == "15":
-            mode = "mcts"
-        elif choice == "16":
-            mode = "test-mcts"
-        elif choice == "17":
-            mode = "test-mcts-minimax"
-        else:
-            print("Invalid choice!")
+    if mode is None or mode == 'q':
+        return
+    if mode == 'course':
+        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        print(f"Open {root}/course/README.md")
+        print("New here? Follow the opening session in course/module-00-orientation/README.md.")
+        print("Returning? Open your JOURNAL.md and continue from its last checkpoint.")
+        return
+    if mode == 'think':
+        try:
+            from selfplay.mind_change_lab import run_lab
+            import torch
+        except ModuleNotFoundError as error:
+            if error.name != 'torch':
+                raise
+            print('This lab needs PyTorch. Install with: pip install -e ".[train,dev]"')
+            print('Or choose "Watch it learn" for the no-torch tic-tac-toe lab.')
             return
+        previous_threads = torch.get_num_threads()
+        try:
+            torch.set_num_threads(1)
+            run_lab(pause=True)
+        finally:
+            torch.set_num_threads(previous_threads)
+        return
+    if mode == 'learn':
+        from selfplay.tictactoe_lab import run
+        print("Predict: can a learner improve by playing only against itself?")
+        input("Press Enter to run the experiment. ")
+        run(seed=0)
+        print("Explain: did it learn every position, or just those its play reached?")
+        print("Next: course/module-06-selfplay-rl/README.md, Part A.")
+        return
 
     if mode == "random":
         play_random_vs_random(interactive=True)
@@ -1064,7 +1084,7 @@ def main():
         test_mcts_vs_minimax()
     else:
         print(f"Unknown mode: {mode}")
-        print("Usage: python play.py [random|human|human-material|human-minimax|test|material|minimax|minimax-material|test-material|test-minimax|test-minimax-material|human-mcts|mcts|test-mcts|test-mcts-minimax]")
+        print("Usage: python play.py [think|learn|course|random|human|human-material|human-minimax|test|material|minimax|minimax-material|test-material|test-minimax|test-minimax-material|human-mcts|mcts|test-mcts|test-mcts-minimax]")
 
 
 if __name__ == "__main__":

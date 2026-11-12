@@ -9,6 +9,13 @@
 > - replace a lookup table with a neural network, and measure what generalisation (giving sensible answers for positions never seen in training) gains and costs
 > - run the chess loop, and write a report that separates real learning from noise
 
+## Choose your pace
+
+Core lesson: start with Part A steps 1–3, then the short chess smoke test in
+Part B. Complete the resume exercise before any long chess run. The larger
+experiments support the full module checkpoint and capstone; you can return
+to them after understanding the small loop.
+
 ## Concepts
 
 The [Module 5 bridge lab](../module-05-puct/README.md#bridge-lab-watch-the-engine-change-its-mind)
@@ -389,7 +396,7 @@ below asks what that changes.
    Only proceed to the long run once this works. To change scientific settings,
    start a new named run; do not silently change an experiment while resuming.
 
-10. **Exercise: a long chess run.** Warm-start from your Module 4
+10. **Extended experiment: a long chess run.** Warm-start from your Module 4
     supervised checkpoint. AlphaGo, DeepMind's first Go program, did the
     same; AlphaZero started from random weights.
     ```bash
@@ -424,7 +431,7 @@ below asks what that changes.
     percentage points ([Module 7](../module-07-measure-and-scale/README.md),
     Part 0), so it can detect a large gain or a collapse. For a claim you can
     defend, run 100 games overnight.
-11. **Exercise: break the chess loop on purpose.** Do three short runs:
+11. **Extended experiment: break the chess loop on purpose.** Do three short runs:
     (a) `--no-root-noise`, (b) `--temperature-moves 0`,
     (c) `--promote-threshold 0.30`. Use the small-scale settings from step 8
     with `--iterations 5`.
@@ -448,7 +455,7 @@ below asks what that changes.
     that lose, so it no longer protects anything. (a) and (b) are harder to
     see at this scale, which makes them worth predicting.
     </details>
-12. **Exercise: buffer-size sweep.** Compare `--buffer-capacity 2000` with
+12. **Extended experiment: buffer-size sweep.** Compare `--buffer-capacity 2000` with
     `50000` at a fixed number of games per iteration. For example, run step
     10's command with `--iterations 5`, once with
     `--buffer-capacity 2000 --checkpoint-dir runs/m6_buf_small_01` and once with
@@ -545,6 +552,10 @@ improvement is hard to measure, the gate stops the loop from learning.
 </details>
 
 ## Checkpoint
+
+Bring the relevant prediction/interpretation entries from your `JOURNAL.md`
+(see the [template](../JOURNAL_TEMPLATE.md)). No entry is needed for routine
+commands or each self-check question. Note your next step before stopping.
 
 ```bash
 pytest tests/test_selfplay.py tests/test_tictactoe_lab.py -q   # regression suite still green
