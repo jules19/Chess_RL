@@ -74,7 +74,12 @@ def choose_mode():
         if choice == 'q':
             return None
         if choice == '1':
-            print("1. Random   2. Material   3. Minimax   4. MCTS   b. Back")
+            print("Choose an opponent:")
+            print("1. Random    picks any legal move")
+            print("2. Material  judges positions by the pieces each side has (Module 1)")
+            print("3. Minimax   looks a few moves ahead, assuming you reply with your best move (Module 2)")
+            print("4. MCTS      explores possible continuations by playing them out (Module 3)")
+            print("b. Back")
             opponent = input("Opponent [1]: ").strip().lower() or '1'
             modes = {'1': 'human', '2': 'human-material',
                      '3': 'human-minimax', '4': 'human-mcts'}
@@ -127,12 +132,25 @@ def mcts_move(board, simulations=200, use_evaluator=True):
     return best_move_mcts(board, simulations=simulations, use_evaluator=use_evaluator, verbose=False)
 
 
+def last_move_text(board, last_move):
+    """Name the move just played in standard notation (Nf3), as in the move list.
+
+    SAN depends on the position before the move, so replay it on a copy. Falls
+    back to square-to-square notation if last_move is not the latest move.
+    """
+    if board.move_stack and board.peek() == last_move:
+        before = board.copy()
+        before.pop()
+        return before.san(last_move)
+    return str(last_move)
+
+
 def display_board(board, move_num, last_move=None):
     """Display the current board state with enhanced visualization."""
     print(f"\n{'='*50}")
     print(f"Move {move_num}")
     if last_move:
-        print(f"Last move: {last_move}")
+        print(f"Last move: {last_move_text(board, last_move)}")
     print(f"{'='*50}")
 
     # Use fancy display with Unicode pieces and colors
@@ -267,9 +285,10 @@ def play_human_vs_random(human_color=chess.WHITE):
         else:
             # Computer's turn
             move = random_move(board)
+            san = board.san(move)
             board.push(move)
             move_count += 1
-            print(f"\nComputer plays: {move}")
+            print(f"\nComputer plays: {san}")
 
         display_board(board, move_count, move)
 
@@ -335,9 +354,10 @@ def play_human_vs_material(human_color=chess.WHITE):
             # Material engine's turn
             print("\n💎 Material engine thinking...")
             move = material_move(board)
+            san = board.san(move)
             board.push(move)
             move_count += 1
-            print(f"Material engine plays: {move}")
+            print(f"Material engine plays: {san}")
 
         display_board(board, move_count, move)
 
@@ -526,9 +546,10 @@ def play_human_vs_minimax(human_color=chess.WHITE, depth=3):
             start_time = time.time()
             move = minimax_move(board, depth=depth)
             elapsed = time.time() - start_time
+            san = board.san(move)
             board.push(move)
             move_count += 1
-            print(f"Minimax plays: {move} (took {elapsed:.2f}s)")
+            print(f"Minimax plays: {san} (took {elapsed:.2f}s)")
 
         display_board(board, move_count, move)
 
@@ -890,9 +911,10 @@ def play_human_vs_mcts(human_color=chess.WHITE, simulations=200):
             # MCTS engine's turn
             print(f"\n🌳 MCTS thinking ({simulations} simulations)...")
             move = mcts_move(board, simulations=simulations)
+            san = board.san(move)
             board.push(move)
             move_count += 1
-            print(f"MCTS plays: {move}")
+            print(f"MCTS plays: {san}")
 
         display_board(board, move_count, move)
 
@@ -999,47 +1021,155 @@ def test_mcts_vs_minimax(mcts_simulations=200, minimax_depth=3, num_games=20):
     print()
 
 
+LEARN_COLUMNS = """You will see one row per training round. Two columns to watch:
+  vs_perfect  % of test games the learner, playing WITHOUT search, does not
+              lose against a perfect player
+  coverage    % of all reachable positions it has met in its own games"""
+
+
+def summarise_learning(rows):
+    """Everyday-language summary of a tic-tac-toe run, from its actual numbers."""
+    first, last = rows[0], rows[-1]
+    return [
+        f"Playing without search against a perfect opponent, it avoided losing "
+        f"{last['vs_perfect']:.0f}% of test games, up from {first['vs_perfect']:.0f}% "
+        f"before training.",
+        "Against a perfect player, not losing means a draw: nobody can beat it.",
+        f"Its own games reached {last['coverage']:.0f}% of the reachable positions.",
+    ]
+
+
+def compare_exploration(explored, unexplored):
+    """Side-by-side summary of the same lab with and without exploration."""
+    a, b = explored[-1], unexplored[-1]
+    return [
+        f"With exploration:    reached {a['coverage']:.1f}% of positions, "
+        f"avoided losing {a['vs_perfect']:.0f}% against perfect play",
+        f"Without exploration: reached {b['coverage']:.1f}% of positions, "
+        f"avoided losing {b['vs_perfect']:.0f}% against perfect play",
+    ]
+
+
+def run_learning_lab():
+    """Tic-tac-toe self-play: predict, watch, then read a plain summary."""
+    from selfplay.tictactoe_lab import run
+    print("Predict: can a learner improve by playing only against itself?")
+    input("Press Enter to run the experiment. ")
+    print(LEARN_COLUMNS)
+    rows = run(seed=0)
+    print()
+    for line in summarise_learning(rows):
+        print(line)
+    print("Explain: did it learn every position, or just those its play reached?")
+    return rows
+
+
+def run_exploration_experiment(explored_rows):
+    """The same lab with exploration switched off (Module 0, step 4)."""
+    from selfplay.tictactoe_lab import run
+    print("\nNow the learner never explores: no random noise in its search, and it")
+    print("always plays its top move.")
+    print("Predict: what happens to coverage, and to vs_perfect?")
+    input("Press Enter to run the experiment. ")
+    rows = run(seed=0, root_noise=False, temperature_moves=0)
+    print()
+    for line in compare_exploration(explored_rows, rows):
+        print(line)
+    print("Explain: why does repeating the same games teach so little?")
+    print("Module 6, Part A, returns to this.")
+
+
+def run_mind_change_lab():
+    """The prepared chess lab. Returns False if torch is missing."""
+    try:
+        from selfplay.mind_change_lab import run_lab
+        import torch
+    except ModuleNotFoundError as error:
+        if error.name != 'torch':
+            raise
+        print('This lab needs PyTorch. Install with: pip install -e ".[train,dev]"')
+        print('Or choose "Watch it learn" for the no-torch tic-tac-toe lab.')
+        return False
+    previous_threads = torch.get_num_threads()
+    try:
+        torch.set_num_threads(1)
+        run_lab(pause=True)
+    finally:
+        torch.set_num_threads(previous_threads)
+    return True
+
+
+def show_course_pointer():
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    print(f"Open {root}/course/README.md")
+    print("New here? Follow the opening session in course/module-00-orientation/README.md.")
+    print("Returning? Open your JOURNAL.md and continue from its last checkpoint.")
+
+
+def ask_next(experiment=None):
+    """After an activity started from the menu: another experiment, menu or finish.
+
+    Returns 'experiment', 'menu' or 'finish'.
+    """
+    print()
+    if experiment:
+        print(f"1. Try another experiment: {experiment}")
+    print("m. Return to menu")
+    print("q. Finish")
+    while True:
+        choice = input("Next: ").strip().lower()
+        if choice == '1' and experiment:
+            return 'experiment'
+        if choice == 'm':
+            return 'menu'
+        if choice in ('q', ''):
+            return 'finish'
+        print("Choose " + ("1, " if experiment else "") + "m or q.")
+
+
 def main():
-    """Main entry point."""
+    """Main entry point. A mode argument runs once; no argument opens the menu."""
     if len(sys.argv) > 1:
         mode = sys.argv[1]
-    else:
-        mode = choose_mode()
-
-    if mode is None or mode == 'q':
-        return
-    if mode == 'course':
-        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        print(f"Open {root}/course/README.md")
-        print("New here? Follow the opening session in course/module-00-orientation/README.md.")
-        print("Returning? Open your JOURNAL.md and continue from its last checkpoint.")
-        return
-    if mode == 'think':
-        try:
-            from selfplay.mind_change_lab import run_lab
-            import torch
-        except ModuleNotFoundError as error:
-            if error.name != 'torch':
-                raise
-            print('This lab needs PyTorch. Install with: pip install -e ".[train,dev]"')
-            print('Or choose "Watch it learn" for the no-torch tic-tac-toe lab.')
+        if mode == 'q':
             return
-        previous_threads = torch.get_num_threads()
-        try:
-            torch.set_num_threads(1)
-            run_lab(pause=True)
-        finally:
-            torch.set_num_threads(previous_threads)
-        return
-    if mode == 'learn':
-        from selfplay.tictactoe_lab import run
-        print("Predict: can a learner improve by playing only against itself?")
-        input("Press Enter to run the experiment. ")
-        run(seed=0)
-        print("Explain: did it learn every position, or just those its play reached?")
-        print("Next: course/module-06-selfplay-rl/README.md, Part A.")
+        if mode == 'course':
+            show_course_pointer()
+        elif mode == 'think':
+            run_mind_change_lab()
+        elif mode == 'learn':
+            run_learning_lab()
+            print("Next: course/module-06-selfplay-rl/README.md, Part A.")
+        else:
+            run_mode(mode)
         return
 
+    while True:
+        mode = choose_mode()
+        if mode is None:
+            return
+        if mode == 'course':
+            show_course_pointer()
+            return
+        if mode == 'learn':
+            rows = run_learning_lab()
+            choice = ask_next("the same learner without exploration")
+            if choice == 'experiment':
+                run_exploration_experiment(rows)
+                choice = ask_next()
+        elif mode == 'think':
+            run_mind_change_lab()
+            choice = ask_next()
+        else:
+            run_mode(mode)
+            choice = ask_next()
+        if choice == 'finish':
+            print("Next time: python3 cli/play.py, or the course at course/README.md.")
+            return
+
+
+def run_mode(mode):
+    """Run one game or engine check by its command-line name."""
     if mode == "random":
         play_random_vs_random(interactive=True)
     elif mode == "human":
