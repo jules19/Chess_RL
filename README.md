@@ -21,8 +21,8 @@ search.
 ## The course (start here)
 
 Start with the [short opening session](course/module-00-orientation/README.md#opening-session-see-the-destination-first):
-predict a move, watch search change its mind, then watch a small learning loop improve.
-The target is about 20 minutes after setup; no game download is needed.
+watch a small learning loop improve, change one setting, then watch search change a chess
+engine's mind. The target is about 20 minutes after setup; no game download is needed.
 
 [course/README.md](course/README.md) has ten modules that teach from this
 codebase. Each module gives the concepts, the reinforcement-learning (RL)
@@ -46,7 +46,7 @@ git clone https://github.com/jules19/Chess_RL.git Chess_RL_learner
 cd Chess_RL_learner
 git checkout -b my-run              # your exercise work lives here
 python3 -m venv .venv && source .venv/bin/activate   # Python 3.9+
-pip install -e ".[train,dev]"       # ".[dev]" alone skips torch until Module 4
+pip install -e ".[dev]"             # seconds; PyTorch comes later (Module 0, step 2)
 pytest -q                           # expect all passed, plus skips: the skips are your exercises
 ```
 
