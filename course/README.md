@@ -73,7 +73,7 @@ understanding leads to bugs in the next module.
 ```bash
 git clone https://github.com/jules19/Chess_RL.git && cd Chess_RL
 python3 -m venv .venv && source .venv/bin/activate
-pip install -e ".[train,dev]"   # or just ".[dev]" to skip torch until Module 4
+pip install -e ".[dev]"         # seconds; Module 0 step 2 adds PyTorch
 pytest -q                        # everything should pass before you start
 ```
 

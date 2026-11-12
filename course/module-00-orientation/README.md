@@ -25,8 +25,40 @@ internals yet.
    `-n` preserves an existing journal. Set "Current module" to 0. Use this file
    only for experiments that ask you to predict or interpret something, plus
    memorable bugs or breakthroughs. Self-check questions need no written entry.
-2. **Predict a chess move, then watch it change.** With the training extras
-   installed (`pip install -e ".[train,dev]"`), run:
+2. **Start the big download now, in a second terminal.** Step 5 needs PyTorch
+   (the neural-network library). Steps 3 and 4 don't, so let it download while
+   you work. In a second terminal, from the repository root:
+   ```bash
+   source .venv/bin/activate
+   pip install -e ".[train,dev]"
+   ```
+   Skip this if you already installed the training extras. How long it takes
+   depends on your computer and connection: on Linux we measured about 4
+   minutes and 5.6 GB on a fast connection, because PyTorch brings graphics-card
+   libraries the course does not use.
+3. **Watch a complete learning loop.** Back in your first terminal:
+   ```bash
+   python3 selfplay/tictactoe_lab.py
+   ```
+   Before running, predict whether playing only against itself can help it
+   avoid losing to a perfect player. Follow `vs_perfect`: the percentage of
+   test games the learned table, playing **without search**, does not lose
+   against a perfect player. A perfect player cannot be beaten, so the best
+   possible result is a draw.
+   **Expected with seed 0:** it rises from 0% to about 89%. Measured runs take
+   about 7 seconds.
+4. **Make one change.** Predict what happens if the learner never explores:
+   ```bash
+   python3 selfplay/tictactoe_lab.py --no-root-noise --temperature-moves 0
+   ```
+   Compare `coverage` (the share of positions it has met) with the first run.
+   Record your prediction and observation in one journal entry. Module 6
+   explains why repeated experience can teach so little.
+
+   The menu runs steps 3 and 4 for you, with a plain-language summary:
+   `python3 cli/play.py`, then **Watch it learn**, then **Try another experiment**.
+5. **Predict a chess move, then watch it change.** Once the download in step 2
+   has finished, run:
    ```bash
    python3 selfplay/mind_change_lab.py --pause
    ```
@@ -37,31 +69,14 @@ internals yet.
    checkmate against it, and training changes its next first choice. This is
    one prepared lesson, not proof of stronger chess. Explain which step changed
    the weights. Module 5 returns to the details.
-3. **Watch a complete learning loop.** No torch or game download is needed:
-   ```bash
-   python3 selfplay/tictactoe_lab.py
-   ```
-   Before running, predict whether playing only against itself can help it
-   avoid losing to a perfect player. Follow `vs_perfect`: it means games not
-   lost by the learned table **without search**; a perfect opponent cannot lose.
-   **Expected with seed 0:** it rises from 0 to about 89 out of 100 games.
-   Exact runtime depends on your computer; measured runs take seconds.
-4. **Make one change.** Predict what happens if the learner never explores:
-   ```bash
-   python3 selfplay/tictactoe_lab.py --no-root-noise --temperature-moves 0
-   ```
-   Compare `coverage` (positions encountered) with the first run. Record your
-   prediction and observation in one journal entry. Module 6 explains why
-   repeated experience can teach so little.
 
-**Stop and explain:** What can search discover? What does training remember?
+**Stop and explain:** What does training remember? What can search discover?
 Why doesn't fitting one board prove useful generalisation? It's fine to have
 questions: put one in your journal and look for its answer as you build.
 
 Want to play first? `python3 cli/play.py` offers Play, Watch an engine think,
 Watch it learn, and Continue the course. Moves accept `e4` or `e2e4`; `q` quits.
-If you installed only the core dependencies, start with tic-tac-toe and return
-to the chess lab after installing the training extras.
+Everything except **Watch an engine think** works before PyTorch is installed.
 
 ## Concepts
 

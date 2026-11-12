@@ -35,7 +35,8 @@ Setup instructions are in [docs/UCI_SETUP_MAC.md](docs/UCI_SETUP_MAC.md).
 
 Try the [opening session](course/module-00-orientation/README.md#opening-session-see-the-destination-first)
 first: predict, watch, and explain. It targets about 20 minutes after setup.
-Tic-tac-toe needs only the core install; the prepared chess lab needs torch.
+It starts with tic-tac-toe, which needs only the core install, and downloads
+PyTorch in the background for the chess lab at the end.
 
 This repository is also a hands-on course. It goes from these engines to an
 AlphaZero-style loop, in which the engine improves by playing against itself
