@@ -48,3 +48,6 @@ keys, snapshot hashes, verbatim
 answers, blind grades and limitations are recorded in
 [assessment_v1/RESULTS.md](assessment_v1/RESULTS.md). Human usability and enjoyment
 remain unmeasured; see [the protocol](course_assessment_protocol.md).
+
+**Next: human observation.** [OBSERVATION_SHEET.md](OBSERVATION_SHEET.md) is
+the sheet for watching 2–3 beginners do Module 0's opening session.
