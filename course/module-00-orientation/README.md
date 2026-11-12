@@ -8,8 +8,60 @@
 > - describe chess as a reinforcement-learning problem: agent, environment, state, action, reward
 > - use a failing test to find which part of the code you broke
 
-Throughout the course, every checkpoint is a command you can run and a
-result you can check.
+Throughout the course, checkpoints combine runnable checks with an explanation
+you can give in your own words.
+
+## Opening session: see the destination first
+
+Aim for about 20 minutes **after setup**. This is a suggested learning pace,
+not a measured completion time for beginners. You can return to the detailed
+engine-building route afterwards; you do not need to understand the network
+internals yet.
+
+1. **Start your journal.** From the repository root, copy the template once:
+   ```bash
+   cp -n course/JOURNAL_TEMPLATE.md JOURNAL.md
+   ```
+   `-n` preserves an existing journal. Set "Current module" to 0. Use this file
+   only for experiments that ask you to predict or interpret something, plus
+   memorable bugs or breakthroughs. Self-check questions need no written entry.
+2. **Predict a chess move, then watch it change.** With the training extras
+   installed (`pip install -e ".[train,dev]"`), run:
+   ```bash
+   python3 selfplay/mind_change_lab.py --pause
+   ```
+   Look at the board and predict Black's reply to the tempting capture before
+   pressing Enter. Later, predict whether fitting this one lesson will help on
+   the comparison boards. The script pauses for both predictions.
+   **Expected:** the prepared learner initially wants the pawn; search finds
+   checkmate against it, and training changes its next first choice. This is
+   one prepared lesson, not proof of stronger chess. Explain which step changed
+   the weights. Module 5 returns to the details.
+3. **Watch a complete learning loop.** No torch or game download is needed:
+   ```bash
+   python3 selfplay/tictactoe_lab.py
+   ```
+   Before running, predict whether playing only against itself can help it
+   avoid losing to a perfect player. Follow `vs_perfect`: it means games not
+   lost by the learned table **without search**; a perfect opponent cannot lose.
+   **Expected with seed 0:** it rises from 0 to about 89 out of 100 games.
+   Exact runtime depends on your computer; measured runs take seconds.
+4. **Make one change.** Predict what happens if the learner never explores:
+   ```bash
+   python3 selfplay/tictactoe_lab.py --no-root-noise --temperature-moves 0
+   ```
+   Compare `coverage` (positions encountered) with the first run. Record your
+   prediction and observation in one journal entry. Module 6 explains why
+   repeated experience can teach so little.
+
+**Stop and explain:** What can search discover? What does training remember?
+Why doesn't fitting one board prove useful generalisation? It's fine to have
+questions: put one in your journal and look for its answer as you build.
+
+Want to play first? `python3 cli/play.py` offers Play, Watch an engine think,
+Watch it learn, and Continue the course. Moves accept `e4` or `e2e4`; `q` quits.
+If you installed only the core dependencies, start with tic-tac-toe and return
+to the chess lab after installing the training extras.
 
 ## Concepts
 
@@ -144,6 +196,10 @@ number back. Working out which of those choices earned the win is the
 </details>
 
 ## Checkpoint
+
+Bring the relevant prediction/interpretation entries from your `JOURNAL.md`
+(see the [template](../JOURNAL_TEMPLATE.md)). No entry is needed for routine
+commands or each self-check question. Note your next step before stopping.
 
 - [ ] `pytest -q` passes
 - [ ] You beat the random engine

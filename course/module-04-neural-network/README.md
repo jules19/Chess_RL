@@ -15,6 +15,12 @@ Requires torch (PyTorch, the deep-learning library the code uses): `pip install 
 
 Do Part A, take a break, then start Part B's quick run and read while it trains.
 
+## Choose your pace
+
+Core lesson: Part A steps 1 and 4 let you inspect representation and watch a
+small network learn. Data preparation and full chess training are extended
+work, required for later trained-network matches but not the opening lab.
+
 ## The four machine-learning ideas this module uses
 
 You don't need a machine-learning (ML) course first. These four ideas are enough:
@@ -476,6 +482,10 @@ The fix is more games instead of more epochs (exercise 7).
 </details>
 
 ## Checkpoint
+
+Bring the relevant prediction/interpretation entries from your `JOURNAL.md`
+(see the [template](../JOURNAL_TEMPLATE.md)). No entry is needed for routine
+commands or each self-check question. Note your next step before stopping.
 
 ```bash
 pytest tests/test_encoding.py tests/test_model.py -q         # still green

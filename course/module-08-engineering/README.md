@@ -204,6 +204,10 @@ you weren't editing. Exercise 1 keeps the suite fast enough for that.
 
 ## Checkpoint
 
+Bring the relevant prediction/interpretation entries from your `JOURNAL.md`
+(see the [template](../JOURNAL_TEMPLATE.md)). No entry is needed for routine
+commands or each self-check question. Note your next step before stopping.
+
 - [ ] CI passes on your fork (your own copy of the repository on GitHub) for
       a pull request that changes real code
 - [ ] At least one exercise above merged, with tests

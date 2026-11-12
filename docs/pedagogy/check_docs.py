@@ -67,7 +67,9 @@ def code_blocks(path, text):
 
 OUTPUT_FLAG = re.compile(r"(?:--?[\w-]*(?:log|output|out|dir)|-o|>)[\s=]*$")  # a flag or a shell redirect
 # Files the course asks the learner to create (not expected to exist in the repo)
-LEARNER_CREATED = {"REPORT.md", "training/first_network.py"}
+LEARNER_CREATED = {"REPORT.md", "JOURNAL.md", "training/first_network.py"}
+# Default artifact written by training/get_lichess.py (no --output flag needed).
+GENERATED_DEFAULTS = {"data/filtered.pgn"}
 
 
 def is_not_a_file_reference(text, match):
@@ -100,7 +102,7 @@ def check_references(docs):
         matches = list(FILE_REF.finditer(text))
         # a file created by a command, or flagged as absent, is excused everywhere in that document
         excused = {m.group(1) for m in matches if is_not_a_file_reference(text, m)}
-        refs = {m.group(1) for m in matches} - excused - CREATED_ELSEWHERE - LEARNER_CREATED
+        refs = {m.group(1) for m in matches} - excused - CREATED_ELSEWHERE - LEARNER_CREATED - GENERATED_DEFAULTS
         for ref in sorted(refs):
             if "://" in ref or ref.startswith(("www.", "lichess")):
                 continue
@@ -145,6 +147,9 @@ def run_commands(commands, timeout):
                 results.append(("skipped (shell syntax)", cmd, doc))
                 continue
             argv = shlex.split(cmd)
+            if "selfplay/train_loop.py" in argv and "--resume" in argv:
+                results.append(("requires Module 6 resume exercise (reference tested separately)", cmd, doc))
+                continue
             if argv[0] in ("python", "python3"):
                 argv[0] = sys.executable
             elif argv[0] == "pytest":

@@ -1,0 +1,117 @@
+{
+  "purpose": "One complete iteration at Module 6 long-run games/search/train settings; random initialisation, not the full warm-start course run.",
+  "code_commit": "75b5ccb4634a4d1c460f06edd349bb86e11654a9",
+  "command": "PYTHONPATH=/tmp/chess-lab-deps:. OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 python3 -u selfplay/train_loop.py --iterations 1 --games-per-iter 20 --simulations 64 --train-steps 300 --checkpoint-dir /tmp/chess-rl-storage-run-01 --seed 7 --device cpu",
+  "platform": "Linux-6.10.14-linuxkit-aarch64-with-glibc2.36",
+  "machine": "aarch64",
+  "cpu_count_reported": 8,
+  "compute_threads": 1,
+  "config": {
+    "settings": {
+      "iterations": 1,
+      "games_per_iter": 20,
+      "simulations": 64,
+      "train_steps": 300,
+      "batch_size": 64,
+      "arena_games": 6,
+      "arena_simulations": 64,
+      "promote_threshold": 0.55,
+      "buffer_capacity": 50000,
+      "temperature_moves": 20,
+      "root_noise": true,
+      "max_moves": 200,
+      "learning_rate": 0.001,
+      "res_blocks": 4,
+      "channels": 128,
+      "init_checkpoint": null,
+      "checkpoint_dir": "/tmp/chess-rl-storage-run-01",
+      "device": "cpu",
+      "seed": 7,
+      "verbose": true,
+      "keep_history": false,
+      "input_channels": 20
+    },
+    "created_utc": "2026-11-11T23:18:09.312643+00:00",
+    "python_version": "3.11.2",
+    "torch_version": "2.6.0+cpu"
+  },
+  "positions": 2782,
+  "iteration": 1,
+  "model_bytes": 7332678,
+  "buffer_bytes": 370548,
+  "buffer_arrays": {
+    "states": {
+      "shape": [
+        2782,
+        20,
+        8,
+        8
+      ],
+      "bytes": 14243840
+    },
+    "policies": {
+      "shape": [
+        2782,
+        4672
+      ],
+      "bytes": 51990016
+    },
+    "values": {
+      "shape": [
+        2782
+      ],
+      "bytes": 11128
+    },
+    "capacity": {
+      "shape": [],
+      "bytes": 8
+    }
+  },
+  "run_unique_file_bytes": 7704511,
+  "run_allocated_bytes_unique_inodes": 7725056,
+  "files": {
+    ".run-started": {
+      "bytes": 31,
+      "hard_link_count": 1
+    },
+    "champion.pt": {
+      "bytes": 7332678,
+      "hard_link_count": 2
+    },
+    "completed.json": {
+      "bytes": 447,
+      "hard_link_count": 1
+    },
+    "config.json": {
+      "bytes": 704,
+      "hard_link_count": 1
+    },
+    "iterations/iteration-000001-szhy86ti/champion.pt": {
+      "bytes": 7332678,
+      "hard_link_count": 2
+    },
+    "iterations/iteration-000001-szhy86ti/replay_buffer.npz": {
+      "bytes": 370548,
+      "hard_link_count": 2
+    },
+    "iterations/iteration-000001-szhy86ti/run_log.csv": {
+      "bytes": 103,
+      "hard_link_count": 2
+    },
+    "replay_buffer.npz": {
+      "bytes": 370548,
+      "hard_link_count": 2
+    },
+    "run_log.csv": {
+      "bytes": 103,
+      "hard_link_count": 2
+    }
+  },
+  "run_log": "iteration,positions_in_buffer,policy_loss,value_loss,arena_score,promoted\n1,2782,6.0070,0.0548,0.500,0\n",
+  "console_output": "Initialized champion with RANDOM weights (tabula rasa, like AlphaZero)\n\n======================================================================\nIteration 1/1\n======================================================================\nSelf-play: 20 games @ 64 sims/move\n  Game 1/20: 1/2-1/2 (200 positions)\n  Game 2/20: 1/2-1/2 (200 positions)\n  Game 3/20: 0-1 (184 positions)\n  Game 4/20: 1-0 (69 positions)\n  Game 5/20: 1-0 (45 positions)\n  Game 6/20: 1/2-1/2 (200 positions)\n  Game 7/20: 1-0 (67 positions)\n  Game 8/20: 1-0 (89 positions)\n  Game 9/20: 0-1 (176 positions)\n  Game 10/20: 1/2-1/2 (200 positions)\n  Game 11/20: 0-1 (28 positions)\n  Game 12/20: 1/2-1/2 (200 positions)\n  Game 13/20: 1/2-1/2 (200 positions)\n  Game 14/20: 1-0 (91 positions)\n  Game 15/20: 1/2-1/2 (200 positions)\n  Game 16/20: 0-1 (56 positions)\n  Game 17/20: 0-1 (194 positions)\n  Game 18/20: 1/2-1/2 (49 positions)\n  Game 19/20: 1/2-1/2 (200 positions)\n  Game 20/20: 0-1 (134 positions)\n  Results: +5 -6 =9 | 2782 total positions\nReplay buffer: 2,782 positions\nTraining candidate: 300 steps, batch 64\n    step 1/300: loss 9.0598 (policy 8.5372, value 0.5227)\n    step 60/300: loss 6.6989 (policy 6.5930, value 0.1058)\n    step 120/300: loss 6.0436 (policy 6.0200, value 0.0237)\n    step 180/300: loss 5.7421 (policy 5.7326, value 0.0095)\n    step 240/300: loss 5.3220 (policy 5.3189, value 0.0031)\n    step 300/300: loss 4.7052 (policy 4.6885, value 0.0167)\nArena: 6 games, promote at >55%\n  Arena game 1/6: 1/2-1/2 (candidate as White, score 0.5/1)\n  Arena game 2/6: 1/2-1/2 (candidate as Black, score 1.0/2)\n  Arena game 3/6: 1/2-1/2 (candidate as White, score 1.5/3)\n  Arena game 4/6: 1/2-1/2 (candidate as Black, score 2.0/4)\n  Arena game 5/6: 1/2-1/2 (candidate as White, score 2.5/5)\n  Arena game 6/6: 1/2-1/2 (candidate as Black, score 3.0/6)\nCandidate score: 50%\n\u2717 Rejected: champion stays (candidate not clearly better)\n\n======================================================================\n\u2705 Loop complete: 1 iterations, 0 promotions\nChampion saved to /tmp/chess-rl-storage-run-01/champion.pt\nPer-iteration log: /tmp/chess-rl-storage-run-01/run_log.csv\n======================================================================\n",
+  "limits": [
+    "Only the first iteration; later replay buffers grow until capacity.",
+    "No Module 4 trained checkpoint was available; random initialisation affects game length and compression.",
+    "Concurrent validation jobs and this host are not a timing benchmark for the reference eight-core CPU."
+  ]
+}

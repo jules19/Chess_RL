@@ -13,6 +13,12 @@ The name PUCT stands for Predictor + Upper Confidence bounds for Trees. The
 is the idea behind UCT (Upper Confidence bounds applied to Trees) in Module 3: add a bonus to moves the search knows
 little about, so they still get tried.
 
+## Choose your pace
+
+Core lesson: step 1 and the bridge lab need no human-game checkpoint. They
+show where search gets knowledge and how training retains a search result.
+Steps 2–5 extend this into trained-network comparisons and performance work.
+
 ## Concepts
 
 Everything below is in `search/puct.py`, which has docstrings written for teaching.
@@ -368,6 +374,10 @@ You have watched one search lesson being written back into a network.
 Module 6 adds varied experience, final game results, and repeated evaluation.
 
 ## Checkpoint
+
+Bring the relevant prediction/interpretation entries from your `JOURNAL.md`
+(see the [template](../JOURNAL_TEMPLATE.md)). No entry is needed for routine
+commands or each self-check question. Note your next step before stopping.
 
 ```bash
 pytest tests/test_puct.py -q                  # regression suite still green

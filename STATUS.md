@@ -80,7 +80,7 @@ course takes you through each one:
    network against Monte Carlo tree search with rollouts, with the same
    number of simulations (search steps) per move for each.
 3. **Run a real self-play loop** (Module 6). Start from the network trained
-   on human games, run it overnight, and record how often a new network
+   on human games, run a long experiment (about 3 hours on the reference 8-core CPU), and record how often a new network
    replaces the old one.
 4. **Measure strength reliably** (Module 7). Use cutechess-cli (a
    command-line program that plays matches between engines) to play at
